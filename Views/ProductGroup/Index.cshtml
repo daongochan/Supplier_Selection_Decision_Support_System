@@ -1,0 +1,236 @@
+﻿@model SupplierSelectionDSS.Models.ProductGroupIndexViewModel
+
+@{
+    ViewData["Title"] = "Product Groups";
+}
+
+<div class="page-header">
+
+    <div>
+
+        <h1 class="page-title">
+            Product groups
+        </h1>
+
+        <p class="page-description">
+            Quản lý các nhóm hàng hóa và dịch vụ được sử dụng
+            trong quá trình lựa chọn nhà cung cấp.
+        </p>
+
+    </div>
+
+    <a asp-action="Create"
+       class="btn-primary">
+        Add group
+    </a>
+
+</div>
+
+
+@if (TempData["SuccessMessage"] is string message)
+{
+    <div class="alert-success">
+        @message
+    </div>
+}
+
+
+<div class="filter-card">
+
+    <form asp-action="Index"
+          method="get"
+          class="supplier-filter">
+
+        <div class="filter-field">
+
+            <label for="keyword">
+                Search
+            </label>
+
+            <input id="keyword"
+                   name="keyword"
+                   value="@Model.Keyword"
+                   class="form-control"
+                   placeholder="Group code or group name..." />
+
+        </div>
+
+
+        <div class="filter-field">
+
+            <label for="status">
+                Status
+            </label>
+
+            <select id="status"
+                    name="status"
+                    class="form-control">
+
+                <option value="All"
+                        selected="@(Model.Status == "All")">
+                    All
+                </option>
+
+                <option value="Active"
+                        selected="@(Model.Status == "Active")">
+                    Active
+                </option>
+
+                <option value="Inactive"
+                        selected="@(Model.Status == "Inactive")">
+                    Inactive
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="filter-actions">
+
+            <button type="submit"
+                    class="btn-primary">
+                Search
+            </button>
+
+            <a asp-action="Index"
+               class="btn-outline">
+                Reset
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<div class="table-card">
+
+    @if (Model.ProductGroups.Any())
+    {
+        <div class="data-table-wrapper">
+
+            <table class="data-table">
+
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Group</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @foreach (var group in Model.ProductGroups)
+                    {
+                        <tr>
+
+                            <td>
+                                <strong>
+                                    @group.GroupCode
+                                </strong>
+                            </td>
+
+                            <td>
+                                <strong>
+                                    @group.GroupName
+                                </strong>
+                            </td>
+
+                            <td>
+                                @(string.IsNullOrWhiteSpace(group.Description)
+                                    ? "—"
+                                    : group.Description)
+                            </td>
+
+                            <td>
+
+                                @if (group.Status == "Active")
+                                {
+                                    <span class="status-pill status-active">
+                                        Active
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="status-pill status-inactive">
+                                        Inactive
+                                    </span>
+                                }
+
+                            </td>
+
+                            <td>
+
+                                <div class="table-actions">
+
+                                    <a asp-action="Suppliers"
+                                       asp-route-id="@group.GroupId"
+                                       class="action-link">
+                                        Suppliers
+                                    </a>
+
+                                    <a asp-action="Edit"
+                                       asp-route-id="@group.GroupId"
+                                       class="action-link">
+                                        Edit
+                                    </a>
+
+                                    <form asp-action="ToggleStatus"
+                                          method="post">
+
+                                        @Html.AntiForgeryToken()
+
+                                        <input type="hidden"
+                                               name="id"
+                                               value="@group.GroupId" />
+
+                                        <button type="submit"
+                                                class="action-link">
+
+                                            @(group.Status == "Active"
+                                                ? "Deactivate"
+                                                : "Activate")
+
+                                        </button>
+
+                                    </form>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+
+            <h3>
+                No product groups found.
+            </h3>
+
+            <p>
+                Chưa có nhóm hàng phù hợp với điều kiện tìm kiếm.
+            </p>
+
+            <a asp-action="Create"
+               class="btn-primary">
+                Add group
+            </a>
+
+        </div>
+    }
+
+</div>

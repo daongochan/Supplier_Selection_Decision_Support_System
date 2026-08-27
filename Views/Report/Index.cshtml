@@ -1,0 +1,518 @@
+﻿@model SupplierSelectionDSS.Models.ReportIndexViewModel
+
+@{
+    ViewData["Title"] = "Reports";
+
+    var canGenerate =
+        Model.CanGenerate;
+}
+
+
+<!-- =========================================================
+     PAGE HEADER
+     ========================================================= -->
+
+<div class="page-header report-page-header">
+
+    <div>
+
+        <div class="page-eyebrow">
+            REPORTS
+        </div>
+
+        <h1 class="page-title">
+            Evaluation reports
+        </h1>
+
+        <p class="page-description">
+            @Model.BatchCode
+            ·
+            @Model.BatchName
+        </p>
+
+    </div>
+
+
+    <div class="report-header-actions">
+
+        <span class="status-pill
+            status-@Model.BatchStatus.ToLowerInvariant()">
+
+            @Model.BatchStatus
+
+        </span>
+
+
+        <a asp-controller="EvaluationBatch"
+           asp-action="Details"
+           asp-route-id="@Model.BatchId"
+           class="btn-outline">
+
+            Back to Batch
+
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     ALERTS
+     ========================================================= -->
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert-success">
+        @successMessage
+    </div>
+}
+
+
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert-danger">
+        @errorMessage
+    </div>
+}
+
+
+<!-- =========================================================
+     REPORT STATUS
+     ========================================================= -->
+
+<div class="report-status-card">
+
+    <div class="report-status-copy">
+
+        <div class="page-eyebrow">
+            FINAL REPORT
+        </div>
+
+
+        @if (canGenerate)
+        {
+            <h2>
+                Batch is ready for reporting.
+            </h2>
+
+            <p>
+                Batch đã hoàn tất phê duyệt.
+                Bạn có thể tạo báo cáo PDF hoặc Excel
+                từ kết quả đánh giá cuối cùng.
+            </p>
+        }
+        else
+        {
+            <h2>
+                Report generation is locked.
+            </h2>
+
+            <p>
+                Báo cáo cuối chỉ được tạo khi Batch đã
+                hoàn tất quy trình và có quyết định cuối cùng.
+            </p>
+        }
+
+    </div>
+
+
+    <div class="report-status-actions">
+
+        @if (canGenerate)
+        {
+            <!-- PDF -->
+
+            <form method="post"
+                  action="@Url.Action(
+                      "GeneratePdf",
+                      "Report",
+                      new
+                      {
+                          batchId = Model.BatchId
+                      })">
+
+                @Html.AntiForgeryToken()
+
+                <button type="submit"
+                        class="btn-primary">
+
+                    <i class="bi bi-file-earmark-pdf"></i>
+
+                    Generate PDF
+
+                </button>
+
+            </form>
+
+
+            <!-- EXCEL -->
+
+            <form method="post"
+                  action="@Url.Action(
+                      "GenerateExcel",
+                      "Report",
+                      new
+                      {
+                          batchId = Model.BatchId
+                      })">
+
+                @Html.AntiForgeryToken()
+
+                <button type="submit"
+                        class="btn-outline">
+
+                    <i class="bi bi-file-earmark-spreadsheet"></i>
+
+                    Generate Excel
+
+                </button>
+
+            </form>
+        }
+        else
+        {
+            <span class="report-disabled-badge">
+                Available after approval
+            </span>
+        }
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     REPORT CONTENT
+     ========================================================= -->
+
+<div class="report-overview-grid">
+
+
+    <!-- REPORT SCOPE -->
+
+    <div class="surface-card report-overview-card">
+
+        <span class="card-label">
+            REPORT SCOPE
+        </span>
+
+
+        <strong class="report-overview-title">
+            Final decision package
+        </strong>
+
+
+        <span class="report-overview-meta">
+            Batch information
+        </span>
+
+        <span class="report-overview-meta">
+            Evaluation scores
+        </span>
+
+        <span class="report-overview-meta">
+            AHP weights & consistency
+        </span>
+
+        <span class="report-overview-meta">
+            TOPSIS ranking
+        </span>
+
+        <span class="report-overview-meta">
+            Final approval
+        </span>
+
+    </div>
+
+
+    <!-- AVAILABLE FORMATS -->
+
+    <div class="surface-card report-overview-card">
+
+        <span class="card-label">
+            OUTPUT FORMATS
+        </span>
+
+
+        <div class="report-format-item">
+
+            <span class="report-format-icon
+                         report-format-pdf">
+
+                <i class="bi bi-file-earmark-pdf"></i>
+
+            </span>
+
+
+            <div>
+
+                <strong>
+                    PDF
+                </strong>
+
+                <span>
+                    Printable final report
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="report-format-item">
+
+            <span class="report-format-icon
+                         report-format-excel">
+
+                <i class="bi bi-file-earmark-spreadsheet"></i>
+
+            </span>
+
+
+            <div>
+
+                <strong>
+                    Excel
+                </strong>
+
+                <span>
+                    Structured analytical workbook
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+<!-- =========================================================
+     REPORT HISTORY
+     ========================================================= -->
+
+<div class="report-history-section">
+
+    <div class="section-heading">
+
+        <div>
+
+            <div class="page-eyebrow">
+                REPORT HISTORY
+            </div>
+
+            <h2 class="section-title">
+                Generated reports.
+            </h2>
+
+        </div>
+
+    </div>
+
+
+    <div class="table-card">
+
+        @if (Model.Reports.Any())
+        {
+            <div class="data-table-wrapper">
+
+                <table class="data-table report-history-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Type
+                            </th>
+
+                            <th>
+                                Generated by
+                            </th>
+
+                            <th>
+                                Generated
+                            </th>
+
+                            <th>
+                                File
+                            </th>
+
+                            <th>
+                                Action
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        @foreach (
+                            var report
+                            in Model.Reports)
+                        {
+                            <tr>
+
+                                <!-- TYPE -->
+
+                                <td>
+
+                                    @if (
+                                        string.Equals(
+                                            report.ReportType,
+                                            "PDF",
+                                            StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <span class="
+                                            report-type-badge
+                                            report-type-pdf">
+
+                                            <i class="bi bi-file-earmark-pdf"></i>
+
+                                            PDF
+
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="
+                                            report-type-badge
+                                            report-type-excel">
+
+                                            <i class="bi bi-file-earmark-spreadsheet"></i>
+
+                                            Excel
+
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <!-- GENERATED BY -->
+
+                                <td>
+
+                                    <strong>
+                                        @(string.IsNullOrWhiteSpace(
+                                            report.GeneratedByName)
+                                            ? $"User #{report.GeneratedBy}"
+                                            : report.GeneratedByName)
+                                    </strong>
+
+                                </td>
+
+
+                                <!-- DATE -->
+
+                                <td>
+
+                                    @report.GeneratedAt.ToString("dd/MM/yyyy HH:mm")
+
+                                </td>
+
+
+                                <!-- FILE -->
+
+                                <td>
+
+                                    @if (
+                                        !string.IsNullOrWhiteSpace(
+                                            report.FilePath))
+                                    {
+                                        <span class="table-muted">
+                                            @System.IO.Path.GetFileName(
+                                                report.FilePath)
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="table-muted">
+                                            —
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <!-- DOWNLOAD -->
+
+                                <td>
+
+                                    <a asp-controller="Report"
+                                       asp-action="Download"
+                                       asp-route-reportId="@report.ReportId"
+                                       class="action-link">
+
+                                        Download
+
+                                        <i class="bi bi-download"></i>
+
+                                    </a>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+
+                <h3>
+                    No reports yet.
+                </h3>
+
+                <p>
+                    Chưa có báo cáo nào được tạo cho Batch này.
+                </p>
+
+                @if (canGenerate)
+                {
+                    <p>
+                        Chọn Generate PDF hoặc Generate Excel
+                        để tạo báo cáo đầu tiên.
+                    </p>
+                }
+
+            </div>
+        }
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     WORKFLOW NOTE
+     ========================================================= -->
+
+<div class="report-workflow-note">
+
+    <span class="report-workflow-dot"></span>
+
+    <div>
+
+        <strong>
+            Reporting workflow
+        </strong>
+
+        <span>
+            Báo cáo được tạo từ dữ liệu Evaluation,
+            AHP, TOPSIS và Final Approval của Batch.
+        </span>
+
+    </div>
+
+</div>

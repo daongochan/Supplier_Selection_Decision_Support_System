@@ -1,0 +1,102 @@
+﻿:root {
+    /* =========================================================
+       FONT
+       ========================================================= */
+
+    --font-serif: "Source Serif 4", "Source Serif Pro", Georgia, "Times New Roman", serif;
+    /* =========================================================
+       BASE COLORS
+       ========================================================= */
+
+    --canvas: #f4f0ea;
+    --canvas-soft: #fbf9f6;
+    --surface: #ffffff;
+    --surface-soft: #f8f5f0;
+    --surface-muted: #efebe5;
+    --ink: #24211e;
+    --ink-soft: #39332f;
+    --body: #514a43;
+    --muted: #81786f;
+    --muted-soft: #a79e95;
+    --border: #ddd5cc;
+    --border-soft: #ece6de;
+    --border-strong: #c9c0b5;
+    /* =========================================================
+       SEMANTIC ACCENTS
+       ========================================================= */
+    /* Primary action */
+    --terracotta: #b75d45;
+    --terracotta-dark: #994b37;
+    --terracotta-soft: #f1d9d1;
+    /* Success */
+    --sage: #6f8773;
+    --sage-dark: #58705d;
+    --sage-soft: #dce7de;
+    /* AHP / analytical */
+    --lavender: #8573a7;
+    --lavender-dark: #6f5e90;
+    --lavender-soft: #e6e0f0;
+    /* TOPSIS / analytics */
+    --sky: #6488a7;
+    --sky-dark: #52708c;
+    --sky-soft: #dce8f0;
+    /* Pending / draft */
+    --amber: #b08a50;
+    --amber-dark: #936f3c;
+    --amber-soft: #eee3cd;
+    /* Error / rejected */
+    --danger: #a94b4b;
+    --danger-dark: #8e3d3d;
+    --danger-soft: #f2dddd;
+    /* =========================================================
+       TYPOGRAPHY SCALE
+       ========================================================= */
+
+    --font-size-display: 56px;
+    --font-size-h1: 48px;
+    --font-size-h2: 34px;
+    --font-size-h3: 24px;
+    --font-size-xl: 20px;
+    --font-size-lg: 18px;
+    --font-size-md: 16px;
+    --font-size-sm: 14px;
+    --font-size-xs: 12px;
+    /* =========================================================
+       SPACING
+       Base unit = 4px
+       ========================================================= */
+
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-7: 32px;
+    --space-8: 40px;
+    --space-9: 48px;
+    --space-10: 64px;
+    --space-11: 80px;
+    /* =========================================================
+       RADIUS
+       ========================================================= */
+
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 18px;
+    --radius-xl: 24px;
+    --radius-pill: 9999px;
+    /* =========================================================
+       SHADOWS
+       ========================================================= */
+
+    --shadow-card: 0 6px 24px rgba(36, 33, 30, 0.04);
+    --shadow-hover: 0 10px 32px rgba(36, 33, 30, 0.07);
+    /* =========================================================
+       LAYOUT
+       ========================================================= */
+
+    --sidebar-width: 224px;
+    --topbar-height: 68px;
+    --content-width: 1240px;
+}

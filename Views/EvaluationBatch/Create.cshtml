@@ -1,0 +1,1652 @@
+﻿@model SupplierSelectionDSS.Models.EvaluationBatchCreateViewModel
+
+@{
+    ViewData["Title"] = "New Evaluation Batch";
+
+    var productGroups =
+        ViewBag.ProductGroups
+        as List<SupplierSelectionDSS.Data.Entities.ProductGroup>
+        ?? new();
+
+    var criteria =
+        ViewBag.Criteria
+        as List<SupplierSelectionDSS.Models.BatchCriteriaOptionViewModel>
+        ?? new();
+
+    var suppliers =
+        ViewBag.Suppliers
+        as List<SupplierSelectionDSS.Models.BatchSupplierOptionViewModel>
+        ?? new();
+
+    var selectedSupplierCount =
+        Model.SelectedSupplierIds?.Count ?? 0;
+
+    var selectedCriteriaCount =
+        Model.SelectedCriteriaIds?.Count ?? 0;
+}
+
+
+<!-- =========================================================
+     PAGE HEADER
+     ========================================================= -->
+
+<div class="page-header evaluation-create-header">
+
+    <div>
+
+        <div class="page-eyebrow">
+            EVALUATION
+        </div>
+
+        <h1 class="page-title">
+            New evaluation
+        </h1>
+
+        <p class="page-description">
+            Xác định phạm vi, nhà cung cấp và tiêu chí trước
+            khi bắt đầu quy trình đánh giá AHP–TOPSIS.
+        </p>
+
+    </div>
+
+
+    <a asp-action="Index"
+       class="btn-outline">
+
+        Back to batches
+
+    </a>
+
+</div>
+
+
+<!-- =========================================================
+     CREATE WORKSPACE
+     ========================================================= -->
+
+<div class="evaluation-create-shell">
+
+
+    <!-- =====================================================
+         STEPPER
+         ===================================================== -->
+
+    <div class="evaluation-create-stepper">
+
+        <div class="create-step active">
+
+            <div class="create-step-number">
+                01
+            </div>
+
+            <div class="create-step-copy">
+
+                <strong>
+                    Identity
+                </strong>
+
+                <span>
+                    Batch details
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="create-step-line"></div>
+
+
+        <div class="create-step">
+
+            <div class="create-step-number">
+                02
+            </div>
+
+            <div class="create-step-copy">
+
+                <strong>
+                    Scope
+                </strong>
+
+                <span>
+                    Product group
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="create-step-line"></div>
+
+
+        <div class="create-step">
+
+            <div class="create-step-number">
+                03
+            </div>
+
+            <div class="create-step-copy">
+
+                <strong>
+                    Suppliers
+                </strong>
+
+                <span>
+                    Participants
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="create-step-line"></div>
+
+
+        <div class="create-step">
+
+            <div class="create-step-number">
+                04
+            </div>
+
+            <div class="create-step-copy">
+
+                <strong>
+                    Criteria
+                </strong>
+
+                <span>
+                    Evaluation basis
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="create-step-line"></div>
+
+
+        <div class="create-step">
+
+            <div class="create-step-number">
+                05
+            </div>
+
+            <div class="create-step-copy">
+
+                <strong>
+                    Period
+                </strong>
+
+                <span>
+                    Timeline
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         MAIN GRID
+         ===================================================== -->
+
+    <div class="evaluation-create-grid">
+
+
+        <!-- =================================================
+             MAIN FORM
+             ================================================= -->
+
+        <div class="evaluation-create-main">
+
+            <div class="form-card evaluation-batch-form">
+
+                <form asp-action="Create"
+                      method="post"
+                      id="batchForm">
+
+                    @Html.AntiForgeryToken()
+
+
+                    <!-- =========================================
+                         VALIDATION
+                         ========================================= -->
+
+                    <div asp-validation-summary="ModelOnly"
+                         class="validation-summary">
+                    </div>
+
+
+                    <!-- =========================================
+                         01 IDENTITY
+                         ========================================= -->
+
+                    <section class="create-section">
+
+                        <div class="create-section-heading">
+
+                            <div class="create-section-index">
+                                01
+                            </div>
+
+                            <div>
+
+                                <div class="page-eyebrow">
+                                    IDENTITY
+                                </div>
+
+                                <h2>
+                                    Batch details
+                                </h2>
+
+                                <p>
+                                    Đặt mã và tên để nhận diện
+                                    đợt đánh giá.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="form-grid">
+
+
+                            <!-- Batch code -->
+
+                            <div class="form-group">
+
+                                <label asp-for="BatchCode">
+                                    Batch code
+                                </label>
+
+                                <input asp-for="BatchCode"
+                                       class="form-control"
+                                       maxlength="20"
+                                       placeholder="BAT-001"
+                                       autocomplete="off" />
+
+                                <span asp-validation-for="BatchCode"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+
+                            <!-- Batch name -->
+
+                            <div class="form-group">
+
+                                <label asp-for="BatchName">
+                                    Batch name
+                                </label>
+
+                                <input asp-for="BatchName"
+                                       class="form-control"
+                                       maxlength="200"
+                                       placeholder="Đánh giá nhà cung cấp Q4"
+                                       autocomplete="off" />
+
+                                <span asp-validation-for="BatchName"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+
+                            <!-- Description -->
+
+                            <div class="form-group form-group-full">
+
+                                <label asp-for="Description">
+                                    Description
+                                </label>
+
+                                <textarea asp-for="Description"
+                                          class="form-control create-description"
+                                          maxlength="500"
+                                          placeholder="Mô tả ngắn về phạm vi và mục đích đợt đánh giá..."></textarea>
+
+                                <div class="field-helper">
+                                    Tối đa 500 ký tự.
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- =========================================
+                         02 SCOPE
+                         ========================================= -->
+
+                    <section class="create-section">
+
+                        <div class="create-section-heading">
+
+                            <div class="create-section-index">
+                                02
+                            </div>
+
+                            <div>
+
+                                <div class="page-eyebrow">
+                                    SCOPE
+                                </div>
+
+                                <h2>
+                                    Evaluation scope
+                                </h2>
+
+                                <p>
+                                    Chọn nhóm hàng hóa hoặc dịch vụ.
+                                    Supplier sẽ được lọc theo nhóm này.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="create-scope-card">
+
+                            <div class="create-scope-icon">
+
+                                <i class="bi bi-box-seam"></i>
+
+                            </div>
+
+
+                            <div class="create-scope-content">
+
+                                <label asp-for="GroupId">
+                                    Product group
+                                </label>
+
+                                <select asp-for="GroupId"
+                                        class="form-control"
+                                        id="groupSelect">
+
+                                    <option value="">
+                                        Select a product group
+                                    </option>
+
+
+                                    @foreach (
+                                        var group
+                                        in productGroups)
+                                    {
+                                        <option value="@group.GroupId">
+
+                                            @group.GroupCode
+                                            —
+                                            @group.GroupName
+
+                                        </option>
+                                    }
+
+                                </select>
+
+                                <span asp-validation-for="GroupId"
+                                      class="text-danger">
+                                </span>
+
+                                <span class="field-helper">
+                                    Chỉ Product Group Active
+                                    mới xuất hiện.
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- =========================================
+                         03 SUPPLIERS
+                         ========================================= -->
+
+                    <section class="create-section">
+
+                        <div class="create-section-heading">
+
+                            <div class="create-section-index">
+                                03
+                            </div>
+
+                            <div>
+
+                                <div class="page-eyebrow">
+                                    SUPPLIERS
+                                </div>
+
+                                <h2>
+                                    Participating suppliers
+                                </h2>
+
+                                <p>
+                                    Chọn các Supplier Active thuộc
+                                    Product Group đã chọn.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="selection-header">
+
+                            <div>
+
+                                <strong>
+                                    Available suppliers
+                                </strong>
+
+                                <span>
+                                    Chọn một hoặc nhiều nhà cung cấp.
+                                </span>
+
+                            </div>
+
+
+                            <span class="selection-counter"
+                                  id="supplierCounter">
+
+                                @selectedSupplierCount selected
+
+                            </span>
+
+                        </div>
+
+
+                        <div id="supplierContainer"
+                             class="selection-grid create-selection-grid">
+
+                            @if (suppliers.Any())
+                            {
+                                foreach (
+                                    var supplier
+                                    in suppliers)
+                                {
+                                    var isChecked =
+                                        Model.SelectedSupplierIds
+                                            .Contains(
+                                                supplier.SupplierId);
+
+
+                                    <label class="selection-card @(isChecked ? "selected" : "")">
+
+                                        <input type="checkbox"
+                                               name="SelectedSupplierIds"
+                                               value="@supplier.SupplierId"
+                                        @(isChecked ? "checked" : null) />
+
+                                        <span class="selection-card-check">
+
+                                            <i class="bi bi-check"></i>
+
+                                        </span>
+
+
+                                        <span class="selection-card-content">
+
+                                            <strong>
+                                                @supplier.SupplierCode
+                                            </strong>
+
+                                            <span class="selection-item-name">
+                                                @supplier.SupplierName
+                                            </span>
+
+                                        </span>
+
+
+                                        <i class="bi bi-building selection-card-icon"></i>
+
+                                    </label>
+                                }
+                            }
+                            else
+                            {
+                                <div class="selection-empty create-selection-empty">
+
+                                    <i class="bi bi-building"></i>
+
+                                    <strong>
+                                        Chưa có Supplier
+                                    </strong>
+
+                                    <span>
+                                        Chọn Product Group để tải
+                                        danh sách Supplier.
+                                    </span>
+
+                                </div>
+                            }
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- =========================================
+                         04 CRITERIA
+                         ========================================= -->
+
+                    <section class="create-section">
+
+                        <div class="create-section-heading">
+
+                            <div class="create-section-index">
+                                04
+                            </div>
+
+                            <div>
+
+                                <div class="page-eyebrow">
+                                    CRITERIA
+                                </div>
+
+                                <h2>
+                                    Evaluation criteria
+                                </h2>
+
+                                <p>
+                                    Chọn các tiêu chí Active được
+                                    sử dụng trong AHP–TOPSIS.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="selection-header">
+
+                            <div>
+
+                                <strong>
+                                    Available criteria
+                                </strong>
+
+                                <span>
+                                    Các tiêu chí sẽ trở thành
+                                    decision criteria của Batch.
+                                </span>
+
+                            </div>
+
+
+                            <span class="selection-counter"
+                                  id="criteriaCounter">
+
+                                @selectedCriteriaCount selected
+
+                            </span>
+
+                        </div>
+
+
+                        <div class="selection-grid create-selection-grid">
+
+                            @foreach (
+                                var criterion
+                                in criteria)
+                            {
+                                var isChecked =
+                                    Model.SelectedCriteriaIds
+                                        .Contains(
+                                            criterion.CriteriaId);
+
+
+                                <label class="selection-card @(isChecked ? "selected" : "")">
+
+                                    <input type="checkbox"
+                                           name="SelectedCriteriaIds"
+                                           value="@criterion.CriteriaId"
+                                    @(isChecked ? "checked" : null) />
+
+
+                                    <span class="selection-card-check">
+
+                                        <i class="bi bi-check"></i>
+
+                                    </span>
+
+
+                                    <span class="selection-card-content">
+
+                                        <strong>
+                                            @criterion.CriteriaCode
+                                        </strong>
+
+                                        <span class="selection-item-name">
+                                            @criterion.CriteriaName
+                                        </span>
+
+                                        <span class="selection-item-meta">
+
+                                            @criterion.CriteriaType
+
+                                            @if (
+                                                !string.IsNullOrWhiteSpace(
+                                                    criterion.Unit))
+                                            {
+                                                @: · @criterion.Unit
+                                            }
+
+                                        </span>
+
+                                    </span>
+
+
+                                    <i class="bi bi-sliders2 selection-card-icon"></i>
+
+                                </label>
+                            }
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- =========================================
+                         05 PERIOD
+                         ========================================= -->
+
+                    <section class="create-section">
+
+                        <div class="create-section-heading">
+
+                            <div class="create-section-index">
+                                05
+                            </div>
+
+                            <div>
+
+                                <div class="page-eyebrow">
+                                    PERIOD
+                                </div>
+
+                                <h2>
+                                    Evaluation period
+                                </h2>
+
+                                <p>
+                                    Xác định khoảng thời gian dự kiến
+                                    thực hiện đợt đánh giá.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="form-grid">
+
+                            <div class="form-group">
+
+                                <label asp-for="StartDate">
+                                    Start date
+                                </label>
+
+                                <input asp-for="StartDate"
+                                       type="date"
+                                       class="form-control" />
+
+                                <span asp-validation-for="StartDate"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+
+                            <div class="form-group">
+
+                                <label asp-for="EndDate">
+                                    End date
+                                </label>
+
+                                <input asp-for="EndDate"
+                                       type="date"
+                                       class="form-control" />
+
+                                <span asp-validation-for="EndDate"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- =========================================
+                         ACTIONS
+                         ========================================= -->
+
+                    <div class="create-form-actions">
+
+                        <a asp-action="Index"
+                           class="btn-outline">
+
+                            Cancel
+
+                        </a>
+
+
+                        <button type="submit"
+                                class="btn-primary">
+
+                            <i class="bi bi-check2"></i>
+
+                            Create batch
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             SUMMARY SIDEBAR
+             ================================================= -->
+
+        <aside class="evaluation-create-sidebar">
+
+            <div class="create-summary-card">
+
+                <div class="page-eyebrow">
+                    BATCH SUMMARY
+                </div>
+
+                <h3>
+                    Review before creating.
+                </h3>
+
+                <p>
+                    Kiểm tra phạm vi đợt đánh giá trước
+                    khi tạo Batch.
+                </p>
+
+
+                <!-- Group -->
+
+                <div class="create-summary-item">
+
+                    <div class="create-summary-item-icon">
+
+                        <i class="bi bi-box-seam"></i>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Product group
+                        </span>
+
+                        <strong id="summaryGroup">
+                            Not selected
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Supplier -->
+
+                <div class="create-summary-item">
+
+                    <div class="create-summary-item-icon">
+
+                        <i class="bi bi-building"></i>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Suppliers
+                        </span>
+
+                        <strong id="summarySuppliers">
+                            @selectedSupplierCount
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Criteria -->
+
+                <div class="create-summary-item">
+
+                    <div class="create-summary-item-icon">
+
+                        <i class="bi bi-sliders2"></i>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Criteria
+                        </span>
+
+                        <strong id="summaryCriteria">
+                            @selectedCriteriaCount
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Period -->
+
+                <div class="create-summary-item">
+
+                    <div class="create-summary-item-icon">
+
+                        <i class="bi bi-calendar3"></i>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Period
+                        </span>
+
+                        <strong id="summaryPeriod">
+                            Not set
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="create-summary-divider"></div>
+
+
+                <div class="create-readiness">
+
+                    <div class="create-readiness-dot"
+                         id="readinessDot">
+                    </div>
+
+
+                    <div>
+
+                        <strong id="readinessTitle">
+                            Incomplete setup
+                        </strong>
+
+                        <span id="readinessText">
+                            Chọn Product Group,
+                            Supplier và Criteria.
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="create-info-card">
+
+                <div class="page-eyebrow">
+                    WORKFLOW
+                </div>
+
+                <h4>
+                    What happens next?
+                </h4>
+
+                <div class="create-info-step">
+
+                    <span>
+                        01
+                    </span>
+
+                    <p>
+                        Tạo Evaluation Batch
+                    </p>
+
+                </div>
+
+                <div class="create-info-step">
+
+                    <span>
+                        02
+                    </span>
+
+                    <p>
+                        Nhập điểm đánh giá Supplier
+                    </p>
+
+                </div>
+
+                <div class="create-info-step">
+
+                    <span>
+                        03
+                    </span>
+
+                    <p>
+                        Tính trọng số bằng AHP
+                    </p>
+
+                </div>
+
+                <div class="create-info-step">
+
+                    <span>
+                        04
+                    </span>
+
+                    <p>
+                        Xếp hạng Supplier bằng TOPSIS
+                    </p>
+
+                </div>
+
+            </div>
+
+        </aside>
+
+    </div>
+
+</div>
+
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+
+    <script>
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            function() {
+
+                const groupSelect =
+                    document.getElementById(
+                        "groupSelect"
+                    );
+
+
+                const supplierContainer =
+                    document.getElementById(
+                        "supplierContainer"
+                    );
+
+
+                const supplierCounter =
+                    document.getElementById(
+                        "supplierCounter"
+                    );
+
+
+                const criteriaCounter =
+                    document.getElementById(
+                        "criteriaCounter"
+                    );
+
+
+                const summaryGroup =
+                    document.getElementById(
+                        "summaryGroup"
+                    );
+
+
+                const summarySuppliers =
+                    document.getElementById(
+                        "summarySuppliers"
+                    );
+
+
+                const summaryCriteria =
+                    document.getElementById(
+                        "summaryCriteria"
+                    );
+
+
+                const summaryPeriod =
+                    document.getElementById(
+                        "summaryPeriod"
+                    );
+
+
+                const readinessDot =
+                    document.getElementById(
+                        "readinessDot"
+                    );
+
+
+                const readinessTitle =
+                    document.getElementById(
+                        "readinessTitle"
+                    );
+
+
+                const readinessText =
+                    document.getElementById(
+                        "readinessText"
+                    );
+
+
+                function updateSupplierSelection() {
+
+                    if (!supplierContainer) {
+                        return;
+                    }
+
+
+                    const checked =
+                        supplierContainer
+                            .querySelectorAll(
+                                'input[name="SelectedSupplierIds"]:checked'
+                            );
+
+
+                    const count =
+                        checked.length;
+
+
+                    if (supplierCounter) {
+                        supplierCounter.textContent =
+                            `${count} selected`;
+                    }
+
+
+                    if (summarySuppliers) {
+                        summarySuppliers.textContent =
+                            count;
+                    }
+
+
+                    supplierContainer
+                        .querySelectorAll(
+                            ".selection-card"
+                        )
+                        .forEach(function(card) {
+
+                            const checkbox =
+                                card.querySelector(
+                                    'input[type="checkbox"]'
+                                );
+
+
+                            if (checkbox) {
+
+                                card.classList.toggle(
+                                    "selected",
+                                    checkbox.checked
+                                );
+
+                            }
+
+                        });
+
+
+                    updateReadiness();
+                }
+
+
+                function updateCriteriaSelection() {
+
+                    const checked =
+                        document
+                            .querySelectorAll(
+                                'input[name="SelectedCriteriaIds"]:checked'
+                            );
+
+
+                    const count =
+                        checked.length;
+
+
+                    if (criteriaCounter) {
+                        criteriaCounter.textContent =
+                            `${count} selected`;
+                    }
+
+
+                    if (summaryCriteria) {
+                        summaryCriteria.textContent =
+                            count;
+                    }
+
+
+                    document
+                        .querySelectorAll(
+                            'input[name="SelectedCriteriaIds"]'
+                        )
+                        .forEach(function(checkbox) {
+
+                            const card =
+                                checkbox.closest(
+                                    ".selection-card"
+                                );
+
+
+                            if (card) {
+
+                                card.classList.toggle(
+                                    "selected",
+                                    checkbox.checked
+                                );
+
+                            }
+
+                        });
+
+
+                    updateReadiness();
+                }
+
+
+                function updateGroupSummary() {
+
+                    if (!groupSelect ||
+                        !summaryGroup) {
+
+                        return;
+                    }
+
+
+                    const option =
+                        groupSelect
+                            .options[
+                        groupSelect.selectedIndex
+                        ];
+
+
+                    if (!groupSelect.value) {
+
+                        summaryGroup.textContent =
+                            "Not selected";
+
+                        return;
+                    }
+
+
+                    summaryGroup.textContent =
+                        option.text
+                            .replace(/\s+/g, " ")
+                            .trim();
+                }
+
+
+                function updatePeriodSummary() {
+
+                    const startDate =
+                        document.getElementById(
+                            "StartDate"
+                        );
+
+
+                    const endDate =
+                        document.getElementById(
+                            "EndDate"
+                        );
+
+
+                    if (!summaryPeriod) {
+                        return;
+                    }
+
+
+                    if (
+                        startDate &&
+                        endDate &&
+                        startDate.value &&
+                        endDate.value
+                    ) {
+
+                        const format =
+                            function(value) {
+
+                                const parts =
+                                    value.split("-");
+
+                                if (
+                                    parts.length !== 3
+                                ) {
+                                    return value;
+                                }
+
+                                return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                            };
+
+
+                        summaryPeriod.textContent =
+                            `${format(startDate.value)} – ${format(endDate.value)}`;
+
+                    }
+                    else if (
+                        startDate &&
+                        startDate.value
+                    ) {
+
+                        summaryPeriod.textContent =
+                            formatDateForSummary(
+                                startDate.value
+                            );
+
+                    }
+                    else {
+
+                        summaryPeriod.textContent =
+                            "Not set";
+                    }
+
+
+                    updateReadiness();
+                }
+
+
+                function formatDateForSummary(value) {
+
+                    if (!value) {
+                        return "Not set";
+                    }
+
+
+                    const parts =
+                        value.split("-");
+
+
+                    if (parts.length !== 3) {
+                        return value;
+                    }
+
+
+                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+
+
+                function updateReadiness() {
+
+                    const groupReady =
+                        groupSelect &&
+                        groupSelect.value;
+
+
+                    const supplierCount =
+                        supplierContainer
+                            ? supplierContainer
+                                .querySelectorAll(
+                                    'input[name="SelectedSupplierIds"]:checked'
+                                ).length
+                            : 0;
+
+
+                    const criteriaCount =
+                        document
+                            .querySelectorAll(
+                                'input[name="SelectedCriteriaIds"]:checked'
+                            ).length;
+
+
+                    if (
+                        groupReady &&
+                        supplierCount >= 2 &&
+                        criteriaCount >= 2
+                    ) {
+
+                        if (readinessDot) {
+                            readinessDot.classList.add(
+                                "ready"
+                            );
+                        }
+
+
+                        if (readinessTitle) {
+                            readinessTitle.textContent =
+                                "Ready to create";
+                        }
+
+
+                        if (readinessText) {
+                            readinessText.textContent =
+                                "Scope đã đủ Supplier và Criteria.";
+                        }
+
+                    }
+                    else {
+
+                        if (readinessDot) {
+                            readinessDot.classList.remove(
+                                "ready"
+                            );
+                        }
+
+
+                        if (readinessTitle) {
+                            readinessTitle.textContent =
+                                "Incomplete setup";
+                        }
+
+
+                        if (readinessText) {
+
+                            if (!groupReady) {
+
+                                readinessText.textContent =
+                                    "Chọn Product Group.";
+
+                            }
+                            else if (
+                                supplierCount < 2
+                            ) {
+
+                                readinessText.textContent =
+                                    "Cần ít nhất 2 Supplier.";
+
+                            }
+                            else if (
+                                criteriaCount < 2
+                            ) {
+
+                                readinessText.textContent =
+                                    "Cần ít nhất 2 Criteria.";
+
+                            }
+
+                        }
+
+                    }
+                }
+
+
+                // =================================================
+                // INITIAL STATE
+                // =================================================
+
+                updateSupplierSelection();
+
+                updateCriteriaSelection();
+
+                updateGroupSummary();
+
+                updatePeriodSummary();
+
+
+                // =================================================
+                // GROUP CHANGE
+                // =================================================
+
+                if (groupSelect) {
+
+                    groupSelect.addEventListener(
+                        "change",
+                        async function() {
+
+                            updateGroupSummary();
+
+
+                            const groupId =
+                                this.value;
+
+
+                            if (!groupId) {
+
+                                supplierContainer.innerHTML = `
+                                            <div class="selection-empty create-selection-empty">
+
+                                                <i class="bi bi-building"></i>
+
+                                                <strong>
+                                                    Chưa chọn Product Group
+                                                </strong>
+
+                                                <span>
+                                                    Chọn Product Group để tải
+                                                    danh sách Supplier.
+                                                </span>
+
+                                            </div>
+                                        `;
+
+                                updateSupplierSelection();
+
+                                return;
+                            }
+
+
+                            supplierContainer.innerHTML = `
+                                        <div class="selection-loading create-selection-empty">
+
+                                            <i class="bi bi-arrow-repeat spinning"></i>
+
+                                            <strong>
+                                                Loading suppliers...
+                                            </strong>
+
+                                            <span>
+                                                Đang tải Supplier thuộc nhóm hàng.
+                                            </span>
+
+                                        </div>
+                                    `;
+
+
+                            try {
+
+                                const response =
+                                    await fetch(
+                                        `/EvaluationBatch/SuppliersByGroup?groupId=${encodeURIComponent(groupId)}`
+                                    );
+
+
+                                if (!response.ok) {
+
+                                    throw new Error(
+                                        "Unable to load suppliers."
+                                    );
+                                }
+
+
+                                const loadedSuppliers =
+                                    await response.json();
+
+
+                                if (
+                                    !loadedSuppliers.length
+                                ) {
+
+                                    supplierContainer.innerHTML = `
+                                                <div class="selection-empty create-selection-empty">
+
+                                                    <i class="bi bi-building-x"></i>
+
+                                                    <strong>
+                                                        No active suppliers
+                                                    </strong>
+
+                                                    <span>
+                                                        Product Group này chưa có
+                                                        Supplier Active.
+                                                    </span>
+
+                                                </div>
+                                            `;
+
+                                    updateSupplierSelection();
+
+                                    return;
+                                }
+
+
+                                supplierContainer.innerHTML =
+                                    loadedSuppliers
+                                        .map(
+                                            function(supplier) {
+
+                                                return `
+
+                                                            <label class="selection-card">
+
+                                                                <input
+                                                                    type="checkbox"
+                                                                    name="SelectedSupplierIds"
+                                                                    value="${supplier.supplierId}" />
+
+                                                                <span class="selection-card-check">
+
+                                                                    <i class="bi bi-check"></i>
+
+                                                                </span>
+
+                                                                <span class="selection-card-content">
+
+                                                                    <strong>
+                                                                        ${supplier.supplierCode}
+                                                                    </strong>
+
+                                                                    <span class="selection-item-name">
+                                                                        ${supplier.supplierName}
+                                                                    </span>
+
+                                                                </span>
+
+                                                                <i class="bi bi-building selection-card-icon"></i>
+
+                                                            </label>
+
+                                                        `;
+
+                                            }
+                                        )
+                                        .join("");
+
+
+                                updateSupplierSelection();
+
+                            }
+                            catch (error) {
+
+                                supplierContainer.innerHTML = `
+                                            <div class="selection-error create-selection-empty">
+
+                                                <i class="bi bi-exclamation-circle"></i>
+
+                                                <strong>
+                                                    Unable to load suppliers
+                                                </strong>
+
+                                                <span>
+                                                    Không thể tải danh sách Supplier.
+                                                </span>
+
+                                            </div>
+                                        `;
+
+                                updateSupplierSelection();
+
+                                console.error(error);
+                            }
+
+                        }
+                    );
+
+                }
+
+
+                // =================================================
+                // CHECKBOX EVENTS
+                // =================================================
+
+                document.addEventListener(
+                    "change",
+                    function(event) {
+
+                        if (
+                            event.target.matches(
+                                'input[name="SelectedSupplierIds"]'
+                            )
+                        ) {
+
+                            updateSupplierSelection();
+
+                        }
+
+
+                        if (
+                            event.target.matches(
+                                'input[name="SelectedCriteriaIds"]'
+                            )
+                        ) {
+
+                            updateCriteriaSelection();
+
+                        }
+
+                    }
+                );
+
+
+                // =================================================
+                // DATE EVENTS
+                // =================================================
+
+                const startDate =
+                    document.getElementById(
+                        "StartDate"
+                    );
+
+
+                const endDate =
+                    document.getElementById(
+                        "EndDate"
+                    );
+
+
+                if (startDate) {
+
+                    startDate.addEventListener(
+                        "change",
+                        updatePeriodSummary
+                    );
+
+                }
+
+
+                if (endDate) {
+
+                    endDate.addEventListener(
+                        "change",
+                        updatePeriodSummary
+                    );
+
+                }
+
+            }
+        );
+
+    </script>
+
+}

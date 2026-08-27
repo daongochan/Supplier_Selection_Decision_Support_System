@@ -1,0 +1,166 @@
+﻿@{
+    var currentController =
+        ViewContext.RouteData.Values["controller"]?.ToString();
+
+    var currentAction =
+        ViewContext.RouteData.Values["action"]?.ToString();
+}
+
+
+<aside class="app-sidebar">
+
+
+    <!-- =====================================================
+         BRAND
+         ===================================================== -->
+
+    <div class="sidebar-brand">
+
+        <div class="sidebar-brand-title">
+            SUPPLIER
+        </div>
+
+        <div class="sidebar-brand-title">
+            SELECTION
+        </div>
+
+        <div class="sidebar-brand-subtitle">
+            Decision Support System
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         NAVIGATION
+         Giữ nguyên phong cách sidebar cũ:
+         chỉ thay đổi danh mục menu.
+         ===================================================== -->
+
+    <nav class="sidebar-nav">
+
+
+        <!-- Dashboard -->
+
+        <a asp-controller="Dashboard"
+           asp-action="Index"
+           class="sidebar-link
+            @(currentController == "Dashboard"
+               ? "active"
+               : "")">
+
+            Dashboard
+
+        </a>
+
+
+        <!-- Suppliers -->
+        @if (
+                    User.IsInRole("Administrator") ||
+                    User.IsInRole("PurchasingStaff"))
+        {
+            <a asp-controller="Supplier"
+               asp-action="Index"
+               class="sidebar-link
+                @(currentController == "Supplier"
+                   ? "active"
+                   : "")">
+
+                Suppliers
+
+            </a>
+        }
+
+
+        <!-- Product Groups -->
+        @if (
+                    User.IsInRole("Administrator") ||
+                    User.IsInRole("PurchasingStaff"))
+        {
+            <a asp-controller="ProductGroup"
+               asp-action="Index"
+               class="sidebar-link
+                @(currentController == "ProductGroup"
+                   ? "active"
+                   : "")">
+
+                Product Groups
+
+            </a>
+        }
+
+
+        <!-- Criteria -->
+        @if (
+                    User.IsInRole("Administrator") ||
+                    User.IsInRole("PurchasingStaff"))
+        {
+            <a asp-controller="Criteria"
+               asp-action="Index"
+               class="sidebar-link
+                @(currentController == "Criteria"
+                   ? "active"
+                   : "")">
+
+                Criteria
+
+            </a>
+        }
+
+
+        <!-- Evaluation Batches -->
+        @if (
+                    User.IsInRole("Administrator") ||
+                    User.IsInRole("PurchasingStaff") ||
+                    User.IsInRole("Expert") ||
+                    User.IsInRole("Manager"))
+        {
+            <a asp-controller="EvaluationBatch"
+               asp-action="Index"
+               class="sidebar-link
+                @(currentController == "EvaluationBatch" ||
+                 currentController == "Evaluation" ||
+                 currentController == "AHP" ||
+                 currentController == "TOPSIS"
+                   ? "active"
+                   : "")">
+
+                Batches
+
+            </a>
+        }
+
+
+        <!-- Users -->
+        @if (User.IsInRole("Administrator"))
+        {
+            <a asp-controller="User"
+               asp-action="Index"
+               class="sidebar-link
+                @(currentController == "User"
+                   ? "active"
+                   : "")">
+
+                Users
+
+            </a>
+        }
+
+        @if (User.IsInRole("Administrator"))
+        {
+            <a asp-controller="AuditLog"
+               asp-action="Index"
+               class="sidebar-link">
+
+                <i class="bi bi-clock-history"></i>
+
+                <span>
+                    Audit logs
+                </span>
+
+            </a>
+        }
+
+    </nav>
+
+</aside>

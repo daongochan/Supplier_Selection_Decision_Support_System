@@ -1,0 +1,171 @@
+﻿/* =========================================================
+   SUPPLIER FILTER
+   ========================================================= */
+
+.filter-card {
+    margin-bottom: var(--space-6);
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    box-sizing: border-box;
+}
+
+
+.supplier-filter {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr) auto;
+    align-items: end;
+    gap: 16px;
+    width: 100%;
+}
+
+
+    .supplier-filter .filter-field {
+        min-width: 0;
+    }
+
+
+    .supplier-filter .filter-actions {
+        height: 42px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+
+    /* Search / Reset cùng kích thước */
+
+    .supplier-filter .btn-primary,
+    .supplier-filter .btn-outline {
+        width: 88px;
+        height: 42px;
+        min-height: 42px;
+        flex: 0 0 88px;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+
+/* =========================================================
+   FILTER LABEL
+   ========================================================= */
+
+.filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+    .filter-field label {
+        color: var(--muted);
+        font-family: var(--font-serif);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.7px;
+        text-transform: uppercase;
+    }
+
+
+/* =========================================================
+   SUPPLIER STATUS
+   ========================================================= */
+
+.supplier-active {
+    background: var(--sage-soft);
+    color: var(--sage-dark);
+}
+
+.supplier-inactive {
+    background: var(--surface-muted);
+    color: var(--muted);
+}
+
+
+/* =========================================================
+   SUPPLIER ASSIGNMENT
+   ========================================================= */
+
+.assignment-header {
+    padding-bottom: 20px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+.supplier-selection-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.supplier-selection-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    cursor: pointer;
+    transition: border-color 0.16s ease, background 0.16s ease;
+}
+
+    .supplier-selection-item:hover {
+        background: var(--canvas-soft);
+        border-color: var(--border-strong);
+    }
+
+    .supplier-selection-item input {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--terracotta);
+        cursor: pointer;
+    }
+
+.supplier-selection-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.supplier-selection-code {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.supplier-selection-name {
+    color: var(--ink);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    .supplier-filter {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+
+@media (max-width: 700px) {
+
+    .supplier-filter {
+        grid-template-columns: 1fr;
+    }
+
+        .supplier-filter .filter-actions {
+            height: auto;
+        }
+
+    .supplier-selection-grid {
+        grid-template-columns: 1fr;
+    }
+}

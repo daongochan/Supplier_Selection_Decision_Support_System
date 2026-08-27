@@ -1,0 +1,320 @@
+﻿@model SupplierSelectionDSS.Models.CriteriaIndexViewModel
+
+@{
+    ViewData["Title"] = "Criteria";
+}
+
+<div class="page-header">
+
+    <div>
+
+        <h1 class="page-title">
+            Criteria
+        </h1>
+
+        <p class="page-description">
+            Quản lý các tiêu chí được sử dụng để đánh giá và
+            xếp hạng nhà cung cấp.
+        </p>
+
+    </div>
+
+
+    <a asp-action="Create"
+       class="btn-primary">
+
+        Add criteria
+
+    </a>
+
+</div>
+
+
+@if (TempData["SuccessMessage"] is string message)
+{
+    <div class="alert-success">
+        @message
+    </div>
+}
+
+
+<div class="filter-card">
+
+    <form asp-action="Index"
+          method="get"
+          class="criteria-filter">
+
+
+        <div class="filter-field">
+
+            <label for="keyword">
+                Search
+            </label>
+
+            <input id="keyword"
+                   name="keyword"
+                   value="@Model.Keyword"
+                   class="form-control"
+                   placeholder="Criteria code or name..." />
+
+        </div>
+
+
+        <div class="filter-field">
+
+            <label for="type">
+                Type
+            </label>
+
+            <select id="type"
+                    name="type"
+                    class="form-control">
+
+                <option value="All"
+                        selected="@(Model.Type == "All")">
+                    All
+                </option>
+
+                <option value="Benefit"
+                        selected="@(Model.Type == "Benefit")">
+                    Benefit
+                </option>
+
+                <option value="Cost"
+                        selected="@(Model.Type == "Cost")">
+                    Cost
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="filter-field">
+
+            <label for="status">
+                Status
+            </label>
+
+            <select id="status"
+                    name="status"
+                    class="form-control">
+
+                <option value="All"
+                        selected="@(Model.Status == "All")">
+                    All
+                </option>
+
+                <option value="Active"
+                        selected="@(Model.Status == "Active")">
+                    Active
+                </option>
+
+                <option value="Inactive"
+                        selected="@(Model.Status == "Inactive")">
+                    Inactive
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="filter-actions">
+
+            <button type="submit"
+                    class="btn-primary">
+
+                Search
+
+            </button>
+
+            <a asp-action="Index"
+               class="btn-outline">
+
+                Reset
+
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<div class="table-card">
+
+    @if (Model.Criteria.Any())
+    {
+        <div class="data-table-wrapper">
+
+            <table class="data-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Code</th>
+
+                        <th>Criteria</th>
+
+                        <th>Type</th>
+
+                        <th>Unit</th>
+
+                        <th>Status</th>
+
+                        <th>Actions</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    @foreach (var criterion in Model.Criteria)
+                    {
+                        <tr>
+
+                            <td>
+
+                                <strong>
+                                    @criterion.CriteriaCode
+                                </strong>
+
+                            </td>
+
+
+                            <td>
+
+                                <strong>
+                                    @criterion.CriteriaName
+                                </strong>
+
+                                @if (!string.IsNullOrWhiteSpace(
+                                    criterion.Description))
+                                {
+                                    <span class="table-muted">
+                                        @criterion.Description
+                                    </span>
+                                }
+
+                            </td>
+
+
+                            <td>
+
+                                @if (criterion.CriteriaType == "Benefit")
+                                {
+                                    <span class="criteria-type criteria-benefit">
+                                        Benefit
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="criteria-type criteria-cost">
+                                        Cost
+                                    </span>
+                                }
+
+                            </td>
+
+
+                            <td>
+
+                                @(string.IsNullOrWhiteSpace(
+                                    criterion.Unit)
+                                    ? "—"
+                                    : criterion.Unit)
+
+                            </td>
+
+
+                            <td>
+
+                                @if (criterion.Status == "Active")
+                                {
+                                    <span class="status-pill status-active">
+                                        Active
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="status-pill status-inactive">
+                                        Inactive
+                                    </span>
+                                }
+
+                            </td>
+
+
+                            <td>
+
+                                <div class="table-actions">
+
+                                    <a asp-action="Edit"
+                                       asp-route-id="@criterion.CriteriaId"
+                                       class="action-link">
+
+                                        Edit
+
+                                    </a>
+
+
+                                    <form asp-action="ToggleStatus"
+                                          method="post">
+
+                                        @Html.AntiForgeryToken()
+
+                                        <input type="hidden"
+                                               name="id"
+                                               value="@criterion.CriteriaId" />
+
+
+                                        <button type="submit"
+                                                class="action-link">
+
+                                            @(criterion.Status == "Active"
+                                                ? "Deactivate"
+                                                : "Activate")
+
+                                        </button>
+
+                                    </form>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+
+            <h3>
+                No criteria found.
+            </h3>
+
+            <p>
+                Không có tiêu chí nào phù hợp với điều kiện tìm kiếm.
+            </p>
+
+            <a asp-action="Create"
+               class="btn-primary">
+                Add criteria
+            </a>
+
+        </div>
+    }
+
+</div>

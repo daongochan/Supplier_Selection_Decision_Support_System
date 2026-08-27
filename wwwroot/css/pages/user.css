@@ -1,0 +1,319 @@
+﻿/* =========================================================
+   USER PAGE
+   ========================================================= */
+
+.user-page-header {
+    margin-bottom: 24px;
+}
+
+
+/* =========================================================
+   USER FILTER
+   ========================================================= */
+
+.filter-card .user-filter {
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: minmax(0, 2fr) minmax(170px, 1fr) minmax(170px, 1fr) auto !important;
+    align-items: end;
+    column-gap: 16px;
+    margin: 0;
+}
+
+
+    .filter-card .user-filter .filter-field {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+
+        .filter-card .user-filter .filter-field label {
+            margin: 0;
+            color: var(--muted);
+            font-family: var(--font-serif);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: .7px;
+            line-height: 1.2;
+            text-transform: uppercase;
+        }
+
+
+    .filter-card .user-filter .form-control {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+
+    .filter-card .user-filter .filter-actions {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center;
+        gap: 8px;
+        height: 42px;
+    }
+
+
+        .filter-card .user-filter .filter-actions .btn-primary,
+        .filter-card .user-filter .filter-actions .btn-outline {
+            width: 88px !important;
+            min-width: 88px !important;
+            max-width: 88px !important;
+            height: 42px !important;
+            min-height: 42px !important;
+            flex: 0 0 88px !important;
+            padding: 0 !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+
+
+/* =========================================================
+   USER TABLE
+   ========================================================= */
+
+.user-table {
+    min-width: 980px;
+}
+
+
+    .user-table th {
+        text-align: center;
+    }
+
+
+        .user-table td:first-child,
+        .user-table th:first-child {
+            text-align: left;
+        }
+
+
+        .user-table td:nth-child(2),
+        .user-table th:nth-child(2) {
+            text-align: left;
+        }
+
+
+        .user-table td:nth-child(4),
+        .user-table th:nth-child(4) {
+            text-align: left;
+        }
+
+
+    .user-table td {
+        vertical-align: middle;
+    }
+
+
+        .user-table td strong {
+            display: block;
+        }
+
+
+        .user-table td .table-muted {
+            display: block;
+            margin-top: 3px;
+        }
+
+
+/* =========================================================
+   ROLE PILL
+   ========================================================= */
+
+.user-role-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-serif);
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+
+.user-role-administrator {
+    background: var(--terracotta-soft);
+    color: var(--terracotta-dark);
+}
+
+
+.user-role-purchasingstaff {
+    background: var(--sky-soft);
+    color: var(--sky-dark);
+}
+
+
+.user-role-expert {
+    background: var(--lavender-soft);
+    color: var(--lavender-dark);
+}
+
+
+.user-role-manager {
+    background: var(--sage-soft);
+    color: var(--sage-dark);
+}
+
+
+/* =========================================================
+   USER STATUS
+   ========================================================= */
+
+.user-status-active {
+    background: var(--sage-soft);
+    color: var(--sage-dark);
+}
+
+
+.user-status-locked {
+    background: var(--amber-soft);
+    color: var(--amber-dark);
+}
+
+
+.user-status-inactive {
+    background: var(--surface-muted);
+    color: var(--muted);
+}
+
+
+/* =========================================================
+   USER FORM
+   ========================================================= */
+
+.user-form-shell {
+    width: 100%;
+    max-width: 980px;
+}
+
+
+.user-form-section {
+    padding: 28px 30px;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+
+    .user-form-section:last-of-type {
+        border-bottom: none;
+    }
+
+
+.user-form-heading {
+    margin-bottom: 22px;
+}
+
+
+    .user-form-heading h2 {
+        margin: 1px 0 0;
+        color: var(--ink);
+        font-family: var(--font-serif);
+        font-size: 24px;
+        font-weight: 500;
+        line-height: 1.2;
+    }
+
+
+    .user-form-heading p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+
+.user-form-shell .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+
+.user-form-shell .form-group-full {
+    grid-column: 1 / -1;
+}
+
+
+.user-form-shell
+.form-control[readonly] {
+    background: var(--surface-muted);
+    color: var(--muted);
+    cursor: not-allowed;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1000px) {
+
+    .filter-card .user-filter {
+        grid-template-columns: minmax(0, 2fr) minmax(160px, 1fr) minmax(160px, 1fr) auto !important;
+    }
+}
+
+
+@media (max-width: 850px) {
+
+    .filter-card .user-filter {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        row-gap: 14px;
+    }
+
+
+        .filter-card .user-filter .filter-actions {
+            grid-column: 1 / -1;
+            justify-content: flex-start;
+        }
+
+
+    .user-form-shell .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+@media (max-width: 600px) {
+
+    .filter-card .user-filter {
+        grid-template-columns: 1fr !important;
+    }
+
+
+        .filter-card .user-filter .filter-actions {
+            width: 100%;
+        }
+
+
+            .filter-card .user-filter .filter-actions
+            .btn-primary,
+            .filter-card .user-filter .filter-actions
+            .btn-outline {
+                flex: 1 1 0 !important;
+                width: auto !important;
+                min-width: 0 !important;
+                max-width: none !important;
+            }
+
+
+    .user-form-section {
+        padding: 24px 20px;
+    }
+
+
+    .user-page-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+
+        .user-page-header .btn-primary {
+            width: 100%;
+        }
+}

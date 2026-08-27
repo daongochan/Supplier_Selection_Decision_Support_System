@@ -1,0 +1,174 @@
+﻿/* =========================================================
+   BUTTONS – soft, consistent with current tokens
+   ========================================================= */
+
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 10px 22px;
+    border: none;
+    border-radius: var(--radius-pill);
+    background: var(--terracotta);
+    color: #ffffff;
+    font-family: var(--font-serif);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(183, 93, 69, 0.14);
+    transition: background 0.18s ease, transform 0.16s ease, box-shadow 0.18s ease, color 0.16s ease;
+}
+
+    .btn-primary:hover {
+        background: var(--terracotta-dark);
+        color: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(183, 93, 69, 0.2);
+    }
+
+    .btn-primary:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 6px rgba(183, 93, 69, 0.12);
+    }
+
+    .btn-primary:disabled,
+    .btn-primary.disabled {
+        background: var(--terracotta);
+        opacity: 0.45;
+        box-shadow: none;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+
+/* Secondary – nền muted, mềm, không cạnh tranh primary */
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 10px 22px;
+    border: none;
+    border-radius: var(--radius-pill);
+    background: var(--surface-muted);
+    color: var(--ink);
+    font-family: var(--font-serif);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.18s ease, transform 0.16s ease, color 0.16s ease;
+}
+
+    .btn-secondary:hover {
+        background: var(--border);
+        color: var(--ink);
+        transform: translateY(-1px);
+    }
+
+    .btn-secondary:active {
+        transform: translateY(0);
+    }
+
+    .btn-secondary:disabled,
+    .btn-secondary.disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+
+/* Outline – viền nhẹ */
+.btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 9px 21px;
+    box-sizing: border-box;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--ink);
+    font-family: var(--font-serif);
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease, transform 0.16s ease, color 0.16s ease;
+}
+
+    .btn-outline:hover {
+        background: var(--surface-muted);
+        border-color: var(--ink);
+        color: var(--ink);
+        transform: translateY(-1px);
+    }
+
+    .btn-outline:active {
+        transform: translateY(0);
+    }
+
+
+/* Danger – từ chối / hủy mạnh */
+.btn-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 10px 22px;
+    border: none;
+    border-radius: var(--radius-pill);
+    background: var(--danger-dark, #a72027);
+    color: #ffffff;
+    font-family: var(--font-serif);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(167, 32, 39, 0.16);
+    transition: background 0.18s ease, transform 0.16s ease, box-shadow 0.18s ease;
+}
+
+    .btn-danger:hover {
+        filter: brightness(0.95);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(167, 32, 39, 0.22);
+    }
+
+    .btn-danger:active {
+        transform: translateY(0);
+    }
+
+/* =========================================================
+   FILTER BUTTON STANDARD
+   Search / Reset của tất cả các filter
+   ========================================================= */
+
+.filter-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .filter-actions .btn-primary,
+    .filter-actions .btn-outline {
+        width: 88px;
+        height: 42px;
+        min-height: 42px;
+        flex: 0 0 88px;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+

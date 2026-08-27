@@ -1,0 +1,117 @@
+﻿/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 1100px) {
+
+    :root {
+        --sidebar-width: 210px;
+    }
+
+    .app-main {
+        width: calc(100% - var(--sidebar-width));
+        margin-left: var(--sidebar-width);
+    }
+}
+
+
+/* =========================================================
+   COLLAPSIBLE SIDEBAR
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    .app-sidebar {
+        transform: translateX(-100%);
+        box-shadow: 10px 0 30px rgba(36, 33, 30, 0.08);
+    }
+
+        .app-sidebar.open {
+            transform: translateX(0);
+        }
+
+    .app-main {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .sidebar-toggle {
+        display: inline-flex;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-group-full {
+        grid-column: auto;
+    }
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+    .app-topbar {
+        padding: 0 18px;
+    }
+
+    .app-content {
+        padding: 40px 18px 60px;
+    }
+
+    .page-header {
+        align-items: flex-start;
+        flex-direction: column;
+        margin-bottom: 32px;
+    }
+
+    .page-title {
+        font-size: 40px;
+    }
+
+    .section-title {
+        font-size: 28px;
+    }
+
+    .user-info,
+    .topbar-title {
+        display: none;
+    }
+
+    .user-summary {
+        margin-right: 10px;
+    }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 480px) {
+
+    .page-title {
+        font-size: 36px;
+    }
+
+    .section-title {
+        font-size: 26px;
+    }
+
+    .form-card {
+        padding: 22px;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+    }
+
+        .form-actions .btn-primary,
+        .form-actions .btn-outline {
+            width: 100%;
+        }
+}

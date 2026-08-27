@@ -1,0 +1,910 @@
+﻿using Microsoft.EntityFrameworkCore;
+using SupplierSelectionDSS.Data;
+using SupplierSelectionDSS.Data.Entities;
+using SupplierSelectionDSS.Models;
+
+namespace SupplierSelectionDSS.Services;
+
+public class AHPService
+{
+    private readonly ApplicationDbContext _context;
+
+    private readonly AHPCalculationService _calculationService;
+
+
+    public AHPService(
+        ApplicationDbContext context,
+        AHPCalculationService calculationService)
+    {
+        _context = context;
+
+        _calculationService =
+            calculationService;
+    }
+
+
+    // =========================================================
+    // GET COMPARISON MATRIX + RESULT
+    // =========================================================
+
+    public async Task<AHPComparisonViewModel?>
+        GetComparisonMatrixAsync(
+            int batchId)
+    {
+        var batch =
+            await _context.EvaluationBatches
+                .AsNoTracking()
+                .Include(x => x.Criteria)
+                .FirstOrDefaultAsync(
+                    x => x.BatchId == batchId);
+
+
+        if (batch == null)
+        {
+            return null;
+        }
+
+
+        var criteria =
+            batch.Criteria
+                .OrderBy(x => x.CriteriaCode)
+                .Select(x =>
+                    new AHPComparisonCriteriaViewModel
+                    {
+                        CriteriaId =
+                            x.CriteriaId,
+
+                        CriteriaCode =
+                            x.CriteriaCode,
+
+                        CriteriaName =
+                            x.CriteriaName
+                    })
+                .ToList();
+
+
+        var comparisons =
+            await _context.AhppairwiseComparisons
+                .AsNoTracking()
+                .Where(x =>
+                    x.BatchId == batchId)
+                .ToListAsync();
+
+
+        var model =
+            new AHPComparisonViewModel
+            {
+                BatchId =
+                    batch.BatchId,
+
+                BatchCode =
+                    batch.BatchCode,
+
+                BatchName =
+                    batch.BatchName,
+
+                Status =
+                    batch.Status,
+
+                Criteria =
+                    criteria
+            };
+
+
+        foreach (var comparison in comparisons)
+        {
+            var key =
+                BuildKey(
+                    comparison.CriteriaRowId,
+                    comparison.CriteriaColId);
+
+
+            model.Values[key] =
+                comparison.ComparisonValue;
+        }
+
+
+        // Diagonal = 1
+
+        foreach (var criterion in criteria)
+        {
+            model.Values[
+                BuildKey(
+                    criterion.CriteriaId,
+                    criterion.CriteriaId)] =
+                1m;
+        }
+
+
+        // Load previous calculation
+
+        model.Result =
+            await GetResultAsync(
+                batchId);
+
+
+        return model;
+    }
+
+
+    // =========================================================
+    // SAVE PAIRWISE COMPARISONS
+    // =========================================================
+
+    public async Task SaveComparisonsAsync(
+        AHPComparisonInputViewModel model,
+        int evaluatedBy)
+    {
+        var batch =
+            await _context.EvaluationBatches
+                .Include(x => x.Criteria)
+                .FirstOrDefaultAsync(
+                    x => x.BatchId == model.BatchId);
+
+
+        if (batch == null)
+        {
+            throw new InvalidOperationException(
+                "Evaluation batch không tồn tại.");
+        }
+
+
+        if (batch.Status == "Completed" ||
+            batch.Status == "Cancelled")
+        {
+            throw new InvalidOperationException(
+                "Batch không còn cho phép chỉnh sửa AHP.");
+        }
+
+
+        var criteria =
+            batch.Criteria
+                .OrderBy(x => x.CriteriaCode)
+                .ToList();
+
+
+        if (criteria.Count < 2)
+        {
+            throw new InvalidOperationException(
+                "Evaluation Batch phải có ít nhất 2 tiêu chí để thực hiện AHP.");
+        }
+
+
+        var criteriaIds =
+            criteria
+                .Select(x => x.CriteriaId)
+                .ToHashSet();
+
+
+        var submittedPairs =
+            new HashSet<string>();
+
+
+        foreach (var item in model.Comparisons)
+        {
+            if (!criteriaIds.Contains(
+                    item.CriteriaRowId)
+                ||
+                !criteriaIds.Contains(
+                    item.CriteriaColId))
+            {
+                throw new InvalidOperationException(
+                    "Criteria không thuộc Evaluation Batch.");
+            }
+
+
+            if (item.CriteriaRowId ==
+                item.CriteriaColId)
+            {
+                throw new InvalidOperationException(
+                    "Không cần nhập so sánh Criteria với chính nó.");
+            }
+
+
+            ValidateComparisonValue(
+                item.Value);
+
+
+            var pairKey =
+                BuildKey(
+                    item.CriteriaRowId,
+                    item.CriteriaColId);
+
+
+            if (!submittedPairs.Add(
+                    pairKey))
+            {
+                throw new InvalidOperationException(
+                    "Ma trận chứa cặp tiêu chí bị trùng.");
+            }
+        }
+
+
+        var expectedPairCount =
+            criteria.Count *
+            (criteria.Count - 1) /
+            2;
+
+
+        if (model.Comparisons.Count !=
+            expectedPairCount)
+        {
+            throw new InvalidOperationException(
+                $"Cần nhập đủ {expectedPairCount} cặp so sánh.");
+        }
+
+
+        var unorderedPairs =
+            new HashSet<string>();
+
+
+        foreach (var item in model.Comparisons)
+        {
+            var minId =
+                Math.Min(
+                    item.CriteriaRowId,
+                    item.CriteriaColId);
+
+
+            var maxId =
+                Math.Max(
+                    item.CriteriaRowId,
+                    item.CriteriaColId);
+
+
+            var key =
+                BuildKey(
+                    minId,
+                    maxId);
+
+
+            if (!unorderedPairs.Add(
+                    key))
+            {
+                throw new InvalidOperationException(
+                    "Mỗi cặp Criteria chỉ được nhập một lần.");
+            }
+        }
+
+
+        await using var transaction =
+            await _context.Database
+                .BeginTransactionAsync();
+
+
+        try
+        {
+            // Delete existing matrix
+
+            var existing =
+                await _context.AhppairwiseComparisons
+                    .Where(x =>
+                        x.BatchId ==
+                        model.BatchId)
+                    .ToListAsync();
+
+
+            _context.AhppairwiseComparisons
+                .RemoveRange(existing);
+
+
+            // Diagonal
+
+            foreach (var criterion in criteria)
+            {
+                var diagonal =
+                    new AhppairwiseComparison
+                    {
+                        BatchId =
+                            model.BatchId,
+
+                        CriteriaRowId =
+                            criterion.CriteriaId,
+
+                        CriteriaColId =
+                            criterion.CriteriaId,
+
+                        ComparisonValue =
+                            1m,
+
+                        EvaluatedBy =
+                            evaluatedBy,
+
+                        EvaluatedAt =
+                            DateTime.Now
+                    };
+
+
+                _context.AhppairwiseComparisons
+                    .Add(diagonal);
+            }
+
+
+            // Direct + inverse
+
+            foreach (var item in model.Comparisons)
+            {
+                var value =
+                    Math.Round(
+                        item.Value,
+                        4);
+
+
+                var direct =
+                    new AhppairwiseComparison
+                    {
+                        BatchId =
+                            model.BatchId,
+
+                        CriteriaRowId =
+                            item.CriteriaRowId,
+
+                        CriteriaColId =
+                            item.CriteriaColId,
+
+                        ComparisonValue =
+                            value,
+
+                        EvaluatedBy =
+                            evaluatedBy,
+
+                        EvaluatedAt =
+                            DateTime.Now
+                    };
+
+
+                _context.AhppairwiseComparisons
+                    .Add(direct);
+
+
+                var inverseValue =
+                    Math.Round(
+                        1m / value,
+                        4);
+
+
+                var inverse =
+                    new AhppairwiseComparison
+                    {
+                        BatchId =
+                            model.BatchId,
+
+                        CriteriaRowId =
+                            item.CriteriaColId,
+
+                        CriteriaColId =
+                            item.CriteriaRowId,
+
+                        ComparisonValue =
+                            inverseValue,
+
+                        EvaluatedBy =
+                            evaluatedBy,
+
+                        EvaluatedAt =
+                            DateTime.Now
+                    };
+
+
+                _context.AhppairwiseComparisons
+                    .Add(inverse);
+            }
+
+
+            await _context.SaveChangesAsync();
+
+
+            /*
+             * Ma trận mới làm cho AHPResult cũ không còn hợp lệ.
+             *
+             * Vì vậy xóa kết quả AHP cũ và trọng số cũ.
+             */
+
+            var oldResult =
+                await _context.Ahpresults
+                    .FirstOrDefaultAsync(
+                        x => x.BatchId ==
+                            model.BatchId);
+
+
+            if (oldResult != null)
+            {
+                _context.Ahpresults
+                    .Remove(oldResult);
+            }
+
+
+            var oldWeights =
+                await _context.AhpcriteriaWeights
+                    .Where(x =>
+                        x.BatchId ==
+                        model.BatchId)
+                    .ToListAsync();
+
+
+            if (oldWeights.Any())
+            {
+                _context.AhpcriteriaWeights
+                    .RemoveRange(oldWeights);
+            }
+
+
+            await _context.SaveChangesAsync();
+
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+
+            throw;
+        }
+    }
+
+
+    // =========================================================
+    // CALCULATE AHP
+    // =========================================================
+
+    public async Task<AHPResultViewModel>
+        CalculateAsync(
+            int batchId)
+    {
+        var batch =
+            await _context.EvaluationBatches
+                .Include(x => x.Criteria)
+                .FirstOrDefaultAsync(
+                    x => x.BatchId == batchId);
+
+
+        if (batch == null)
+        {
+            throw new InvalidOperationException(
+                "Evaluation Batch không tồn tại.");
+        }
+
+
+        if (batch.Status == "Completed" ||
+            batch.Status == "Cancelled")
+        {
+            throw new InvalidOperationException(
+                "Batch không còn cho phép tính AHP.");
+        }
+
+
+        var criteria =
+            batch.Criteria
+                .OrderBy(x => x.CriteriaCode)
+                .ToList();
+
+
+        var n =
+            criteria.Count;
+
+
+        if (n < 2)
+        {
+            throw new InvalidOperationException(
+                "Cần ít nhất 2 Criteria để tính AHP.");
+        }
+
+
+        // =====================================================
+        // LOAD MATRIX
+        // =====================================================
+
+        var comparisons =
+            await _context.AhppairwiseComparisons
+                .AsNoTracking()
+                .Where(x =>
+                    x.BatchId ==
+                    batchId)
+                .ToListAsync();
+
+
+        var expectedCount =
+            n * n;
+
+
+        if (comparisons.Count !=
+            expectedCount)
+        {
+            throw new InvalidOperationException(
+                $"Ma trận AHP chưa đầy đủ. " +
+                $"Cần {expectedCount} giá trị nhưng hiện có {comparisons.Count}.");
+        }
+
+
+        var matrix =
+            new double[n, n];
+
+
+        for (var i = 0; i < n; i++)
+        {
+            for (var j = 0; j < n; j++)
+            {
+                var rowId =
+                    criteria[i].CriteriaId;
+
+                var colId =
+                    criteria[j].CriteriaId;
+
+
+                var comparison =
+                    comparisons.FirstOrDefault(
+                        x =>
+                            x.CriteriaRowId ==
+                                rowId
+                            &&
+                            x.CriteriaColId ==
+                                colId);
+
+
+                if (comparison == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Thiếu giá trị AHP cho " +
+                        $"{criteria[i].CriteriaCode} / " +
+                        $"{criteria[j].CriteriaCode}.");
+                }
+
+
+                matrix[i, j] =
+                    (double)
+                    comparison.ComparisonValue;
+            }
+        }
+
+
+        // =====================================================
+        // CALCULATE
+        // =====================================================
+
+        var calculation =
+            _calculationService
+                .Calculate(matrix);
+
+
+        await using var transaction =
+            await _context.Database
+                .BeginTransactionAsync();
+
+
+        try
+        {
+            // =================================================
+            // REMOVE OLD RESULT
+            // =================================================
+
+            var oldResult =
+                await _context.Ahpresults
+                    .FirstOrDefaultAsync(
+                        x => x.BatchId ==
+                            batchId);
+
+
+            if (oldResult != null)
+            {
+                _context.Ahpresults
+                    .Remove(oldResult);
+            }
+
+
+            // =================================================
+            // REMOVE OLD WEIGHTS
+            // =================================================
+
+            var oldWeights =
+                await _context.AhpcriteriaWeights
+                    .Where(x =>
+                        x.BatchId ==
+                        batchId)
+                    .ToListAsync();
+
+
+            if (oldWeights.Any())
+            {
+                _context.AhpcriteriaWeights
+                    .RemoveRange(oldWeights);
+            }
+
+
+            await _context.SaveChangesAsync();
+
+
+            // =================================================
+            // INSERT RESULT
+            // =================================================
+
+            var resultEntity =
+                new Ahpresult
+                {
+                    BatchId =
+                        batchId,
+
+                    LambdaMax =
+                        (decimal)
+                        Math.Round(
+                            calculation.LambdaMax,
+                            6),
+
+                    Civalue =
+                        (decimal)
+                        Math.Round(
+                            calculation.CIValue,
+                            6),
+
+                    Rivalue =
+                        (decimal)
+                        Math.Round(
+                            calculation.RIValue,
+                            6),
+
+                    Crvalue =
+                        (decimal)
+                        Math.Round(
+                            calculation.CRValue,
+                            6),
+
+                    IsConsistent =
+                        calculation.IsConsistent,
+
+                    N =
+                        calculation.N,
+
+                    CalculatedAt =
+                        DateTime.Now
+                };
+
+
+            _context.Ahpresults
+                .Add(resultEntity);
+
+
+            // =================================================
+            // INSERT WEIGHTS
+            // =================================================
+
+            for (var i = 0; i < n; i++)
+            {
+                var weightEntity =
+                    new AhpcriteriaWeight
+                    {
+                        BatchId =
+                            batchId,
+
+                        CriteriaId =
+                            criteria[i].CriteriaId,
+
+                        WeightValue =
+                            (decimal)
+                            Math.Round(
+                                calculation.Weights[i],
+                                6)
+                    };
+
+
+                _context.AhpcriteriaWeights
+                    .Add(weightEntity);
+            }
+
+
+            await _context.SaveChangesAsync();
+
+
+            await transaction.CommitAsync();
+
+
+            // =================================================
+            // RETURN VIEW MODEL
+            // =================================================
+
+            return new AHPResultViewModel
+            {
+                HasResult = true,
+
+                BatchId = batchId,
+
+                CriteriaCount = n,
+
+                LambdaMax =
+                    calculation.LambdaMax,
+
+                CIValue =
+                    calculation.CIValue,
+
+                RIValue =
+                    calculation.RIValue,
+
+                CRValue =
+                    calculation.CRValue,
+
+                IsConsistent =
+                    calculation.IsConsistent,
+
+                CalculatedAt =
+                    resultEntity.CalculatedAt,
+
+                Weights =
+                    criteria
+                        .Select(
+                            (criterion, index) =>
+                                new AHPWeightViewModel
+                                {
+                                    CriteriaId =
+                                        criterion.CriteriaId,
+
+                                    CriteriaCode =
+                                        criterion.CriteriaCode,
+
+                                    CriteriaName =
+                                        criterion.CriteriaName,
+
+                                    WeightValue =
+                                        calculation.Weights[
+                                            index]
+                                })
+                        .ToList()
+            };","explanation":"Assign the generated list to the Weights property instead of leaving an expression inside the object initializer which caused CS0747."}]}{
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+
+            throw;
+        }
+    }
+
+
+    // =========================================================
+    // GET STORED RESULT
+    // =========================================================
+
+    private async Task<AHPResultViewModel?>
+        GetResultAsync(
+            int batchId)
+    {
+        var result =
+            await _context.Ahpresults
+                .AsNoTracking()
+                .FirstOrDefaultAsync(
+                    x => x.BatchId == batchId);
+
+
+        if (result == null)
+        {
+            return null;
+        }
+
+
+        var weights =
+            await (
+                from weight
+                    in _context.AhpcriteriaWeights
+
+                join criterion
+                    in _context.Criteria
+                    on weight.CriteriaId
+                        equals criterion.CriteriaId
+
+                where
+                    weight.BatchId ==
+                    batchId
+
+                orderby
+                    criterion.CriteriaCode
+
+                select new AHPWeightViewModel
+                {
+                    CriteriaId =
+                        criterion.CriteriaId,
+
+                    CriteriaCode =
+                        criterion.CriteriaCode,
+
+                    CriteriaName =
+                        criterion.CriteriaName,
+
+                    WeightValue =
+                        (double)
+                        weight.WeightValue
+                })
+                .ToListAsync();
+
+
+        return new AHPResultViewModel
+        {
+            HasResult = true,
+
+            BatchId = batchId,
+
+            CriteriaCount =
+                result.N ?? 0,
+
+            LambdaMax =
+                (double)
+                result.LambdaMax,
+
+            CIValue =
+                (double)
+                result.Civalue,
+
+            RIValue =
+                (double)
+                result.Rivalue,
+
+            CRValue =
+                (double)
+                result.Crvalue,
+
+            IsConsistent =
+                result.IsConsistent,
+
+            CalculatedAt =
+                result.CalculatedAt,
+
+            Weights =
+                weights
+        };
+    }
+
+
+    // =========================================================
+    // VALIDATE SAATY VALUE
+    // =========================================================
+
+    private static void ValidateComparisonValue(
+        decimal value)
+    {
+        var rounded =
+            Math.Round(
+                value,
+                4);
+
+
+        var allowed =
+            new HashSet<decimal>
+            {
+                1m,
+                2m,
+                3m,
+                4m,
+                5m,
+                6m,
+                7m,
+                8m,
+                9m,
+
+                0.5m,
+                0.3333m,
+                0.25m,
+                0.2m,
+                0.1667m,
+                0.1429m,
+                0.125m,
+                0.1111m
+            };
+
+
+        if (!allowed.Contains(
+                rounded))
+        {
+            throw new InvalidOperationException(
+                "Giá trị AHP phải thuộc thang Saaty " +
+                "1–9 hoặc nghịch đảo tương ứng.");
+        }
+    }
+
+
+    // =========================================================
+    // KEY
+    // =========================================================
+
+    private static string BuildKey(
+        int rowId,
+        int colId)
+    {
+        return $"{rowId}_{colId}";
+    }
+}

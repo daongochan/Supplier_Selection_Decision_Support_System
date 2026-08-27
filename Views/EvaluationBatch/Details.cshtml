@@ -1,0 +1,1072 @@
+﻿@model SupplierSelectionDSS.Data.Entities.EvaluationBatch
+
+@{
+    ViewData["Title"] = "Evaluation Batch";
+
+
+    var isAdmin =
+        User.IsInRole("Administrator");
+
+    var isPurchasing =
+        User.IsInRole("PurchasingStaff");
+
+    var isExpert =
+        User.IsInRole("Expert");
+
+    var isManager =
+        User.IsInRole("Manager");
+
+
+    var canEvaluate =
+        isAdmin ||
+        isPurchasing ||
+        isExpert;
+
+
+    var canAHP =
+        isAdmin ||
+        isExpert;
+
+
+    var canTOPSIS =
+        isAdmin ||
+        isExpert;
+
+
+    var canResult =
+        isAdmin ||
+        isManager ||
+        isExpert;
+
+
+    var canApprove =
+        isAdmin ||
+        isManager;
+
+
+    var canReport =
+        isAdmin ||
+        isManager;
+
+
+    // =========================================================
+    // WORKFLOW DATA
+    // =========================================================
+
+    var supplierCount =
+        Model.Suppliers.Count;
+
+
+    var criteriaCount =
+        Model.Criteria.Count;
+
+
+    var evaluationScoreCount =
+        Model.EvaluationScores.Count;
+
+
+    var expectedEvaluationScoreCount =
+        supplierCount *
+        criteriaCount;
+
+
+    var evaluationComplete =
+        supplierCount > 0 &&
+        criteriaCount > 0 &&
+        evaluationScoreCount >=
+            expectedEvaluationScoreCount;
+
+
+    var ahpResultExists =
+        Model.Ahpresult != null;
+
+
+    var ahpConsistent =
+        ahpResultExists &&
+        Model.Ahpresult!.IsConsistent;
+
+
+    var ahpCR =
+        ahpResultExists
+            ? Model.Ahpresult!.Crvalue
+            : (decimal?)null;
+
+
+    var topsisResultCount =
+        Model.TopsisResults.Count;
+
+
+    var topsisComplete =
+        supplierCount > 0 &&
+        topsisResultCount >=
+            supplierCount;
+
+
+    var finalApproval =
+        Model.Approvals
+            .Where(
+                x =>
+                    x.IsFinal &&
+                    x.Status == "Approved")
+            .OrderByDescending(
+                x =>
+                    x.ApprovalDate)
+            .FirstOrDefault();
+
+
+    var isCompleted =
+        Model.Status == "Completed" ||
+        finalApproval != null;
+}
+
+
+<!-- =========================================================
+     PAGE HEADER
+     ========================================================= -->
+
+<div class="page-header evaluation-batch-header">
+
+    <div>
+
+        <div class="page-eyebrow">
+            EVALUATION BATCH
+        </div>
+
+        <h1 class="page-title">
+            @Model.BatchCode
+        </h1>
+
+        <p class="page-description">
+            @Model.BatchName
+        </p>
+
+    </div>
+
+
+    <div class="evaluation-batch-header-actions">
+
+        <span class="status-pill
+            status-@Model.Status.ToLowerInvariant()">
+
+            @Model.Status
+
+        </span>
+
+
+        <a asp-action="Index"
+           class="btn-outline">
+
+            Back
+
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     ALERTS
+     ========================================================= -->
+@if (
+    TempData["SuccessMessage"]
+    is string successMessage)
+{
+    <div class="alert-success">
+
+        @successMessage
+
+    </div>
+}
+
+
+@if (
+    TempData["ErrorMessage"]
+    is string errorMessage)
+{
+    <div class="alert-danger">
+
+        @errorMessage
+
+    </div>
+}
+
+
+<!-- =========================================================
+     WORKFLOW STEPPER
+     ========================================================= -->
+
+<div class="batch-workflow">
+
+    <!-- =====================================================
+         01 SETUP
+         ===================================================== -->
+
+    <div class="batch-workflow-step
+        @(supplierCount >= 2 &&
+          criteriaCount >= 2
+            ? "batch-step-complete"
+            : "batch-step-current")">
+
+        <div class="batch-workflow-number">
+            01
+        </div>
+
+
+        <div class="batch-workflow-content">
+
+            <span>
+                Setup
+            </span>
+
+            <small>
+                @supplierCount suppliers ·
+                @criteriaCount criteria
+            </small>
+
+        </div>
+
+    </div>
+
+
+    <div class="batch-workflow-line"></div>
+
+
+    <!-- =====================================================
+         02 EVALUATION
+         ===================================================== -->
+
+    <div class="batch-workflow-step
+        @(evaluationComplete
+            ? "batch-step-complete"
+            : Model.Status == "Evaluating"
+                ? "batch-step-current"
+                : "batch-step-disabled")">
+
+        <div class="batch-workflow-number">
+            02
+        </div>
+
+
+        <div class="batch-workflow-content">
+
+            <span>
+                Evaluation
+            </span>
+
+            <small>
+                @evaluationScoreCount /
+                @expectedEvaluationScoreCount
+            </small>
+
+        </div>
+
+    </div>
+
+
+    <div class="batch-workflow-line"></div>
+
+
+    <!-- =====================================================
+         03 AHP
+         ===================================================== -->
+
+    <div class="batch-workflow-step
+        @(ahpConsistent
+            ? "batch-step-complete"
+            : evaluationComplete
+                ? "batch-step-current"
+                : "batch-step-disabled")">
+
+        <div class="batch-workflow-number">
+            03
+        </div>
+
+
+        <div class="batch-workflow-content">
+
+            <span>
+                AHP
+            </span>
+
+            <small>
+
+                @if (ahpResultExists)
+                {
+                    @: CR @(
+                        (ahpCR ?? 0m).ToString("0.0000")
+                    )
+                    }
+                else
+                    {
+                        @: Criteria weights
+                    }
+
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <div class="batch-workflow-line"></div>
+
+
+        <!-- =====================================================
+         04 TOPSIS
+         ===================================================== -->
+
+        <div class="batch-workflow-step
+            @(topsisComplete
+                ? "batch-step-complete"
+                : ahpConsistent
+                    ? "batch-step-current"
+                    : "batch-step-disabled")">
+
+            <div class="batch-workflow-number">
+                04
+            </div>
+
+
+            <div class="batch-workflow-content">
+
+                <span>
+                    TOPSIS
+                </span>
+
+                <small>
+
+                    @if (topsisComplete)
+                    {
+                        @: @topsisResultCount results
+                    }
+                    else
+                    {
+                        @:Supplier ranking
+                    }
+
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <div class="batch-workflow-line"></div>
+
+
+        <!-- =====================================================
+         05 RESULT
+         ===================================================== -->
+
+        <div class="batch-workflow-step
+            @(isCompleted
+                ? "batch-step-complete"
+                : topsisComplete
+                    ? "batch-step-current"
+                    : "batch-step-disabled")">
+
+            <div class="batch-workflow-number">
+                05
+            </div>
+
+
+            <div class="batch-workflow-content">
+
+                <span>
+                    Result
+                </span>
+
+                <small>
+                    Decision
+                </small>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+     SUMMARY
+     ========================================================= -->
+
+    <div class="batch-summary-grid">
+
+
+        <!-- Product Group -->
+
+        <div class="surface-card batch-summary-card">
+
+            <span class="card-label">
+                PRODUCT GROUP
+            </span>
+
+            <strong class="batch-summary-value-text">
+                @Model.Group.GroupCode
+            </strong>
+
+            <span class="batch-summary-meta">
+                @Model.Group.GroupName
+            </span>
+
+        </div>
+
+
+        <!-- Suppliers -->
+
+        <div class="surface-card batch-summary-card">
+
+            <span class="card-label">
+                SUPPLIERS
+            </span>
+
+            <strong class="batch-summary-value">
+                @supplierCount.ToString("00")
+            </strong>
+
+            <span class="batch-summary-meta">
+                Participating suppliers
+            </span>
+
+        </div>
+
+
+        <!-- Criteria -->
+
+        <div class="surface-card batch-summary-card">
+
+            <span class="card-label">
+                CRITERIA
+            </span>
+
+            <strong class="batch-summary-value">
+                @criteriaCount.ToString("00")
+            </strong>
+
+            <span class="batch-summary-meta">
+                Evaluation criteria
+            </span>
+
+        </div>
+
+
+        <!-- Period -->
+
+        <div class="surface-card batch-summary-card">
+
+            <span class="card-label">
+                PERIOD
+            </span>
+
+            <strong class="batch-summary-value-text">
+
+                @if (Model.StartDate.HasValue)
+                {
+                    @Model.StartDate.Value.ToString("dd/MM/yyyy")
+                }
+                else
+                {
+                    @: Not set
+                }
+
+            </strong>
+
+            <span class="batch-summary-meta">
+
+                @if (Model.EndDate.HasValue)
+                {
+                    @Model.EndDate.Value.ToString("dd/MM/yyyy")
+                }
+
+            </span>
+
+        </div>
+
+    </div>
+
+    <!-- =========================================================
+     CURRENT ACTION
+     ========================================================= -->
+
+    <div class="batch-action-card">
+
+        <div class="batch-action-content">
+
+            <div class="page-eyebrow">
+                DECISION WORKFLOW
+            </div>
+
+
+            @if (Model.Status == "Draft")
+            {
+                <h2>
+                    Ready to start.
+                </h2>
+
+                <p>
+                    Phạm vi đánh giá đã được cấu hình trong bước
+                    tạo Batch. Sau khi kiểm tra Supplier và Criteria,
+                    hãy bắt đầu Evaluation.
+                </p>
+            }
+            else if (!evaluationComplete)
+            {
+                <h2>
+                    Complete supplier evaluation.
+                </h2>
+
+                <p>
+                    Đã nhập
+                    <strong>
+                        @evaluationScoreCount
+                    </strong>
+                    /
+                    <strong>
+                        @expectedEvaluationScoreCount
+                    </strong>
+                    giá trị đánh giá.
+                </p>
+            }
+            else if (!ahpResultExists)
+            {
+                <h2>
+                    Complete AHP.
+                </h2>
+
+                <p>
+                    Ma trận đánh giá đã đầy đủ.
+                    Hãy thực hiện so sánh cặp và Calculate AHP
+                    để xác định trọng số Criteria.
+                </p>
+            }
+            else if (!ahpConsistent)
+            {
+                <h2>
+                    Review AHP consistency.
+                </h2>
+
+                <p>
+                    Consistency Ratio hiện tại là
+                    <strong>
+                        @((ahpCR ?? 0m).ToString("0.0000"))
+                    </strong>.
+                    Cần điều chỉnh ma trận để CR ≤ 0.10
+                    trước khi thực hiện TOPSIS.
+                </p>
+            }
+            else if (!topsisComplete)
+            {
+                <h2>
+                    Calculate TOPSIS.
+                </h2>
+
+                <p>
+                    AHP đã đạt tính nhất quán.
+                    Có thể sử dụng trọng số AHP để
+                    xếp hạng các nhà cung cấp.
+                </p>
+            }
+            else if (isCompleted)
+            {
+                <h2>
+                    Evaluation completed.
+                </h2>
+
+                <p>
+                    Quyết định cuối cùng của Batch đã được hoàn tất.
+                </p>
+            }
+            else
+            {
+                <h2>
+                    Review final result.
+                </h2>
+
+                <p>
+                    TOPSIS đã hoàn tất.
+                    Bạn có thể chuyển sang trang Decision Result.
+                </p>
+            }
+
+        </div>
+
+
+        <div class="batch-action-buttons">
+
+
+            <!-- =================================================
+             01. DRAFT → START
+             ================================================= -->
+            @if (
+                        Model.Status == "Draft" &&
+                        canEvaluate)
+            {
+                <form asp-action="Start"
+                      method="post"
+                      style="margin:0;">
+
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden"
+                           name="id"
+                           value="@Model.BatchId" />
+
+                    <button type="submit"
+                            class="btn-primary"
+                            onclick="return confirm('Bắt đầu đợt đánh giá này?');">
+
+                        Start Evaluation
+
+                        <i class="bi bi-arrow-right"></i>
+
+                    </button>
+
+                </form>
+            }
+
+
+            <!-- =================================================
+             02. EVALUATION
+             ================================================= -->
+            @if (
+                        Model.Status == "Evaluating" &&
+                        !evaluationComplete &&
+                        canEvaluate)
+            {
+                <a asp-controller="Evaluation"
+                   asp-action="Index"
+                   asp-route-batchId="@Model.BatchId"
+                   class="btn-primary">
+
+                    Evaluation
+
+                    <i class="bi bi-arrow-right"></i>
+
+                </a>
+            }
+
+
+            <!-- =================================================
+             03. AHP
+             ================================================= -->
+            @if (
+                        Model.Status == "Evaluating" &&
+                        evaluationComplete &&
+                        !ahpConsistent &&
+                        canAHP)
+            {
+                <a asp-controller="AHP"
+                   asp-action="Index"
+                   asp-route-batchId="@Model.BatchId"
+                   class="btn-outline">
+
+                    AHP
+
+                    <i class="bi bi-arrow-right"></i>
+
+                </a>
+            }
+
+
+            <!-- =================================================
+             04. TOPSIS
+             ================================================= -->
+            @if (
+                        Model.Status == "Evaluating" &&
+                        ahpConsistent &&
+                        !topsisComplete &&
+                        canTOPSIS)
+            {
+                <a asp-controller="TOPSIS"
+                   asp-action="Index"
+                   asp-route-batchId="@Model.BatchId"
+                   class="btn-primary">
+
+                    TOPSIS
+
+                    <i class="bi bi-arrow-right"></i>
+
+                </a>
+            }
+
+
+            <!-- =================================================
+             05. RESULT
+             ================================================= -->
+            @if (
+                        topsisComplete &&
+                        canResult)
+            {
+                <a asp-controller="DecisionResult"
+                   asp-action="Index"
+                   asp-route-batchId="@Model.BatchId"
+                   class="btn-primary">
+
+                    Result
+
+                    <i class="bi bi-arrow-right"></i>
+
+                </a>
+            }
+
+
+            <!-- =================================================
+             COMPLETED
+             ================================================= -->
+            @if (isCompleted)
+            {
+                <a asp-controller="DecisionResult"
+                   asp-action="Index"
+                   asp-route-batchId="@Model.BatchId"
+                   class="btn-outline">
+
+                    View Decision
+
+                    <i class="bi bi-arrow-right"></i>
+
+                </a>
+
+
+                @if (canReport)
+                {
+                    <a asp-controller="Report"
+                       asp-action="Index"
+                       asp-route-batchId="@Model.BatchId"
+                       class="btn-primary">
+
+                        Reports
+
+                        <i class="bi bi-file-earmark-text"></i>
+
+                    </a>
+                }
+            }
+
+        </div>
+
+    </div>
+
+    <!-- =========================================================
+     WORKFLOW STATUS
+     ========================================================= -->
+
+    <div class="batch-workflow-status-note"
+         style="
+        margin-top:14px;
+        padding:12px 16px;
+        border:1px solid var(--border);
+        border-radius:var(--radius-md);
+        background:var(--canvas-soft);
+        color:var(--muted);
+        font-size:13px;">
+
+        <strong>
+            Workflow:
+        </strong>
+
+
+        @if (isCompleted)
+        {
+            @: Completed · Decision approved
+        }
+        else if (!evaluationComplete)
+        {
+            @: Evaluation · @evaluationScoreCount / @expectedEvaluationScoreCount scores
+        }
+        else if (!ahpResultExists)
+        {
+            @: AHP · Waiting for calculation
+        }
+        else if (!ahpConsistent)
+        {
+            @: AHP · CR = @((ahpCR ?? 0m).ToString("0.0000"))
+        }
+        else if (!topsisComplete)
+        {
+            @: TOPSIS · Ready
+        }
+        else
+        {
+            @: Result · Waiting for decision
+        }
+
+    </div>
+
+
+    <!-- =========================================================
+     SUPPLIERS
+     ========================================================= -->
+
+    <div class="dashboard-section">
+
+        <div class="section-heading">
+
+            <div>
+
+                <div class="page-eyebrow">
+                    SCOPE
+                </div>
+
+                <h2 class="section-title">
+                    Suppliers
+                </h2>
+
+            </div>
+
+        </div>
+
+
+        <div class="table-card">
+
+            @if (Model.Suppliers.Any())
+            {
+                <div class="data-table-wrapper">
+
+                    <table class="data-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Code
+                                </th>
+
+                                <th>
+                                    Supplier
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            @foreach (
+                                var supplier
+                                in Model.Suppliers
+                                    .OrderBy(
+                                        x =>
+                                            x.SupplierCode))
+                            {
+                                <tr>
+
+                                    <td>
+
+                                        <strong>
+                                            @supplier.SupplierCode
+                                        </strong>
+
+                                    </td>
+
+
+                                    <td>
+
+                                        <strong>
+                                            @supplier.SupplierName
+                                        </strong>
+
+                                    </td>
+
+
+                                    <td>
+
+                                        <span class="status-pill
+                                            status-@supplier.Status
+                                            .ToLowerInvariant()">
+
+                                            @supplier.Status
+
+                                        </span>
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+
+                    <h3>
+                        No suppliers.
+                    </h3>
+
+                    <p>
+                        Batch chưa có nhà cung cấp tham gia.
+                    </p>
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+     CRITERIA
+     ========================================================= -->
+
+    <div class="dashboard-section">
+
+        <div class="section-heading">
+
+            <div>
+
+                <div class="page-eyebrow">
+                    EVALUATION
+                </div>
+
+                <h2 class="section-title">
+                    Criteria
+                </h2>
+
+            </div>
+
+        </div>
+
+
+        <div class="table-card">
+
+            @if (Model.Criteria.Any())
+            {
+                <div class="data-table-wrapper">
+
+                    <table class="data-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Code
+                                </th>
+
+                                <th>
+                                    Criteria
+                                </th>
+
+                                <th>
+                                    Type
+                                </th>
+
+                                <th>
+                                    Unit
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            @foreach (
+                                var criterion
+                                in Model.Criteria
+                                    .OrderBy(
+                                        x =>
+                                            x.CriteriaCode))
+                            {
+                                <tr>
+
+                                    <td>
+
+                                        <strong>
+                                            @criterion.CriteriaCode
+                                        </strong>
+
+                                    </td>
+
+
+                                    <td>
+
+                                        <strong>
+                                            @criterion.CriteriaName
+                                        </strong>
+
+
+                                        @if (
+                                            !string.IsNullOrWhiteSpace(
+                                                criterion.Description))
+                                        {
+                                            <span class="table-muted">
+                                                @criterion.Description
+                                            </span>
+                                        }
+
+                                    </td>
+
+
+                                    <td>
+
+                                        @if (
+                                            criterion.CriteriaType ==
+                                            "Benefit")
+                                        {
+                                            <span class="criteria-type criteria-benefit">
+                                                Benefit
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="criteria-type criteria-cost">
+                                                Cost
+                                            </span>
+                                        }
+
+                                    </td>
+
+
+                                    <td>
+
+                                        @(
+                                            string.IsNullOrWhiteSpace(
+                                                criterion.Unit)
+                                                ? "—"
+                                                : criterion.Unit
+                                        )
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+
+                    <h3>
+                        No criteria.
+                    </h3>
+
+                    <p>
+                        Batch chưa có tiêu chí đánh giá.
+                    </p>
+
+                </div>
+            }
+
+        </div>
+
+    </div>

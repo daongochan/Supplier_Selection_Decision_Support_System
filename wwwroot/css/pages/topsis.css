@@ -1,0 +1,437 @@
+﻿/* =========================================================
+   TOPSIS READINESS
+   ========================================================= */
+
+.topsis-readiness-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 20px;
+    padding: 22px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+}
+
+    .topsis-readiness-card h2 {
+        margin: 0;
+        font-family: var(--font-serif);
+        font-size: 24px;
+        font-weight: 500;
+    }
+
+.topsis-readiness-badge {
+    padding: 8px 14px;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-serif);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.topsis-badge-success {
+    background: var(--sage-soft);
+    color: var(--sage-dark);
+}
+
+.topsis-badge-error {
+    background: var(--danger-soft);
+    color: var(--danger-dark);
+}
+
+
+/* =========================================================
+   CRITERIA CARDS
+   ========================================================= */
+
+.topsis-summary-grid {
+    display: grid;
+    grid-template-columns: repeat( auto-fit, minmax(180px, 1fr) );
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.topsis-criteria-card {
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 18px;
+    box-sizing: border-box;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+}
+
+.topsis-criteria-code {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.topsis-criteria-card strong {
+    color: var(--ink);
+    font-family: var(--font-serif);
+    font-size: 17px;
+    font-weight: 500;
+}
+
+.topsis-criteria-meta {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.topsis-weight {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-soft);
+    color: var(--muted);
+    font-size: 11px;
+}
+
+    .topsis-weight strong {
+        color: var(--lavender-dark);
+        font-family: var(--font-serif);
+        font-size: 18px;
+    }
+
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+.topsis-matrix-card,
+.topsis-ideal-card,
+.topsis-ranking-card {
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.topsis-card-header {
+    padding: 22px 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+    .topsis-card-header .section-title {
+        margin: 0;
+    }
+
+.topsis-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.topsis-table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: var(--font-serif);
+}
+
+    .topsis-table th,
+    .topsis-table td {
+        padding: 13px 15px;
+        border-right: 1px solid var(--border-soft);
+        border-bottom: 1px solid var(--border-soft);
+        text-align: center;
+        vertical-align: middle;
+    }
+
+        .topsis-table th:last-child,
+        .topsis-table td:last-child {
+            border-right: none;
+        }
+
+    .topsis-table thead th {
+        background: var(--canvas-soft);
+        color: var(--ink);
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+        .topsis-table thead th span {
+            display: block;
+            font-size: 13px;
+        }
+
+        .topsis-table thead th small {
+            display: block;
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 400;
+        }
+
+.topsis-supplier-column {
+    width: 220px;
+    min-width: 220px;
+    text-align: left !important;
+}
+
+.topsis-supplier-cell {
+    min-width: 220px;
+    text-align: left !important;
+}
+
+    .topsis-supplier-cell strong {
+        display: block;
+        color: var(--ink);
+        font-size: 14px;
+    }
+
+    .topsis-supplier-cell span {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 12px;
+    }
+
+.topsis-table td strong {
+    font-size: 14px;
+}
+
+.topsis-table td small {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.topsis-missing {
+    color: var(--muted-soft);
+}
+
+
+/* =========================================================
+   CALCULATE
+   ========================================================= */
+
+.topsis-calculate-form {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 20px;
+    padding: 24px 28px;
+    background: var(--canvas-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+}
+
+    .topsis-calculate-form h2,
+    .topsis-lock-card h2 {
+        margin: 0;
+        font-family: var(--font-serif);
+        font-size: 24px;
+        font-weight: 500;
+    }
+
+    .topsis-calculate-form p,
+    .topsis-lock-card p {
+        max-width: 750px;
+        margin: 7px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+.topsis-lock-card {
+    margin-bottom: 20px;
+    padding: 24px 28px;
+    background: var(--danger-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+}
+
+
+/* =========================================================
+   IDEAL SOLUTION
+   ========================================================= */
+
+.topsis-pis {
+    color: var(--sage-dark);
+    font-weight: 600;
+}
+
+.topsis-nis {
+    color: var(--terracotta);
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   RANKING
+   ========================================================= */
+
+.topsis-winner-row td {
+    background: var(--sage-soft);
+}
+
+.topsis-rank {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--surface-muted);
+    color: var(--muted);
+    font-family: var(--font-serif);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.topsis-winner-row .topsis-rank {
+    background: var(--sage-dark);
+    color: var(--surface);
+}
+
+.topsis-score {
+    color: var(--lavender-dark);
+    font-size: 17px !important;
+}
+
+
+   TOPSIS - NEXT STEP
+   ========================================================= */
+
+.topsis-next-step {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 28px;
+    margin-top: 16px;
+    margin-bottom: 40px;
+    padding: 22px 26px;
+    background: var(--canvas-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card);
+}
+
+
+.topsis-next-step-content {
+    min-width: 0;
+    max-width: 720px;
+}
+
+
+    .topsis-next-step-content h3 {
+        margin: 0;
+        color: var(--ink);
+        font-family: var(--font-serif);
+        font-size: 24px;
+        font-weight: 500;
+        line-height: 1.2;
+    }
+
+
+    .topsis-next-step-content p {
+        margin: 7px 0 0;
+        color: var(--body);
+        font-size: 13px;
+        line-height: 1.55;
+    }
+
+
+.topsis-next-step-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 18px;
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 10px;
+}
+
+
+    .topsis-next-step-meta span {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+
+    .topsis-next-step-meta i {
+        color: var(--sage-dark);
+        font-size: 11px;
+    }
+
+
+    .topsis-next-step-meta strong {
+        color: var(--ink);
+        font-family: var(--font-serif);
+        font-weight: 600;
+    }
+
+
+.topsis-next-step-actions {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex: 0 0 auto;
+}
+
+
+@media (max-width: 800px) {
+
+    .topsis-next-step {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+
+    .topsis-next-step-actions {
+        width: 100%;
+    }
+
+
+        .topsis-next-step-actions
+        .btn-primary,
+        .topsis-next-step-actions
+        .btn-outline {
+            flex: 1;
+        }
+}
+
+
+@media (max-width: 600px) {
+
+    .topsis-next-step-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+
+        .topsis-next-step-actions
+        .btn-primary,
+        .topsis-next-step-actions
+        .btn-outline {
+            width: 100%;
+        }
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 800px) {
+
+    .topsis-readiness-card,
+    .topsis-calculate-form {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+        .topsis-calculate-form .btn-primary {
+            width: 100%;
+        }
+}
+
+
+

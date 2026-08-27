@@ -1,0 +1,160 @@
+﻿html,
+body,
+button,
+input,
+select,
+textarea,
+table {
+    font-family: var(--font-serif);
+}
+
+html {
+    font-size: 16px;
+}
+
+body {
+    margin: 0;
+    background: var(--canvas);
+    color: var(--body);
+    font-family: var(--font-serif);
+    font-size: var(--font-size-md);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+    margin-top: 0;
+}
+
+a {
+    color: inherit;
+}
+
+
+/* =========================================================
+   PAGE TITLES
+   ========================================================= */
+
+.page-title {
+    margin: 0;
+    color: var(--ink);
+    font-family: var(--font-serif);
+    font-size: var(--font-size-h1);
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: -0.6px;
+}
+
+.section-title {
+    margin: 0;
+    color: var(--ink);
+    font-family: var(--font-serif);
+    font-size: var(--font-size-h2);
+    font-weight: 500;
+    line-height: 1.12;
+    letter-spacing: -0.3px;
+}
+
+.card-title {
+    margin: 0;
+    color: var(--ink);
+    font-family: var(--font-serif);
+    font-size: var(--font-size-xl);
+    font-weight: 500;
+    line-height: 1.25;
+}
+
+
+/* =========================================================
+   LABELS
+   ========================================================= */
+
+.page-eyebrow {
+    margin-bottom: var(--space-3);
+    color: var(--muted);
+    font-family: var(--font-serif);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    letter-spacing: 0.9px;
+    text-transform: uppercase;
+}
+
+.card-label {
+    color: var(--muted);
+    font-family: var(--font-serif);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+.page-description {
+    max-width: 680px;
+    margin: var(--space-4) 0 0;
+    color: var(--body);
+    font-size: var(--font-size-md);
+    line-height: 1.55;
+}
+
+
+/* =========================================================
+   NUMBERS
+   ========================================================= */
+
+.card-value {
+    display: block;
+    margin: 16px 0;
+    color: var(--ink);
+    font-family: var(--font-serif);
+    font-size: 46px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.8px;
+}
+
+.card-meta {
+    color: var(--muted);
+    font-size: var(--font-size-sm);
+}
+
+.ranking-score {
+    font-family: var(--font-serif);
+    font-size: 38px;
+    font-weight: 500;
+    line-height: 1;
+}
+
+.table-muted {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: var(--font-size-xs);
+}
+
+
+/* =========================================================
+   GENERAL
+   ========================================================= */
+
+strong {
+    color: var(--ink);
+    font-weight: 600;
+}
+
+small {
+    font-size: var(--font-size-xs);
+}

@@ -1,0 +1,1027 @@
+﻿@model SupplierSelectionDSS.Models.AHPComparisonViewModel
+
+@{
+    ViewData["Title"] = "AHP Pairwise Comparison";
+
+    var criteriaCount =
+        Model.Criteria.Count;
+
+    var canCalculate =
+        Model.Status != "Completed" &&
+        Model.Status != "Cancelled";
+
+    var hasResult =
+        Model.Result?.HasResult == true;
+
+    var isConsistent =
+        hasResult &&
+        Model.Result!.IsConsistent;
+}
+
+
+<!-- =========================================================
+     PAGE HEADER
+     ========================================================= -->
+
+<div class="page-header">
+
+    <div>
+
+        <div class="page-eyebrow">
+            AHP · ANALYTICAL HIERARCHY PROCESS
+        </div>
+
+        <h1 class="page-title">
+            Pairwise comparison
+        </h1>
+
+        <p class="page-description">
+            @Model.BatchCode
+            ·
+            @Model.BatchName
+        </p>
+
+    </div>
+
+
+    <div class="page-header-actions">
+
+        <span class="status-pill
+            status-@Model.Status.ToLowerInvariant()">
+
+            @Model.Status
+
+        </span>
+
+
+        <a asp-controller="EvaluationBatch"
+           asp-action="Details"
+           asp-route-id="@Model.BatchId"
+           class="btn-outline">
+
+            Back to Batch
+
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     ALERTS
+     ========================================================= -->
+@if (TempData["Success"] is string successMessage)
+{
+    <div class="alert-success">
+
+        @successMessage
+
+    </div>
+}
+
+
+@if (TempData["SuccessMessage"] is string successMessage2)
+{
+    <div class="alert-success">
+
+        @successMessage2
+
+    </div>
+}
+
+
+@if (TempData["Error"] is string errorMessage)
+{
+    <div class="alert-danger">
+
+        @errorMessage
+
+    </div>
+}
+
+
+@if (TempData["ErrorMessage"] is string errorMessage2)
+{
+    <div class="alert-danger">
+
+        @errorMessage2
+
+    </div>
+}
+
+
+<!-- =========================================================
+     WORKFLOW
+     ========================================================= -->
+
+<div class="ahp-workflow">
+
+    <div class="ahp-workflow-step ahp-workflow-complete">
+
+        <span class="ahp-workflow-number">
+            01
+        </span>
+
+        <div>
+
+            <strong>
+                Evaluation
+            </strong>
+
+            <small>
+                Supplier scores
+            </small>
+
+        </div>
+
+    </div>
+
+
+    <div class="ahp-workflow-line"></div>
+
+
+    <div class="ahp-workflow-step ahp-workflow-current">
+
+        <span class="ahp-workflow-number">
+            02
+        </span>
+
+        <div>
+
+            <strong>
+                AHP
+            </strong>
+
+            <small>
+                Criteria weights
+            </small>
+
+        </div>
+
+    </div>
+
+
+    <div class="ahp-workflow-line"></div>
+
+
+    <div class="ahp-workflow-step
+        @(isConsistent
+            ? "ahp-workflow-complete"
+            : "ahp-workflow-disabled")">
+
+        <span class="ahp-workflow-number">
+            03
+        </span>
+
+        <div>
+
+            <strong>
+                TOPSIS
+            </strong>
+
+            <small>
+                Supplier ranking
+            </small>
+
+        </div>
+
+    </div>
+
+
+    <div class="ahp-workflow-line"></div>
+
+
+    <div class="ahp-workflow-step ahp-workflow-disabled">
+
+        <span class="ahp-workflow-number">
+            04
+        </span>
+
+        <div>
+
+            <strong>
+                Result
+            </strong>
+
+            <small>
+                Decision
+            </small>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     SAATY SCALE
+     ========================================================= -->
+
+<div class="ahp-scale-card">
+
+    <div class="ahp-scale-intro">
+
+        <div class="page-eyebrow">
+            SAATY SCALE
+        </div>
+
+        <h2 class="section-title">
+            Relative importance
+        </h2>
+
+        <p>
+            Chỉ nhập các ô ở tam giác phía trên.
+            Hệ thống tự động tạo giá trị nghịch đảo
+            cho tam giác phía dưới.
+        </p>
+
+    </div>
+
+
+    <div class="ahp-scale-grid">
+
+        <div>
+            <strong>1</strong>
+            <span>Equal</span>
+        </div>
+
+        <div>
+            <strong>3</strong>
+            <span>Moderate</span>
+        </div>
+
+        <div>
+            <strong>5</strong>
+            <span>Strong</span>
+        </div>
+
+        <div>
+            <strong>7</strong>
+            <span>Very strong</span>
+        </div>
+
+        <div>
+            <strong>9</strong>
+            <span>Extreme</span>
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     PAIRWISE MATRIX
+     ========================================================= -->
+
+<div class="table-card ahp-matrix-card">
+
+    <form method="post"
+          action="@Url.Action(
+                              "Save",
+                              "AHP",
+                              new
+                              {
+                                  batchId = Model.BatchId
+                              })"
+          id="ahpForm">
+
+        @Html.AntiForgeryToken()
+
+
+        <input type="hidden"
+               name="BatchId"
+               value="@Model.BatchId" />
+
+
+        <div class="ahp-table-wrapper">
+
+            <table class="ahp-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th class="ahp-corner">
+                            Criteria
+                        </th>
+
+
+                        @foreach (
+                            var criterion
+                            in Model.Criteria)
+                        {
+                            <th>
+
+                                <span>
+                                    @criterion.CriteriaCode
+                                </span>
+
+                                <small>
+                                    @criterion.CriteriaName
+                                </small>
+
+                            </th>
+                        }
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    @{
+                        var comparisonIndex = 0;
+                    }
+
+
+                    @for (
+                        var rowIndex = 0;
+                        rowIndex < Model.Criteria.Count;
+                        rowIndex++)
+                    {
+                        var rowCriterion =
+                            Model.Criteria[rowIndex];
+
+
+                        <tr>
+
+                            <th class="ahp-row-header">
+
+                                <strong>
+                                    @rowCriterion.CriteriaCode
+                                </strong>
+
+                                <span>
+                                    @rowCriterion.CriteriaName
+                                </span>
+
+                            </th>
+
+
+                            @for (
+                                var colIndex = 0;
+                                colIndex < Model.Criteria.Count;
+                                colIndex++)
+                            {
+                                var colCriterion =
+                                    Model.Criteria[colIndex];
+
+
+                                var key =
+                                    $"{rowCriterion.CriteriaId}_{colCriterion.CriteriaId}";
+
+
+                                var isDiagonal =
+                                    rowIndex == colIndex;
+
+
+                                var isUpperTriangle =
+                                    rowIndex < colIndex;
+
+
+                                <td>
+
+                                    @if (isDiagonal)
+                                    {
+                                        <span class="ahp-diagonal">
+                                            1
+                                        </span>
+                                    }
+                                    else if (isUpperTriangle)
+                                    {
+                                        var existingValue =
+                                            Model.Values.TryGetValue(
+                                                key,
+                                                out var storedValue)
+                                                ? storedValue
+                                                : 0m;
+
+
+                                        <input type="hidden"
+                                               name="Comparisons[@comparisonIndex].CriteriaRowId"
+                                               value="@rowCriterion.CriteriaId" />
+
+
+                                        <input type="hidden"
+                                               name="Comparisons[@comparisonIndex].CriteriaColId"
+                                               value="@colCriterion.CriteriaId" />
+
+
+                                        <input type="number"
+                                               name="Comparisons[@comparisonIndex].Value"
+                                               value="@(existingValue == 0m
+                                                                                                   ? ""
+                                                                                                   : existingValue.ToString("0.####"))"
+                           class="ahp-input"
+                           min="0.1111"
+                           max="9"
+                           step="0.0001"
+                           placeholder="—"
+                           autocomplete="off" />
+
+
+                    <span class="ahp-input-help">
+                        1–9 / inverse
+                    </span>
+
+
+                    comparisonIndex++;
+                }
+                                    else
+                {
+                    var inverseKey =
+                        $"{colCriterion.CriteriaId}_{rowCriterion.CriteriaId}";
+
+
+                    if (
+                        Model.Values.TryGetValue(
+                            inverseKey,
+                            out var upperValue)
+                        &&
+                        upperValue > 0)
+                    {
+                        <span class="ahp-inverse-value">
+
+                            @FormatAHPValue(
+                                1m / upperValue)
+
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="ahp-empty">
+                            —
+                        </span>
+                    }
+                }
+
+            </td>
+        }
+
+    </tr>
+}
+
+</tbody>
+
+</table>
+
+</div>
+
+
+<!-- =================================================
+             SAVE FOOTER
+             ================================================= -->
+
+<div class="ahp-footer">
+
+    <div class="ahp-note">
+
+        <span class="ahp-note-dot"></span>
+
+        <span>
+            Ma trận sẽ được lưu trước khi tính AHP.
+        </span>
+
+    </div>
+
+
+    @if (canCalculate)
+    {
+        <button type="submit"
+                class="btn-outline">
+
+            Save comparisons
+
+        </button>
+    }
+
+</div>
+
+</form>
+
+</div>
+
+
+<!-- =========================================================
+     CALCULATE AHP
+     ========================================================= -->
+@if (criteriaCount >= 2 &&
+     canCalculate)
+{
+    <form method="post"
+          action="@Url.Action(
+                              "Calculate",
+                              "AHP",
+                              new
+                              {
+                                  batchId = Model.BatchId
+                              })"
+          class="ahp-calculate-form">
+
+        @Html.AntiForgeryToken()
+
+
+        <div class="ahp-calculate-content">
+
+            <div class="ahp-calculate-copy">
+
+                <div class="page-eyebrow">
+                    AHP CALCULATION
+                </div>
+
+                <h3>
+                    Calculate criteria weights.
+                </h3>
+
+                <p>
+                    Hệ thống sử dụng ma trận AHP đã lưu
+                    để tính trọng số tiêu chí, λmax, CI,
+                    RI và Consistency Ratio (CR).
+                </p>
+
+            </div>
+
+
+            <button type="submit"
+                    class="btn-primary">
+
+                <i class="bi bi-calculator"></i>
+
+                Calculate AHP
+
+            </button>
+
+        </div>
+
+    </form>
+}
+
+
+<!-- =========================================================
+     AHP RESULT
+     ========================================================= -->
+@if (hasResult)
+{
+    <div class="ahp-result-section">
+
+
+        <!-- =================================================
+             RESULT SUMMARY
+             ================================================= -->
+
+        <div class="ahp-result-card">
+
+            <div class="ahp-result-header">
+
+                <div>
+
+                    <div class="page-eyebrow">
+                        AHP RESULT
+                    </div>
+
+                    <h2 class="section-title">
+                        Consistency analysis
+                    </h2>
+
+                </div>
+
+
+                @if (isConsistent)
+                {
+                    <span class="
+                        ahp-consistency-badge
+                        ahp-consistency-good">
+
+                        <i class="bi bi-check-circle-fill"></i>
+
+                        Consistent
+
+                    </span>
+                }
+                else
+                {
+                    <span class="
+                        ahp-consistency-badge
+                        ahp-consistency-bad">
+
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+
+                        Inconsistent
+
+                    </span>
+                }
+
+            </div>
+
+
+            <div class="ahp-metrics">
+
+                <div class="ahp-metric">
+
+                    <span>
+                        λmax
+                    </span>
+
+                    <strong>
+                        @Model.Result!.LambdaMax.ToString("0.0000")
+                    </strong>
+
+                </div>
+
+
+                <div class="ahp-metric">
+
+                    <span>
+                        CI
+                    </span>
+
+                    <strong>
+                        @Model.Result.CIValue.ToString("0.0000")
+                    </strong>
+
+                </div>
+
+
+                <div class="ahp-metric">
+
+                    <span>
+                        RI
+                    </span>
+
+                    <strong>
+                        @Model.Result.RIValue.ToString("0.0000")
+                    </strong>
+
+                </div>
+
+
+                <div class="
+                    ahp-metric
+                    ahp-metric-highlight">
+
+                    <span>
+                        CR
+                    </span>
+
+                    <strong>
+                        @Model.Result.CRValue.ToString("0.0000")
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="ahp-consistency-note">
+
+                @if (isConsistent)
+                {
+                    <span>
+                        Ma trận đạt tính nhất quán.
+                        Có thể sử dụng trọng số AHP
+                        cho bước TOPSIS.
+                    </span>
+                }
+                else
+                {
+                    <span>
+                        Ma trận chưa đạt tính nhất quán.
+                        CR &gt; 0.10.
+                        Hãy điều chỉnh lại các so sánh cặp
+                        trước khi tiếp tục.
+                    </span>
+                }
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             CRITERIA WEIGHTS
+             ================================================= -->
+
+        <div class="table-card ahp-weight-card">
+
+            <div class="ahp-weight-header">
+
+                <div>
+
+                    <div class="page-eyebrow">
+                        CRITERIA WEIGHTS
+                    </div>
+
+                    <h2 class="section-title">
+                        Priority vector
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="data-table-wrapper">
+
+                <table class="data-table ahp-weight-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Rank
+                            </th>
+
+                            <th>
+                                Criteria
+                            </th>
+
+                            <th>
+                                Weight
+                            </th>
+
+                            <th>
+                                Percentage
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        @{
+                            var rank = 1;
+                        }
+
+
+                        @foreach (
+                            var weight
+                            in Model.Result!.Weights
+                                .OrderByDescending(
+                                    x =>
+                                        x.WeightValue))
+                        {
+                            <tr>
+
+                                <td>
+
+                                    <span class="weight-rank">
+                                        @rank
+                                    </span>
+
+                                </td>
+
+
+                                <td>
+
+                                    <strong>
+                                        @weight.CriteriaCode
+                                    </strong>
+
+                                    <span class="table-muted">
+                                        @weight.CriteriaName
+                                    </span>
+
+                                </td>
+
+
+                                <td>
+
+                                    <strong>
+                                        @weight.WeightValue.ToString("0.000000")
+                                    </strong>
+
+                                </td>
+
+
+                                <td>
+
+                                    <div class="weight-progress">
+
+                                        <div class="weight-progress-bar"
+                                             style="
+                                            width:@(
+                                             Math.Clamp(
+                                                 weight.Percentage,
+                                                 0,
+                                                 100)
+                                                                                        )%;
+                                            ">
+                                        </div>
+
+                                    </div>
+
+                                    <span class="weight-percentage">
+
+                                        @weight.Percentage.ToString("0.00")%
+
+                                    </span>
+
+                                </td>
+
+                            </tr>
+
+
+                            rank++;
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             NEXT STEP
+             ================================================= -->
+        @if (isConsistent)
+        {
+            <div class="ahp-next-step">
+
+                <div>
+
+                    <div class="page-eyebrow">
+                        NEXT STEP
+                    </div>
+
+                    <h2>
+                        Criteria weights are ready.
+                    </h2>
+
+                    <p>
+                        Ma trận AHP đã đạt yêu cầu nhất quán.
+                        Bạn có thể chuyển sang TOPSIS để
+                        xếp hạng nhà cung cấp.
+                    </p>
+
+                </div>
+
+
+                <div class="ahp-next-step-actions">
+
+                    <a asp-controller="EvaluationBatch"
+                       asp-action="Details"
+                       asp-route-id="@Model.BatchId"
+                       class="btn-outline">
+
+                        Batch Details
+
+                    </a>
+
+
+                    <a asp-controller="TOPSIS"
+                       asp-action="Index"
+                       asp-route-batchId="@Model.BatchId"
+                       class="btn-primary">
+
+                        Continue to TOPSIS
+
+                        <i class="bi bi-arrow-right"></i>
+
+                    </a>
+
+                </div>
+
+            </div>
+        }
+        else
+        {
+            <div class="
+                ahp-next-step
+                ahp-next-step-warning">
+
+                <div>
+
+                    <div class="page-eyebrow">
+                        REVIEW REQUIRED
+                    </div>
+
+                    <h2>
+                        Review the AHP matrix.
+                    </h2>
+
+                    <p>
+                        CR đang lớn hơn 0.10.
+                        Hãy điều chỉnh các so sánh cặp
+                        trước khi chuyển sang TOPSIS.
+                    </p>
+
+                </div>
+
+
+                <a asp-controller="AHP"
+                   asp-action="Index"
+                   asp-route-batchId="@Model.BatchId"
+                   class="btn-outline">
+
+                    Adjust Matrix
+
+                </a>
+
+            </div>
+        }
+
+    </div>
+}
+
+
+@functions {
+
+    public string FormatAHPValue(
+        decimal value)
+    {
+        var rounded =
+            Math.Round(
+                value,
+                4);
+
+
+        if (rounded == 1m)
+            return "1";
+
+
+        if (
+            Math.Abs(
+                rounded - 0.5m)
+            < 0.0001m)
+        {
+            return "1/2";
+        }
+
+
+        if (
+            Math.Abs(
+                rounded - 0.3333m)
+            < 0.0001m)
+        {
+            return "1/3";
+        }
+
+
+        if (
+            Math.Abs(
+                rounded - 0.25m)
+            < 0.0001m)
+        {
+            return "1/4";
+        }
+
+
+        if (
+            Math.Abs(
+                rounded - 0.2m)
+            < 0.0001m)
+        {
+            return "1/5";
+        }
+
+
+        if (
+            Math.Abs(
+                rounded - 0.1667m)
+            < 0.0001m)
+        {
+            return "1/6";
+        }
+
+
+        if (
+            Math.Abs(
+                rounded - 0.1429m)
+            < 0.0001m)
+        {
+            return "1/7";
+        }
+
+
+        if (
+            Math.Abs(
+                rounded - 0.125m)
+            < 0.0001m)
+        {
+            return "1/8";
+        }
+
+
+        if (
+            Math.Abs(
+                rounded - 0.1111m)
+            < 0.0001m)
+        {
+            return "1/9";
+        }
+
+
+        return rounded.ToString("0.####");
+    }
+
+}

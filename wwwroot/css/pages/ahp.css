@@ -1,0 +1,812 @@
+﻿/* =========================================================
+   AHP SCALE CARD
+   ========================================================= */
+
+.ahp-scale-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    margin-bottom: 24px;
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+}
+
+
+.ahp-scale-intro {
+    min-width: 280px;
+}
+
+
+    .ahp-scale-intro .section-title {
+        margin: 0;
+    }
+
+
+    .ahp-scale-intro p {
+        max-width: 560px;
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+
+/* =========================================================
+   AHP WORKFLOW
+   ========================================================= */
+
+.ahp-workflow {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 18px 22px;
+    box-sizing: border-box;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    overflow-x: auto;
+}
+
+
+.ahp-workflow-step {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex: 0 0 auto;
+    min-width: 0;
+}
+
+
+.ahp-workflow-number {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 32px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--canvas-soft);
+    color: var(--muted);
+    font-family: var(--font-serif);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+
+.ahp-workflow-step > div:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    white-space: nowrap;
+}
+
+
+.ahp-workflow-step strong {
+    color: var(--ink);
+    font-family: var(--font-serif);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+
+.ahp-workflow-step small {
+    color: var(--muted);
+    font-size: 10px;
+}
+
+
+.ahp-workflow-complete
+.ahp-workflow-number {
+    border-color: var(--sage-soft);
+    background: var(--sage-soft);
+    color: var(--sage-dark);
+}
+
+
+.ahp-workflow-complete
+strong {
+    color: var(--sage-dark);
+}
+
+
+.ahp-workflow-current
+.ahp-workflow-number {
+    border-color: var(--lavender);
+    background: var(--lavender-soft);
+    color: var(--lavender-dark);
+}
+
+
+.ahp-workflow-current
+strong {
+    color: var(--lavender-dark);
+}
+
+
+.ahp-workflow-disabled {
+    opacity: .48;
+}
+
+
+.ahp-workflow-line {
+    flex: 1;
+    min-width: 28px;
+    height: 1px;
+    margin: 0 14px;
+    background: var(--border);
+}
+
+
+/* =========================================================
+   SAATY SCALE
+   ========================================================= */
+
+.ahp-scale-grid {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+
+
+    .ahp-scale-grid > div {
+        min-width: 72px;
+        padding: 10px 12px;
+        box-sizing: border-box;
+        border-radius: var(--radius-md);
+        background: var(--lavender-soft);
+        text-align: center;
+    }
+
+
+    .ahp-scale-grid strong {
+        display: block;
+        color: var(--lavender-dark);
+        font-family: var(--font-serif);
+        font-size: 19px;
+        font-weight: 600;
+    }
+
+
+    .ahp-scale-grid span {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 11px;
+    }
+
+
+/* =========================================================
+   MATRIX CARD
+   ========================================================= */
+
+.ahp-matrix-card {
+    overflow: hidden;
+}
+
+
+.ahp-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+
+.ahp-table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: var(--font-serif);
+}
+
+
+    .ahp-table th,
+    .ahp-table td {
+        padding: 12px;
+        border-right: 1px solid var(--border-soft);
+        border-bottom: 1px solid var(--border-soft);
+        text-align: center;
+        vertical-align: middle;
+    }
+
+
+    .ahp-table thead th {
+        background: var(--canvas-soft);
+        color: var(--ink);
+        vertical-align: bottom;
+    }
+
+
+    .ahp-table th:last-child,
+    .ahp-table td:last-child {
+        border-right: none;
+    }
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.ahp-corner {
+    width: 220px;
+    min-width: 220px;
+    text-align: left !important;
+}
+
+
+.ahp-table thead th span {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+.ahp-table thead th small {
+    display: block;
+    max-width: 130px;
+    margin: 4px auto 0;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1.25;
+}
+
+
+/* =========================================================
+   ROW HEADER
+   ========================================================= */
+
+.ahp-row-header {
+    min-width: 220px;
+    background: var(--surface-soft);
+    text-align: left !important;
+}
+
+
+    .ahp-row-header strong {
+        display: block;
+        color: var(--ink);
+        font-size: 14px;
+    }
+
+
+    .ahp-row-header span {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.25;
+    }
+
+
+/* =========================================================
+   DIAGONAL
+   ========================================================= */
+
+.ahp-diagonal {
+    width: 42px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    background: var(--surface-muted);
+    color: var(--muted);
+    font-family: var(--font-serif);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   INPUT
+   ========================================================= */
+
+.ahp-input {
+    width: 82px;
+    height: 40px;
+    box-sizing: border-box;
+    padding: 7px 9px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--font-serif);
+    font-size: 16px;
+    text-align: center;
+    transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+
+    .ahp-input:hover {
+        background: var(--canvas-soft);
+    }
+
+
+    .ahp-input:focus {
+        outline: none;
+        border-color: var(--lavender);
+        background: var(--lavender-soft);
+        box-shadow: 0 0 0 3px rgba(133, 115, 167, .10);
+    }
+
+
+    .ahp-input::placeholder {
+        color: var(--muted-soft);
+    }
+
+
+.ahp-input-help {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted-soft);
+    font-size: 9px;
+}
+
+
+/* =========================================================
+   INVERSE VALUE
+   ========================================================= */
+
+.ahp-inverse-value {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 48px;
+    min-height: 40px;
+    padding: 0 8px;
+    box-sizing: border-box;
+    border-radius: var(--radius-sm);
+    background: var(--surface-muted);
+    color: var(--muted);
+    font-size: 14px;
+    font-style: italic;
+}
+
+
+.ahp-empty {
+    color: var(--muted-soft);
+}
+
+
+/* =========================================================
+   SAVE FOOTER
+   ========================================================= */
+
+.ahp-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 18px 20px;
+    background: var(--canvas-soft);
+    border-top: 1px solid var(--border);
+}
+
+
+.ahp-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+
+.ahp-note-dot {
+    width: 7px;
+    height: 7px;
+    flex: 0 0 7px;
+    border-radius: 50%;
+    background: var(--lavender);
+}
+
+
+/* =========================================================
+   CALCULATE CARD
+   ========================================================= */
+
+.ahp-calculate-form {
+    margin-top: 16px;
+}
+
+
+.ahp-calculate-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 22px 24px;
+    box-sizing: border-box;
+    background: var(--canvas-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+}
+
+
+.ahp-calculate-copy {
+    min-width: 0;
+}
+
+
+.ahp-calculate-content h3 {
+    margin: 0;
+    color: var(--ink);
+    font-family: var(--font-serif);
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+
+.ahp-calculate-content p {
+    max-width: 700px;
+    margin: 7px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   RESULT SECTION
+   ========================================================= */
+
+.ahp-result-section {
+    margin-top: 28px;
+}
+
+
+.ahp-result-card {
+    margin-bottom: 16px;
+    padding: 28px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+}
+
+
+.ahp-result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+
+    .ahp-result-header .section-title {
+        margin: 0;
+    }
+
+
+/* =========================================================
+   CONSISTENCY BADGE
+   ========================================================= */
+
+.ahp-consistency-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-serif);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+
+.ahp-consistency-good {
+    background: var(--sage-soft);
+    color: var(--sage-dark);
+}
+
+
+.ahp-consistency-bad {
+    background: var(--danger-soft);
+    color: var(--danger-dark);
+}
+
+
+/* =========================================================
+   METRICS
+   ========================================================= */
+
+.ahp-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+
+
+.ahp-metric {
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 18px;
+    box-sizing: border-box;
+    background: var(--canvas-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+
+
+    .ahp-metric span {
+        color: var(--muted);
+        font-family: var(--font-serif);
+        font-size: 13px;
+    }
+
+
+    .ahp-metric strong {
+        color: var(--ink);
+        font-family: var(--font-serif);
+        font-size: 28px;
+        font-weight: 500;
+    }
+
+
+.ahp-metric-highlight {
+    background: var(--lavender-soft);
+    border-color: var(--lavender);
+}
+
+
+    .ahp-metric-highlight strong {
+        color: var(--lavender-dark);
+    }
+
+
+/* =========================================================
+   CONSISTENCY NOTE
+   ========================================================= */
+
+.ahp-consistency-note {
+    margin-top: 18px;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    background: var(--canvas-soft);
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   WEIGHT CARD
+   ========================================================= */
+
+.ahp-weight-card {
+    overflow: hidden;
+}
+
+
+.ahp-weight-header {
+    padding: 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+
+    .ahp-weight-header .section-title {
+        margin: 0;
+    }
+
+
+.ahp-weight-table {
+    margin: 0;
+}
+
+
+.weight-rank {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--surface-muted);
+    color: var(--muted);
+    font-family: var(--font-serif);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+
+.weight-progress {
+    width: 130px;
+    height: 6px;
+    display: inline-block;
+    margin-right: 10px;
+    overflow: hidden;
+    vertical-align: middle;
+    border-radius: var(--radius-pill);
+    background: var(--lavender-soft);
+}
+
+
+.weight-progress-bar {
+    height: 100%;
+    border-radius: var(--radius-pill);
+    background: var(--lavender);
+}
+
+
+.weight-percentage {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   NEXT STEP
+   ========================================================= */
+
+.ahp-next-step {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-top: 16px;
+    padding: 24px 28px;
+    background: var(--canvas-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+}
+
+
+    .ahp-next-step > div {
+        min-width: 0;
+    }
+
+
+    .ahp-next-step h2 {
+        margin: 0;
+        color: var(--ink);
+        font-family: var(--font-serif);
+        font-size: 24px;
+        font-weight: 500;
+        line-height: 1.2;
+    }
+
+
+    .ahp-next-step p {
+        max-width: 700px;
+        margin: 7px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+
+.ahp-next-step-actions {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex: 0 0 auto;
+}
+
+
+.ahp-next-step-warning {
+    background: var(--danger-soft);
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1000px) {
+
+    .ahp-scale-card {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+
+    .ahp-scale-grid {
+        width: 100%;
+        overflow-x: auto;
+    }
+}
+
+
+@media (max-width: 900px) {
+
+    .ahp-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+
+    .ahp-calculate-content,
+    .ahp-next-step {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+
+        .ahp-calculate-content .btn-primary,
+        .ahp-next-step-actions .btn-primary,
+        .ahp-next-step-actions .btn-outline {
+            flex: 1;
+        }
+
+
+    .ahp-next-step-actions {
+        width: 100%;
+    }
+}
+
+
+@media (max-width: 700px) {
+
+    .ahp-workflow {
+        padding: 15px 16px;
+    }
+
+
+    .ahp-workflow-content {
+        display: none;
+    }
+
+
+    .ahp-workflow-line {
+        min-width: 18px;
+        margin: 0 8px;
+    }
+}
+
+
+@media (max-width: 600px) {
+
+    .ahp-footer {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+
+        .ahp-footer .btn-outline {
+            width: 100%;
+        }
+
+
+    .ahp-metrics {
+        grid-template-columns: 1fr;
+    }
+
+
+    .ahp-result-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+
+    .ahp-scale-grid {
+        max-width: 100%;
+        padding-bottom: 4px;
+    }
+
+
+    .ahp-calculate-content {
+        padding: 20px;
+    }
+
+
+    .ahp-next-step-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+
+        .ahp-next-step-actions .btn-primary,
+        .ahp-next-step-actions .btn-outline {
+            width: 100%;
+        }
+}

@@ -1,0 +1,630 @@
+﻿@model SupplierSelectionDSS.Models.TOPSISViewModel
+
+@{
+    ViewData["Title"] = "TOPSIS";
+}
+
+<div class="page-header">
+
+    <div>
+
+        <div class="page-eyebrow">
+            TOPSIS · TECHNIQUE FOR ORDER PREFERENCE
+        </div>
+
+        <h1 class="page-title">
+            Supplier ranking.
+        </h1>
+
+        <p class="page-description">
+            @Model.BatchCode
+            ·
+            @Model.BatchName
+        </p>
+
+    </div>
+
+
+    <span class="status-pill status-@Model.Status.ToLowerInvariant()">
+        @Model.Status
+    </span>
+
+</div>
+
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert-success">
+        @successMessage
+    </div>
+}
+
+
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert-danger">
+        @errorMessage
+    </div>
+}
+
+
+<!-- =========================================================
+     AHP STATUS
+     ========================================================= -->
+
+<div class="topsis-readiness-card">
+
+    <div>
+
+        <div class="page-eyebrow">
+            AHP READINESS
+        </div>
+
+        <h2>
+            Criteria weights.
+        </h2>
+
+    </div>
+
+
+    @if (!Model.HasAHPResult)
+    {
+        <span class="topsis-readiness-badge topsis-badge-error">
+            AHP result unavailable
+        </span>
+    }
+    else if (!Model.IsAHPConsistent)
+    {
+        <span class="topsis-readiness-badge topsis-badge-error">
+            AHP inconsistent ·
+            CR = @Model.AHPConsistencyRatio.ToString("0.0000")
+        </span>
+    }
+    else
+    {
+        <span class="topsis-readiness-badge topsis-badge-success">
+            ✓ AHP consistent ·
+            CR = @Model.AHPConsistencyRatio.ToString("0.0000")
+        </span>
+    }
+
+</div>
+
+
+<!-- =========================================================
+     CRITERIA
+     ========================================================= -->
+
+<div class="topsis-summary-grid">
+
+    @foreach (var criterion in Model.Criteria)
+    {
+        <div class="topsis-criteria-card">
+
+            <span class="topsis-criteria-code">
+                @criterion.CriteriaCode
+            </span>
+
+            <strong>
+                @criterion.CriteriaName
+            </strong>
+
+            <div class="topsis-criteria-meta">
+
+                <span>
+                    @criterion.CriteriaType
+                </span>
+
+                @if (!string.IsNullOrWhiteSpace(
+                    criterion.Unit))
+                {
+                    <span>
+                        · @criterion.Unit
+                    </span>
+                }
+
+            </div>
+
+            <div class="topsis-weight">
+
+                <span>
+                    AHP Weight
+                </span>
+
+                <strong>
+                    @(
+                        ((double)criterion.Weight * 100)
+                        .ToString("0.00")
+                    )%
+                </strong>
+
+            </div>
+
+        </div>
+    }
+
+</div>
+
+
+<!-- =========================================================
+     DECISION MATRIX
+     ========================================================= -->
+
+<div class="table-card topsis-matrix-card">
+
+    <div class="topsis-card-header">
+
+        <div>
+
+            <div class="page-eyebrow">
+                DECISION MATRIX
+            </div>
+
+            <h2 class="section-title">
+                Raw evaluation values.
+            </h2>
+
+        </div>
+
+    </div>
+
+
+    <div class="topsis-table-wrapper">
+
+        <table class="topsis-table">
+
+            <thead>
+
+                <tr>
+
+                    <th class="topsis-supplier-column">
+                        Supplier
+                    </th>
+
+                    @foreach (var criterion
+                        in Model.Criteria)
+                    {
+                        <th>
+
+                            <span>
+                                @criterion.CriteriaCode
+                            </span>
+
+                            <small>
+                                @criterion.CriteriaType
+                            </small>
+
+                        </th>
+                    }
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                @foreach (var supplier
+                    in Model.Suppliers)
+                {
+                    <tr>
+
+                        <td class="topsis-supplier-cell">
+
+                            <strong>
+                                @supplier.SupplierCode
+                            </strong>
+
+                            <span>
+                                @supplier.SupplierName
+                            </span>
+
+                        </td>
+
+
+                        @foreach (var criterion
+                            in Model.Criteria)
+                        {
+                            <td>
+
+                                @if (supplier.Scores.TryGetValue(
+                                    criterion.CriteriaId,
+                                    out var score))
+                                {
+                                    <strong>
+                                        @score.ToString("N4")
+                                    </strong>
+
+                                    @if (!string.IsNullOrWhiteSpace(
+                                        criterion.Unit))
+                                    {
+                                        <small>
+                                            @criterion.Unit
+                                        </small>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="topsis-missing">
+                                        —
+                                    </span>
+                                }
+
+                            </td>
+                        }
+
+                    </tr>
+                }
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     CALCULATE
+     ========================================================= -->
+@if (Model.HasAHPResult &&
+     Model.IsAHPConsistent)
+{
+    <form method="post"
+          action="@Url.Action(
+                      "Calculate",
+                      "TOPSIS",
+                      new { batchId = Model.BatchId })"
+          class="topsis-calculate-form">
+
+        @Html.AntiForgeryToken()
+
+        <div>
+
+            <div class="page-eyebrow">
+                DECISION CALCULATION
+            </div>
+
+            <h2>
+                Calculate supplier ranking.
+            </h2>
+
+            <p>
+                TOPSIS sẽ sử dụng Evaluation Scores và
+                trọng số AHP hiện tại để xác định PIS,
+                NIS và thứ hạng nhà cung cấp.
+            </p>
+
+        </div>
+
+
+        <button type="submit"
+                class="btn-primary">
+
+            Calculate TOPSIS
+
+        </button>
+
+    </form>
+}
+else
+{
+    <div class="topsis-lock-card">
+
+        <div class="page-eyebrow">
+            TOPSIS LOCKED
+        </div>
+
+        <h2>
+            AHP must be consistent first.
+        </h2>
+
+        <p>
+            Hoàn thành AHP và đạt CR ≤ 0.10 trước khi
+            thực hiện TOPSIS.
+        </p>
+
+    </div>
+}
+
+
+<!-- =========================================================
+     IDEAL SOLUTIONS
+     ========================================================= -->
+@if (Model.IdealSolutions.Any())
+{
+    <div class="table-card topsis-ideal-card">
+
+        <div class="topsis-card-header">
+
+            <div>
+
+                <div class="page-eyebrow">
+                    IDEAL SOLUTIONS
+                </div>
+
+                <h2 class="section-title">
+                    PIS & NIS.
+                </h2>
+
+            </div>
+
+        </div>
+
+
+        <div class="topsis-table-wrapper">
+
+            <table class="topsis-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Criteria
+                        </th>
+
+                        <th>
+                            Type
+                        </th>
+
+                        <th>
+                            PIS
+                        </th>
+
+                        <th>
+                            NIS
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    @foreach (
+                        var ideal
+                        in Model.IdealSolutions)
+                    {
+                        <tr>
+
+                            <td>
+
+                                <strong>
+                                    @ideal.CriteriaCode
+                                </strong>
+
+                                <span>
+                                    @ideal.CriteriaName
+                                </span>
+
+                            </td>
+
+
+                            <td>
+                                @ideal.CriteriaType
+                            </td>
+
+
+                            <td class="topsis-pis">
+                                @ideal.PISValue.ToString("N6")
+                            </td>
+
+
+                            <td class="topsis-nis">
+                                @ideal.NISValue.ToString("N6")
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+}
+
+
+<!-- =========================================================
+     RANKING
+     ========================================================= -->
+@if (Model.Ranking.Any())
+{
+    <div class="table-card topsis-ranking-card">
+
+        <div class="topsis-card-header">
+
+            <div>
+
+                <div class="page-eyebrow">
+                    FINAL RANKING
+                </div>
+
+                <h2 class="section-title">
+                    Supplier ranking.
+                </h2>
+
+            </div>
+
+        </div>
+
+
+        <div class="topsis-table-wrapper">
+
+            <table class="topsis-table topsis-ranking-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Rank
+                        </th>
+
+                        <th>
+                            Supplier
+                        </th>
+
+                        <th>
+                            Distance to PIS
+                        </th>
+
+                        <th>
+                            Distance to NIS
+                        </th>
+
+                        <th>
+                            Closeness
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    @foreach (var ranking
+                        in Model.Ranking
+                            .OrderBy(
+                                x => x.RankNo))
+                    {
+                        <tr class="@(ranking.RankNo == 1
+                                                            ? "topsis-winner-row"
+                                                            : "")">
+
+                            <td>
+
+                                <span class="topsis-rank">
+                                    @ranking.RankNo
+                                </span>
+
+                            </td>
+
+
+                            <td>
+
+                                <strong>
+                                    @ranking.SupplierCode
+                                </strong>
+
+                                <span>
+                                    @ranking.SupplierName
+                                </span>
+
+                            </td>
+
+
+                            <td>
+                                @ranking.DistanceToPIS.ToString("0.000000")
+                            </td>
+
+
+                            <td>
+                                @ranking.DistanceToNIS.ToString("0.000000")
+                            </td>
+
+
+                            <td>
+
+                                <strong class="topsis-score">
+                                    @ranking.ClosenessCoefficient.ToString("0.000000")
+                                </strong>
+
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+}
+
+@if (Model.Ranking != null &&
+     Model.Ranking.Any())
+{
+    <div class="topsis-next-step">
+
+        <div class="topsis-next-step-content">
+
+            <div class="page-eyebrow">
+                NEXT STEP
+            </div>
+
+            <h3>
+                TOPSIS calculation completed.
+            </h3>
+
+            <p>
+                Kết quả xếp hạng nhà cung cấp đã được lưu.
+                Bạn có thể chuyển sang Decision Result để
+                xem nhà cung cấp được đề xuất.
+            </p>
+
+            <div class="topsis-next-step-meta">
+
+                <span>
+                    <i class="bi bi-check-circle-fill"></i>
+                    @Model.Ranking.Count suppliers ranked
+                </span>
+
+                @{
+                    var winner =
+                        Model.Ranking
+                            .OrderBy(x => x.RankNo)
+                            .FirstOrDefault();
+                }
+
+                @if (winner != null)
+                {
+                    <span>
+                        <i class="bi bi-trophy-fill"></i>
+                        Recommended:
+                        <strong>
+                            @winner.SupplierCode
+                        </strong>
+                    </span>
+                }
+
+            </div>
+
+        </div>
+
+
+        <div class="topsis-next-step-actions">
+
+            <a asp-controller="EvaluationBatch"
+               asp-action="Details"
+               asp-route-id="@Model.BatchId"
+               class="btn-outline">
+
+                Batch Details
+
+            </a>
+
+
+            <a asp-controller="DecisionResult"
+               asp-action="Index"
+               asp-route-batchId="@Model.BatchId"
+               class="btn-primary">
+
+                View Decision Result
+
+                <i class="bi bi-arrow-right"></i>
+
+            </a>
+
+        </div>
+
+    </div>
+}

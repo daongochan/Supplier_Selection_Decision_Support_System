@@ -1,0 +1,33 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using SupplierSelectionDSS.Models;
+using SupplierSelectionDSS.Data;
+
+namespace SupplierSelectionDSS.Controllers;
+
+public class DatabaseTestController : Controller
+{
+    private readonly ApplicationDbContext _context;
+
+    public DatabaseTestController(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    public IActionResult Verify()
+    {
+        var user = _context.Users
+            .FirstOrDefault(x => x.Username == "admin");
+
+        if (user == null)
+        {
+            return Content("User not found");
+        }
+
+        var result = BCrypt.Net.BCrypt.Verify(
+            "Admin@123",
+            user.PasswordHash);
+
+        return Content($"Password valid: {result}");
+    }
+}

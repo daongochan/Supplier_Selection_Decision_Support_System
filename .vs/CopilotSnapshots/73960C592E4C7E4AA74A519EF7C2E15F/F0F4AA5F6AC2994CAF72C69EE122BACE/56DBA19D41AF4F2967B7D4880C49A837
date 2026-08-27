@@ -1,0 +1,368 @@
+﻿@model SupplierSelectionDSS.Models.SupplierIndexViewModel
+
+@{
+    ViewData["Title"] = "Suppliers";
+
+    var pageSize =
+        Model.PageSize <= 0
+            ? 10
+            : Model.PageSize;
+}
+
+<div class="page-header">
+
+    <div>
+
+        <h1 class="page-title">
+            Suppliers
+        </h1>
+
+        <p class="page-description">
+            Quản lý thông tin và trạng thái các nhà cung cấp
+            tham gia hệ thống đánh giá.
+        </p>
+
+    </div>
+
+
+    <a asp-action="Create"
+       class="btn-primary">
+
+        Add supplier
+
+    </a>
+
+</div>
+
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert-success">
+        @successMessage
+    </div>
+}
+
+
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert-danger">
+        @errorMessage
+    </div>
+}
+
+
+<!-- =========================================================
+     FILTER
+     ========================================================= -->
+
+<div class="filter-card">
+
+    <form asp-action="Index"
+          method="get"
+          class="supplier-filter">
+
+        <input type="hidden"
+               name="page"
+               value="1" />
+
+
+        <div class="filter-field">
+
+            <label for="keyword">
+                Search
+            </label>
+
+            <input id="keyword"
+                   name="keyword"
+                   value="@Model.Keyword"
+                   class="form-control"
+                   placeholder="Supplier code, name or contact..." />
+
+        </div>
+
+
+        <div class="filter-field">
+
+            <label for="status">
+                Status
+            </label>
+
+            <select id="status"
+                    name="status"
+                    class="form-control">
+
+                <option value="All"
+                        selected="@(Model.Status == "All")">
+                    All
+                </option>
+
+                <option value="Active"
+                        selected="@(Model.Status == "Active")">
+                    Active
+                </option>
+
+                <option value="Inactive"
+                        selected="@(Model.Status == "Inactive")">
+                    Inactive
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="filter-field">
+
+            <label for="pageSize">
+                Rows
+            </label>
+
+            <select id="pageSize"
+                    name="pageSize"
+                    class="form-control">
+
+                <option value="10"
+                        selected="@(pageSize == 10)">
+                    10
+                </option>
+
+                <option value="20"
+                        selected="@(pageSize == 20)">
+                    20
+                </option>
+
+                <option value="50"
+                        selected="@(pageSize == 50)">
+                    50
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="filter-actions">
+
+            <button type="submit"
+                    class="btn-primary">
+
+                Search
+
+            </button>
+
+
+            <a asp-action="Index"
+               class="btn-outline">
+
+                Reset
+
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<!-- =========================================================
+     TABLE
+     ========================================================= -->
+
+<div class="table-card">
+
+    @if (Model.Suppliers.Any())
+    {
+        <div class="data-table-wrapper">
+
+            <table class="data-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Code
+                        </th>
+
+                        <th>
+                            Supplier
+                        </th>
+
+                        <th>
+                            Contact
+                        </th>
+
+                        <th>
+                            Business field
+                        </th>
+
+                        <th>
+                            Status
+                        </th>
+
+                        <th>
+                            Actions
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    @foreach (var supplier in Model.Suppliers)
+                    {
+                        <tr>
+
+                            <td>
+                                <strong>
+                                    @supplier.SupplierCode
+                                </strong>
+                            </td>
+
+
+                            <td>
+                                <strong>
+                                    @supplier.SupplierName
+                                </strong>
+
+                                @if (!string.IsNullOrWhiteSpace(supplier.Address))
+                                {
+                                    <span class="table-muted">
+                                        @supplier.Address
+                                    </span>
+                                }
+                            </td>
+
+
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(supplier.ContactPerson))
+                                {
+                                    <strong>
+                                        @supplier.ContactPerson
+                                    </strong>
+                                }
+
+                                @if (!string.IsNullOrWhiteSpace(supplier.Email))
+                                {
+                                    <span class="table-muted">
+                                        @supplier.Email
+                                    </span>
+                                }
+                            </td>
+
+
+                            <td>
+                                @if (string.IsNullOrWhiteSpace(supplier.BusinessField))
+                                {
+                                    @:—
+                                }
+                                else
+                                {
+                                    @supplier.BusinessField
+                                }
+                            </td>
+
+
+                            <td>
+                                @if (supplier.Status == "Active")
+                                {
+                                    <span class="status-pill supplier-active">
+                                        Active
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="status-pill supplier-inactive">
+                                        Inactive
+                                    </span>
+                                }
+                            </td>
+
+
+                            <td>
+                                <div class="table-actions">
+
+                                    <a asp-action="Edit"
+                                       asp-route-id="@supplier.SupplierId"
+                                       class="action-link">
+                                        Edit
+                                    </a>
+
+                                    <form asp-action="ToggleStatus"
+                                          method="post">
+
+                                        @Html.AntiForgeryToken()
+
+                                        <input type="hidden"
+                                               name="id"
+                                               value="@supplier.SupplierId" />
+
+                                        <button type="submit"
+                                                class="action-link">
+                                            @if (supplier.Status == "Active")
+                                            {
+                                                @:Deactivate
+                                            }
+                                            else
+                                            {
+                                                @:Activate
+                                            }
+                                        </button>
+
+                                    </form>
+
+                                </div>
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        @{
+            ViewData["PageNumber"] = Model.PageNumber;
+            ViewData["TotalPages"] = Model.TotalPages;
+            ViewData["TotalCount"] = Model.TotalCount;
+            ViewData["StartItemNumber"] = Model.StartItemNumber;
+            ViewData["EndItemNumber"] = Model.EndItemNumber;
+            ViewData["HasPreviousPage"] = Model.HasPreviousPage;
+            ViewData["HasNextPage"] = Model.HasNextPage;
+            ViewData["Keyword"] = Model.Keyword;
+            ViewData["Status"] = Model.Status;
+            ViewData["PageSize"] = Model.PageSize;
+            ViewData["Action"] = "Index";
+        }
+        <partial name="_Pagination" />
+    }
+    else
+    {
+        <div class="empty-state">
+
+            <h3>
+                No suppliers found.
+            </h3>
+
+            <p>
+                Không có nhà cung cấp nào phù hợp với điều kiện
+                tìm kiếm hiện tại.
+            </p>
+
+            <a asp-action="Create"
+               class="btn-primary">
+
+                Add supplier
+
+            </a>
+
+        </div>
+    }
+
+</div>

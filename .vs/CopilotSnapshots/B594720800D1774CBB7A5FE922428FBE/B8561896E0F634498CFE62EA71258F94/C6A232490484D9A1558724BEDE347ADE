@@ -1,0 +1,368 @@
+﻿using Microsoft.EntityFrameworkCore;
+using SupplierSelectionDSS.Data;
+using SupplierSelectionDSS.Data.Entities;
+
+namespace SupplierSelectionDSS.Services;
+
+public class EvaluationWorkflowState
+{
+    public string Step { get; set; } = "Setup";
+
+    public string Title { get; set; } = string.Empty;
+
+    public string Description { get; set; } = string.Empty;
+
+
+    public bool SetupComplete { get; set; }
+
+    public bool EvaluationComplete { get; set; }
+
+    public bool AHPAvailable { get; set; }
+
+    public bool AHPResultExists { get; set; }
+
+    public bool AHPConsistent { get; set; }
+
+    public decimal? AHPCR { get; set; }
+
+    public bool TOPSISAvailable { get; set; }
+
+    public bool TOPSISComplete { get; set; }
+
+    public bool ResultAvailable { get; set; }
+
+    public bool FinalApprovalExists { get; set; }
+
+
+    public int SupplierCount { get; set; }
+
+    public int CriteriaCount { get; set; }
+
+    public int EvaluationScoreCount { get; set; }
+
+    public int ExpectedEvaluationScoreCount { get; set; }
+
+    public int AHPComparisonCount { get; set; }
+
+    public int ExpectedAHPComparisonCount { get; set; }
+
+    public int TOPSISResultCount { get; set; }
+
+
+    public bool IsCompleted =>
+        FinalApprovalExists;
+}
+
+
+public class EvaluationWorkflowService
+{
+    private readonly ApplicationDbContext _context;
+
+
+    public EvaluationWorkflowService(
+        ApplicationDbContext context)
+    {
+        _context = context;
+    }","explanation":"Replace missing SupplierSelectionDSSContext with existing ApplicationDbContext defined in Data/ApplicationDbContext.cs"}
+
+
+    // =========================================================
+    // GET WORKFLOW STATE
+    // =========================================================
+
+    public async Task<EvaluationWorkflowState?>
+        GetStateAsync(
+            int batchId)
+    {
+        var batch =
+            await _context.EvaluationBatches
+                .AsNoTracking()
+                .Include(x => x.Suppliers)
+                .Include(x => x.Criteria)
+                .Include(x => x.EvaluationScores)
+                .Include(x => x.AhppairwiseComparisons)
+                .Include(x => x.Ahpresult)
+                .Include(x => x.TopsisResults)
+                .Include(x => x.Approvals)
+                .FirstOrDefaultAsync(
+                    x => x.BatchId == batchId);
+
+
+        if (batch == null)
+        {
+            return null;
+        }
+
+
+        var supplierCount =
+            batch.Suppliers.Count;
+
+
+        var criteriaCount =
+            batch.Criteria.Count;
+
+
+        var expectedEvaluationScoreCount =
+            supplierCount *
+            criteriaCount;
+
+
+        var evaluationScoreCount =
+            batch.EvaluationScores.Count;
+
+
+        /*
+         * Mỗi cặp Criteria có một giá trị trực tiếp,
+         * một giá trị nghịch đảo và đường chéo = 1.
+         *
+         * Vì vậy AHP Matrix hoàn chỉnh = n * n.
+         */
+
+        var expectedAHPComparisonCount =
+            criteriaCount *
+            criteriaCount;
+
+
+        var ahpComparisonCount =
+            batch.AhppairwiseComparisons.Count;
+
+
+        var evaluationComplete =
+            supplierCount > 0 &&
+            criteriaCount > 0 &&
+            evaluationScoreCount >=
+                expectedEvaluationScoreCount;
+
+
+        var ahpResultExists =
+            batch.Ahpresult != null;
+
+
+        var ahpConsistent =
+            ahpResultExists &&
+            batch.Ahpresult!.IsConsistent;
+
+
+        var topsisResultCount =
+            batch.TopsisResults.Count;
+
+
+        var topsisComplete =
+            supplierCount > 0 &&
+            topsisResultCount >= supplierCount;
+
+
+        var finalApprovalExists =
+            batch.Approvals.Any(
+                x =>
+                    x.IsFinal &&
+                    x.Status == "Approved");
+
+
+        var state =
+            new EvaluationWorkflowState
+            {
+                SupplierCount =
+                    supplierCount,
+
+                CriteriaCount =
+                    criteriaCount,
+
+                EvaluationScoreCount =
+                    evaluationScoreCount,
+
+                ExpectedEvaluationScoreCount =
+                    expectedEvaluationScoreCount,
+
+                AHPComparisonCount =
+                    ahpComparisonCount,
+
+                ExpectedAHPComparisonCount =
+                    expectedAHPComparisonCount,
+
+                AHPResultExists =
+                    ahpResultExists,
+
+                AHPConsistent =
+                    ahpConsistent,
+
+                AHPCR =
+                    ahpResultExists
+                        ? batch.Ahpresult!.Crvalue
+                        : null,
+
+                TOPSISResultCount =
+                    topsisResultCount,
+
+                TOPSISComplete =
+                    topsisComplete,
+
+                FinalApprovalExists =
+                    finalApprovalExists,
+
+                SetupComplete =
+                    supplierCount >= 2 &&
+                    criteriaCount >= 2,
+
+                EvaluationComplete =
+                    evaluationComplete,
+
+                AHPAvailable =
+                    evaluationComplete &&
+                    criteriaCount >= 2,
+
+                TOPSISAvailable =
+                    evaluationComplete &&
+                    ahpResultExists &&
+                    ahpConsistent,
+
+                ResultAvailable =
+                    topsisComplete
+            };
+
+
+        // =====================================================
+        // DETERMINE CURRENT STEP
+        // =====================================================
+
+        if (batch.Status == "Cancelled")
+        {
+            state.Step =
+                "Cancelled";
+
+            state.Title =
+                "Batch cancelled.";
+
+            state.Description =
+                "Đợt đánh giá đã được hủy.";
+
+            return state;
+        }
+
+
+        if (batch.Status == "Completed" ||
+            finalApprovalExists)
+        {
+            state.Step =
+                "Completed";
+
+            state.Title =
+                "Evaluation completed.";
+
+            state.Description =
+                "Quyết định cuối cùng đã được phê duyệt.";
+
+            return state;
+        }
+
+
+        if (batch.Status == "Draft")
+        {
+            state.Step =
+                "Setup";
+
+            if (!state.SetupComplete)
+            {
+                state.Title =
+                    "Complete batch setup.";
+
+                state.Description =
+                    $"Cần ít nhất 2 Supplier và 2 Criteria. " +
+                    $"Hiện có {supplierCount} Supplier và " +
+                    $"{criteriaCount} Criteria.";
+            }
+            else
+            {
+                state.Title =
+                    "Batch ready to start.";
+
+                state.Description =
+                    "Scope đã sẵn sàng. Có thể bắt đầu Evaluation.";
+            }
+
+            return state;
+        }
+
+
+        if (!evaluationComplete)
+        {
+            state.Step =
+                "Evaluation";
+
+            state.Title =
+                "Complete supplier evaluation.";
+
+            state.Description =
+                $"Đã nhập {evaluationScoreCount}/" +
+                $"{expectedEvaluationScoreCount} giá trị đánh giá.";
+
+            return state;
+        }
+
+
+        if (!ahpResultExists)
+        {
+            state.Step =
+                "AHP";
+
+            state.Title =
+                "Calculate AHP.";
+
+            state.Description =
+                ahpComparisonCount >=
+                    expectedAHPComparisonCount
+                    ? "Ma trận AHP đã đủ. Có thể Calculate AHP."
+                    : $"Đã có {ahpComparisonCount}/" +
+                      $"{expectedAHPComparisonCount} " +
+                      "giá trị ma trận AHP.";
+
+            return state;
+        }
+
+
+        if (!ahpConsistent)
+        {
+            state.Step =
+                "AHP";
+
+            state.Title =
+                "Review AHP consistency.";
+
+            state.Description =
+                $"CR = {(state.AHPCR ?? 0m):0.0000}. " +
+                "Cần điều chỉnh ma trận để CR ≤ 0.10.";
+
+            return state;
+        }
+
+
+        if (!topsisComplete)
+        {
+            state.Step =
+                "TOPSIS";
+
+            state.Title =
+                "Calculate TOPSIS.";
+
+            state.Description =
+                $"AHP hợp lệ. TOPSIS hiện có " +
+                $"{topsisResultCount}/{supplierCount} kết quả.";
+
+            return state;
+        }
+
+
+        state.Step =
+            "Result";
+
+        state.Title =
+            "Review and approve.";
+
+        state.Description =
+            "TOPSIS đã hoàn tất. Có thể xem kết quả " +
+            "và thực hiện quyết định cuối cùng.";
+
+
+        return state;
+    }
+}

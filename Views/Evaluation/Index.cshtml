@@ -1,0 +1,536 @@
+﻿@model SupplierSelectionDSS.Models.EvaluationViewModel
+
+@{
+    ViewData["Title"] = "Evaluation";
+
+
+    // =========================================================
+    // WORKFLOW STATUS
+    // =========================================================
+
+    var totalCells =
+        Model.Suppliers.Count *
+        Model.Criteria.Count;
+
+
+    var completedCells =
+        Model.Suppliers
+            .Sum(
+                supplier =>
+                    Model.Criteria.Count(
+                        criterion =>
+                            supplier.Scores
+                                .TryGetValue(
+                                    criterion.CriteriaId,
+                                    out var cell)
+                            &&
+                            cell.Score.HasValue));
+
+
+    var evaluationComplete =
+        totalCells > 0 &&
+        completedCells >= totalCells;
+
+
+    var canContinueToAHP =
+        User.IsInRole("Administrator") ||
+        User.IsInRole("Expert");
+
+
+    var canSaveEvaluation =
+        User.IsInRole("Administrator") ||
+        User.IsInRole("PurchasingStaff") ||
+        User.IsInRole("Expert");
+}
+
+
+<!-- =========================================================
+     PAGE HEADER
+     ========================================================= -->
+
+<div class="page-header">
+
+    <div>
+
+        <div class="page-eyebrow">
+            EVALUATION
+        </div>
+
+        <h1 class="page-title">
+            @Model.BatchCode
+        </h1>
+
+        <p class="page-description">
+            @Model.BatchName
+            ·
+            @Model.GroupName
+        </p>
+
+    </div>
+
+
+    <div class="evaluation-header-actions">
+
+        <span class="status-pill
+            status-@Model.Status.ToLowerInvariant()">
+
+            @Model.Status
+
+        </span>
+
+
+        <a asp-controller="EvaluationBatch"
+           asp-action="Details"
+           asp-route-id="@Model.BatchId"
+           class="btn-outline">
+
+            Back to Batch
+
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     ALERTS
+     ========================================================= -->
+@if (
+    TempData["SuccessMessage"]
+    is string successMessage)
+{
+    <div class="alert-success">
+
+        @successMessage
+
+    </div>
+}
+
+
+@if (
+    TempData["ErrorMessage"]
+    is string errorMessage)
+{
+    <div class="alert-danger">
+
+        @errorMessage
+
+    </div>
+}
+
+
+<!-- =========================================================
+     SUMMARY
+     ========================================================= -->
+
+<div class="evaluation-summary">
+
+    <div>
+
+        <span class="card-label">
+            BATCH
+        </span>
+
+        <strong>
+            @Model.BatchCode
+        </strong>
+
+    </div>
+
+
+    <div>
+
+        <span class="card-label">
+            SUPPLIERS
+        </span>
+
+        <strong>
+            @Model.Suppliers.Count.ToString("00")
+        </strong>
+
+    </div>
+
+
+    <div>
+
+        <span class="card-label">
+            CRITERIA
+        </span>
+
+        <strong>
+            @Model.Criteria.Count.ToString("00")
+        </strong>
+
+    </div>
+
+
+    <div>
+
+        <span class="card-label">
+            EVALUATION
+        </span>
+
+        <strong>
+            @completedCells / @totalCells
+        </strong>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     EVALUATION PROGRESS
+     ========================================================= -->
+
+<div class="evaluation-progress-card">
+
+    <div class="evaluation-progress-header">
+
+        <div>
+
+            <div class="page-eyebrow">
+                COMPLETION
+            </div>
+
+            <strong>
+                @completedCells / @totalCells values entered
+            </strong>
+
+        </div>
+
+
+        <span class="
+            @(evaluationComplete
+                ? "evaluation-progress-complete"
+                : "evaluation-progress-pending")">
+
+            @(evaluationComplete
+                ? "Complete"
+                : "In progress")
+
+        </span>
+
+    </div>
+
+
+    <div class="evaluation-progress-track">
+
+        <div class="evaluation-progress-bar"
+             style="
+            width:
+            @(totalCells > 0
+                ? Math.Min(
+                    100,
+                    completedCells * 100.0 /
+                    totalCells)
+                : 0)%;
+            ">
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     EVALUATION MATRIX
+     ========================================================= -->
+
+<div class="table-card evaluation-card">
+
+    <form asp-action="Save"
+          method="post"
+          id="evaluationForm">
+
+        @Html.AntiForgeryToken()
+
+        <input type="hidden"
+               name="BatchId"
+               value="@Model.BatchId" />
+
+
+        <div class="evaluation-table-wrapper">
+
+            <table class="evaluation-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th class="supplier-column">
+                            Supplier
+                        </th>
+
+
+                        @foreach (
+                            var criterion
+                            in Model.Criteria)
+                        {
+                            <th class="criteria-column">
+
+                                <span class="criteria-code">
+                                    @criterion.CriteriaCode
+                                </span>
+
+
+                                <span class="criteria-name">
+                                    @criterion.CriteriaName
+                                </span>
+
+
+                                <span class="
+                                    criteria-meta
+                                    criteria-meta-@criterion.CriteriaType.ToLowerInvariant()">
+
+                                    @criterion.CriteriaType
+
+                                    @if (
+                                        !string.IsNullOrWhiteSpace(
+                                            criterion.Unit))
+                                    {
+                                        @: ·@criterion.Unit
+                                    }
+
+                                </span>
+
+
+                                @if (criterion.IsRating)
+                                {
+                                    <span class="criteria-input-hint">
+                                        0–10
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="criteria-input-hint">
+                                        Numeric
+                                    </span>
+                                }
+
+                            </th>
+                        }
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    @for (
+                        var rowIndex = 0;
+                        rowIndex < Model.Suppliers.Count;
+                        rowIndex++)
+                    {
+                        var supplier =
+                            Model.Suppliers[rowIndex];
+
+
+                        <tr>
+
+                            <!-- =========================
+                                 SUPPLIER
+                                 ========================= -->
+
+                            <td class="supplier-cell">
+
+                                <input type="hidden"
+                                       name="Rows[@rowIndex].SupplierId"
+                                       value="@supplier.SupplierId" />
+
+
+                                <strong>
+                                    @supplier.SupplierCode
+                                </strong>
+
+
+                                <span>
+                                    @supplier.SupplierName
+                                </span>
+
+                            </td>
+
+
+                            <!-- =========================
+                                 CRITERIA
+                                 ========================= -->
+                            @foreach (
+                                                            var criterion
+                                                            in Model.Criteria)
+                            {
+                                var cell =
+                                    supplier.Scores[
+                                        criterion.CriteriaId];
+
+
+                                <td class="score-cell">
+
+                                    @if (criterion.IsRating)
+                                    {
+                                        <input type="number"
+                                               name="Rows[@rowIndex].Scores[@criterion.CriteriaId]"
+                                               value="@cell.Score"
+                                               class="score-input score-input-rating"
+                                               min="0"
+                                               max="10"
+                                               step="0.1"
+                                               placeholder="—"
+                                               title="Nhập điểm từ 0 đến 10" />
+                                    }
+                                    else
+                                    {
+                                        <input type="number"
+                                               name="Rows[@rowIndex].Scores[@criterion.CriteriaId]"
+                                               value="@cell.Score"
+                                               class="score-input score-input-numeric"
+                                               min="0"
+                                               step="0.0001"
+                                               placeholder="—"
+                                               title="Nhập giá trị thực tế của tiêu chí" />
+                                    }
+
+
+                                    @if (
+                                        !string.IsNullOrWhiteSpace(
+                                            criterion.Unit))
+                                    {
+                                        <span class="input-unit">
+                                            @criterion.Unit
+                                        </span>
+                                    }
+
+                                </td>
+                            }
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <!-- =================================================
+             FOOTER
+             ================================================= -->
+
+        <div class="evaluation-footer">
+
+            <div class="evaluation-scale-note">
+
+                <span class="scale-dot"></span>
+
+                <span>
+                    <strong>Điểm:</strong>
+                    nhập 0–10.
+                    <strong>Tiêu chí định lượng:</strong>
+                    nhập giá trị thực tế.
+                </span>
+
+            </div>
+
+
+            @if (canSaveEvaluation &&
+                 Model.Status != "Completed" &&
+                 Model.Status != "Cancelled")
+            {
+                <button type="submit"
+                        class="btn-primary">
+
+                    Save evaluation
+
+                </button>
+            }
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<!-- =========================================================
+     NEXT STEP
+     ========================================================= -->
+@if (evaluationComplete)
+{
+    <div class="evaluation-next-step">
+
+        <div class="evaluation-next-step-content">
+
+            <div class="page-eyebrow">
+                NEXT STEP
+            </div>
+
+
+            <h2>
+                Evaluation completed.
+            </h2>
+
+
+            <p>
+                Tất cả dữ liệu đánh giá của Supplier đã được nhập.
+                Bạn có thể chuyển sang AHP để thực hiện so sánh
+                cặp và xác định trọng số các tiêu chí.
+            </p>
+
+
+            <div class="evaluation-next-step-meta">
+
+                <span>
+                    <i class="bi bi-check-circle-fill"></i>
+                    @completedCells / @totalCells values
+                </span>
+
+
+                <span>
+                    <i class="bi bi-people-fill"></i>
+                    @Model.Suppliers.Count suppliers
+                </span>
+
+
+                <span>
+                    <i class="bi bi-list-check"></i>
+                    @Model.Criteria.Count criteria
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="evaluation-next-step-actions">
+
+
+            <a asp-controller="EvaluationBatch"
+               asp-action="Details"
+               asp-route-id="@Model.BatchId"
+               class="btn-outline">
+
+                Batch Details
+
+            </a>
+
+
+            @if (canContinueToAHP)
+            {
+                <a asp-controller="AHP"
+                   asp-action="Index"
+                   asp-route-batchId="@Model.BatchId"
+                   class="btn-primary">
+
+                    Continue to AHP
+
+                    <i class="bi bi-arrow-right"></i>
+
+                </a>
+            }
+
+        </div>
+
+    </div>
+}

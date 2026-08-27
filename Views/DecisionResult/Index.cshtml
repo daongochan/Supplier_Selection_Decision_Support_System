@@ -1,0 +1,823 @@
+﻿@model SupplierSelectionDSS.Models.DecisionResultViewModel
+
+@{
+    ViewData["Title"] = "Final Result";
+
+    var canApprove =
+        User.IsInRole("Administrator") ||
+        User.IsInRole("Manager");
+
+    var canReport =
+        User.IsInRole("Administrator") ||
+        User.IsInRole("Manager");
+}
+
+
+<!-- =========================================================
+     PAGE HEADER
+     ========================================================= -->
+
+<div class="page-header decision-page-header">
+
+    <div>
+
+        <div class="page-eyebrow">
+            FINAL DECISION
+        </div>
+
+        <h1 class="page-title">
+            Supplier ranking
+        </h1>
+
+        <p class="page-description">
+            @Model.BatchCode
+            ·
+            @Model.BatchName
+        </p>
+
+    </div>
+
+
+    <div class="decision-header-actions">
+
+        <span class="status-pill
+            status-@Model.BatchStatus.ToLowerInvariant()">
+
+            @Model.BatchStatus
+
+        </span>
+
+
+        <a asp-controller="EvaluationBatch"
+           asp-action="Details"
+           asp-route-id="@Model.BatchId"
+           class="btn-outline">
+
+            Back to Batch
+
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     ALERTS
+     ========================================================= -->
+@if (
+    TempData["SuccessMessage"]
+    is string successMessage)
+{
+    <div class="alert-success">
+
+        @successMessage
+
+    </div>
+}
+
+
+@if (
+    TempData["ErrorMessage"]
+    is string errorMessage)
+{
+    <div class="alert-danger">
+
+        @errorMessage
+
+    </div>
+}
+
+
+<!-- =========================================================
+     WORKFLOW
+     ========================================================= -->
+
+<div class="decision-workflow">
+
+    <div class="decision-workflow-step complete">
+
+        <span class="decision-workflow-number">
+            01
+        </span>
+
+        <div class="decision-workflow-copy">
+
+            <strong>
+                Evaluation
+            </strong>
+
+            <small>
+                Scores
+            </small>
+
+        </div>
+
+    </div>
+
+
+    <div class="decision-workflow-line"></div>
+
+
+    <div class="decision-workflow-step complete">
+
+        <span class="decision-workflow-number">
+            02
+        </span>
+
+        <div class="decision-workflow-copy">
+
+            <strong>
+                AHP
+            </strong>
+
+            <small>
+                Weights
+            </small>
+
+        </div>
+
+    </div>
+
+
+    <div class="decision-workflow-line"></div>
+
+
+    <div class="decision-workflow-step complete">
+
+        <span class="decision-workflow-number">
+            03
+        </span>
+
+        <div class="decision-workflow-copy">
+
+            <strong>
+                TOPSIS
+            </strong>
+
+            <small>
+                Ranking
+            </small>
+
+        </div>
+
+    </div>
+
+
+    <div class="decision-workflow-line"></div>
+
+
+    <div class="decision-workflow-step current">
+
+        <span class="decision-workflow-number">
+            04
+        </span>
+
+        <div class="decision-workflow-copy">
+
+            <strong>
+                Decision
+            </strong>
+
+            <small>
+                Approval
+            </small>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+@if (!Model.Ranking.Any())
+{
+    <!-- =====================================================
+         EMPTY
+         ===================================================== -->
+
+    <div class="empty-state">
+
+        <h2>
+            No TOPSIS result.
+        </h2>
+
+        <p>
+            Chưa có kết quả xếp hạng TOPSIS cho Batch này.
+        </p>
+
+
+        <a asp-controller="TOPSIS"
+           asp-action="Index"
+           asp-route-batchId="@Model.BatchId"
+           class="btn-primary">
+
+            Back to TOPSIS
+
+        </a>
+
+    </div>
+}
+else
+{
+    <!-- =====================================================
+         RECOMMENDED SUPPLIER
+         ===================================================== -->
+    @if (Model.RecommendedSupplier != null)
+    {
+        <div class="decision-recommendation">
+
+            <div>
+
+                <div class="page-eyebrow">
+                    RECOMMENDATION
+                </div>
+
+                <h2>
+                    @Model.RecommendedSupplier.SupplierCode
+                    ·
+                    @Model.RecommendedSupplier.SupplierName
+                </h2>
+
+                <p>
+                    Nhà cung cấp đứng đầu theo TOPSIS với
+                    Closeness Coefficient =
+                    <strong>
+                        @Model.RecommendedSupplier.ClosenessCoefficient.ToString("0.000000")
+                    </strong>
+                </p>
+
+            </div>
+
+
+            <div class="decision-winner-badge">
+
+                #1
+
+            </div>
+
+        </div>
+    }
+
+
+    <!-- =====================================================
+         RANKING
+         ===================================================== -->
+
+    <div class="table-card decision-ranking-card">
+
+        <div class="decision-card-header">
+
+            <div>
+
+                <div class="page-eyebrow">
+                    TOPSIS RESULT
+                </div>
+
+                <h2 class="section-title">
+                    Final ranking
+                </h2>
+
+            </div>
+
+        </div>
+
+
+        <div class="table-wrapper">
+
+            <table class="data-table decision-ranking-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Rank
+                        </th>
+
+                        <th>
+                            Supplier
+                        </th>
+
+                        <th>
+                            Distance to PIS
+                        </th>
+
+                        <th>
+                            Distance to NIS
+                        </th>
+
+                        <th>
+                            Closeness
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    @foreach (
+                        var item
+                        in Model.Ranking
+                            .OrderBy(
+                                x =>
+                                    x.RankNo))
+                    {
+                        <tr class="
+                            @(item.RankNo == 1
+                                ? "decision-winner-row"
+                                : "")">
+
+                            <td>
+
+                                <span class="decision-rank">
+                                    @item.RankNo
+                                </span>
+
+                            </td>
+
+
+                            <td>
+
+                                <strong>
+                                    @item.SupplierCode
+                                </strong>
+
+                                <span class="table-muted">
+                                    @item.SupplierName
+                                </span>
+
+                            </td>
+
+
+                            <td>
+                                @item.DistanceToPIS.ToString("0.000000")
+                            </td>
+
+
+                            <td>
+                                @item.DistanceToNIS.ToString("0.000000")
+                            </td>
+
+
+                            <td>
+
+                                <strong>
+                                    @item.ClosenessCoefficient.ToString("0.000000")
+                                </strong>
+
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         APPROVAL
+         ===================================================== -->
+    @if (
+            Model.HasApproval &&
+            string.Equals(
+                Model.ApprovalStatus,
+                "Approved",
+                StringComparison.OrdinalIgnoreCase))
+    {
+        <!-- =================================================
+             FINAL APPROVED
+             ================================================= -->
+
+        <div class="
+            decision-approval-card
+            decision-approval-approved">
+
+            <div class="page-eyebrow">
+                FINAL APPROVAL
+            </div>
+
+            <h2>
+                Approved
+            </h2>
+
+            <p>
+                Nhà cung cấp được phê duyệt:
+                <strong>
+                    @(Model.SelectedSupplierCode ?? "—")
+                </strong>
+            </p>
+
+
+            <div class="decision-approval-summary">
+
+                @if (
+                    !string.IsNullOrWhiteSpace(
+                        Model.SelectedSupplierName))
+                {
+                    <div>
+
+                        <span>
+                            Supplier name
+                        </span>
+
+                        <strong>
+                            @Model.SelectedSupplierName
+                        </strong>
+
+                    </div>
+                }
+
+
+                @if (
+                    !string.IsNullOrWhiteSpace(
+                        Model.ApprovedByName))
+                {
+                    <div>
+
+                        <span>
+                            Approved by
+                        </span>
+
+                        <strong>
+                            @Model.ApprovedByName
+                        </strong>
+
+                    </div>
+                }
+
+
+                @if (Model.ApprovalDate.HasValue)
+                {
+                    <div>
+
+                        <span>
+                            Date
+                        </span>
+
+                        <strong>
+                            @Model.ApprovalDate.Value.ToString("dd/MM/yyyy HH:mm")
+                        </strong>
+
+                    </div>
+                }
+
+            </div>
+
+
+            @if (
+                !string.IsNullOrWhiteSpace(
+                    Model.ApprovalNotes))
+            {
+                <p class="decision-approval-notes">
+
+                    <strong>
+                        Notes:
+                    </strong>
+
+                    @Model.ApprovalNotes
+
+                </p>
+            }
+
+
+            @if (canReport)
+            {
+                <div class="decision-report-action">
+
+                    <a asp-controller="Report"
+                       asp-action="Index"
+                       asp-route-batchId="@Model.BatchId"
+                       class="btn-primary">
+
+                        Reports
+
+                        <i class="bi bi-file-earmark-text"></i>
+
+                    </a>
+
+                </div>
+            }
+
+        </div>
+    }
+    else if (
+        Model.HasApproval &&
+        string.Equals(
+            Model.ApprovalStatus,
+            "Rejected",
+            StringComparison.OrdinalIgnoreCase))
+    {
+        <!-- =================================================
+             REJECTED
+             ================================================= -->
+
+        <div class="
+            decision-approval-card
+            decision-approval-rejected">
+
+            <div class="page-eyebrow">
+                DECISION REVIEW
+            </div>
+
+            <h2>
+                Decision rejected.
+            </h2>
+
+            <p>
+                Kết quả lựa chọn hiện tại đã bị từ chối.
+                Người quản lý có thể yêu cầu đánh giá lại
+                trước khi đưa ra quyết định mới.
+            </p>
+
+
+            @if (
+                !string.IsNullOrWhiteSpace(
+                    Model.ApprovalNotes))
+            {
+                <p class="decision-approval-notes">
+
+                    <strong>
+                        Reason:
+                    </strong>
+
+                    @Model.ApprovalNotes
+
+                </p>
+            }
+
+
+            @if (canApprove)
+            {
+                <form method="post"
+                      action="@Url.Action(
+                                                                  "Reevaluate",
+                                                                  "DecisionResult",
+                                                                  new
+                                                                  {
+                                                                      batchId = Model.BatchId
+                                                                  })">
+
+                    @Html.AntiForgeryToken()
+
+                    <button type="submit"
+                            class="btn-primary">
+
+                        Re-evaluate
+
+                        <i class="bi bi-arrow-repeat"></i>
+
+                    </button>
+
+                </form>
+            }
+
+        </div>
+    }
+    else if (
+        Model.HasApproval &&
+        string.Equals(
+            Model.ApprovalStatus,
+            "PendingReevaluation",
+            StringComparison.OrdinalIgnoreCase))
+    {
+        <!-- =================================================
+             PENDING RE-EVALUATION
+             ================================================= -->
+
+        <div class="
+            decision-approval-card
+            decision-approval-pending">
+
+            <div class="page-eyebrow">
+                RE-EVALUATION
+            </div>
+
+            <h2>
+                Re-evaluation requested.
+            </h2>
+
+            <p>
+                Batch đã được yêu cầu đánh giá lại.
+                Dữ liệu Evaluation, AHP và TOPSIS cũ
+                đã được vô hiệu hóa.
+            </p>
+
+
+            @if (
+                User.IsInRole("Administrator") ||
+                User.IsInRole("PurchasingStaff") ||
+                User.IsInRole("Expert"))
+            {
+                <a asp-controller="Evaluation"
+                   asp-action="Index"
+                   asp-route-batchId="@Model.BatchId"
+                   class="btn-primary">
+
+                    Continue to Evaluation
+
+                    <i class="bi bi-arrow-right"></i>
+
+                </a>
+            }
+
+        </div>
+    }
+    else if (
+        canApprove &&
+        Model.RecommendedSupplier != null &&
+        Model.BatchStatus != "Completed" &&
+        Model.BatchStatus != "Cancelled")
+    {
+        <!-- =================================================
+             SELECT FINAL SUPPLIER
+             ================================================= -->
+
+        <div class="decision-approval-card">
+
+            <div class="page-eyebrow">
+                APPROVAL
+            </div>
+
+            <h2>
+                Select final supplier
+            </h2>
+
+            <p class="decision-approval-description">
+                TOPSIS đề xuất
+                <strong>
+                    @Model.RecommendedSupplier.SupplierCode
+                </strong>
+                ở vị trí #1. Tuy nhiên, người quản lý
+                có thể lựa chọn bất kỳ Supplier nào trong
+                bảng xếp hạng trước khi phê duyệt.
+            </p>
+
+
+            <!-- =============================================
+                 SUPPLIER SELECTION
+                 ============================================= -->
+
+            <form method="post"
+                  action="@Url.Action(
+                                                      "Approve",
+                                                      "DecisionResult",
+                                                      new
+                                                      {
+                                                          batchId = Model.BatchId
+                                                      })"
+                  id="approvalForm">
+
+                @Html.AntiForgeryToken()
+
+
+                <div class="decision-supplier-selection">
+
+                    @foreach (
+                        var item
+                        in Model.Ranking
+                            .OrderBy(
+                                x =>
+                                    x.RankNo))
+                    {
+                        <label class="
+                            decision-supplier-option
+                            @(item.RankNo == 1
+                                ? "recommended"
+                                : "")">
+
+                            <input type="radio"
+                                   name="supplierId"
+                                   value="@item.SupplierId"
+                            @(item.RankNo == 1
+                                ? "checked"
+                                : null)
+                                   class="decision-supplier-radio" />
+
+
+                            <span class="
+                                decision-supplier-radio-mark">
+
+                            </span>
+
+
+                            <span class="
+                                decision-supplier-rank">
+
+                                #@item.RankNo
+
+                            </span>
+
+
+                            <span class="
+                                decision-supplier-main">
+
+                                <strong>
+                                    @item.SupplierCode
+                                </strong>
+
+                                <span>
+                                    @item.SupplierName
+                                </span>
+
+                            </span>
+
+
+                            <span class="
+                                decision-supplier-score">
+
+                                <small>
+                                    TOPSIS CC
+                                </small>
+
+                                <strong>
+                                    @item.ClosenessCoefficient.ToString("0.000000")
+                                </strong>
+
+                            </span>
+
+                        </label>
+                    }
+
+                </div>
+
+
+                <!-- =========================================
+                     APPROVE
+                     ========================================= -->
+
+                <div class="decision-approval-actions">
+
+                    <button type="submit"
+                            class="btn-primary">
+
+                        Approve selected supplier
+
+                        <i class="bi bi-check2"></i>
+
+                    </button>
+
+                </div>
+
+            </form>
+
+
+            <!-- =============================================
+                 REJECT / RE-EVALUATE
+                 ============================================= -->
+
+            <div class="decision-secondary-actions">
+
+                <form method="post"
+                      action="@Url.Action(
+                                                                  "Reject",
+                                                                  "DecisionResult",
+                                                                  new
+                                                                  {
+                                                                      batchId = Model.BatchId
+                                                                  })">
+
+                    @Html.AntiForgeryToken()
+
+                    <button type="submit"
+                            class="btn-outline">
+
+                        Reject
+
+                    </button>
+
+                </form>
+
+
+                <form method="post"
+                      action="@Url.Action(
+                                                                  "Reevaluate",
+                                                                  "DecisionResult",
+                                                                  new
+                                                                  {
+                                                                      batchId = Model.BatchId
+                                                                  })">
+
+                    @Html.AntiForgeryToken()
+
+                    <button type="submit"
+                            class="btn-outline">
+
+                        Re-evaluate
+
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+    }
+}

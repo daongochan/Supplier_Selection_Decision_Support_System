@@ -1,0 +1,160 @@
+﻿@model SupplierSelectionDSS.Models.CriteriaFormViewModel
+
+@{
+    ViewData["Title"] = "Edit Criteria";
+}
+
+<div class="page-header">
+
+    <div>
+
+        <div class="page-eyebrow">
+            CRITERIA
+        </div>
+
+        <h1 class="page-title">
+            Edit criteria.
+        </h1>
+
+        <p class="page-description">
+            Cập nhật tiêu chí đánh giá.
+        </p>
+
+    </div>
+
+</div>
+
+
+<div class="form-card">
+
+    <form asp-action="Edit"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+        <input type="hidden"
+               asp-for="CriteriaId" />
+
+
+        <div asp-validation-summary="ModelOnly"
+             class="validation-summary">
+        </div>
+
+
+        <div class="form-grid">
+
+            <div class="form-group">
+
+                <label asp-for="CriteriaCode">
+                    Criteria code
+                </label>
+
+                <input asp-for="CriteriaCode"
+                       class="form-control"
+                       maxlength="20" />
+
+                <span asp-validation-for="CriteriaCode"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label asp-for="CriteriaName">
+                    Criteria name
+                </label>
+
+                <input asp-for="CriteriaName"
+                       class="form-control"
+                       maxlength="150" />
+
+                <span asp-validation-for="CriteriaName"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label asp-for="CriteriaType">
+                    Criteria type
+                </label>
+
+                <select asp-for="CriteriaType"
+                        class="form-control">
+
+                    <option value="Benefit">
+                        Benefit
+                    </option>
+
+                    <option value="Cost">
+                        Cost
+                    </option>
+
+                </select>
+
+                <span asp-validation-for="CriteriaType"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label asp-for="Unit">
+                    Unit
+                </label>
+
+                <input asp-for="Unit"
+                       class="form-control"
+                       maxlength="30" />
+
+            </div>
+
+
+            <div class="form-group form-group-full">
+
+                <label asp-for="Description">
+                    Description
+                </label>
+
+                <textarea asp-for="Description"
+                          class="form-control"
+                          maxlength="500"></textarea>
+
+            </div>
+
+        </div>
+
+
+        <div class="form-actions">
+
+            <a asp-action="Index"
+               class="btn-outline">
+
+                Cancel
+
+            </a>
+
+
+            <button type="submit"
+                    class="btn-primary">
+
+                Save changes
+
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

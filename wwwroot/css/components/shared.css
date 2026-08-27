@@ -1,0 +1,72 @@
+/* =========================================================
+   SHARED (AHP / TOPSIS helpers + Action links)
+   ========================================================= */
+
+/* =========================================================
+   AHP
+   ========================================================= */
+
+.ahp-card {
+    padding: 24px;
+}
+
+.ahp-progress {
+    width: 100%;
+    height: 4px;
+    overflow: hidden;
+    border-radius: var(--radius-pill);
+    background: var(--lavender-soft);
+}
+
+.ahp-progress-value {
+    height: 100%;
+    border-radius: var(--radius-pill);
+    background: var(--lavender);
+    transition: width 0.25s ease;
+}
+
+.consistency-good {
+    background: var(--sage-soft);
+    color: var(--sage-dark);
+}
+
+.consistency-warning {
+    background: var(--danger-soft);
+    color: var(--danger-dark);
+}
+
+
+/* =========================================================
+   TOPSIS
+   ========================================================= */
+
+.topsis-card {
+    padding: 28px;
+    border-left: 3px solid var(--sky);
+}
+
+    .topsis-card .ranking-score {
+        color: var(--sky-dark);
+    }
+
+
+/* =========================================================
+   ACTION LINKS
+   ========================================================= */
+
+.action-link {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--ink);
+    font-family: var(--font-serif);
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+    .action-link:hover {
+        color: var(--terracotta);
+        text-decoration: underline;
+    }
+

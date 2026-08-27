@@ -1,0 +1,110 @@
+﻿@model SupplierSelectionDSS.Models.LoginViewModel
+
+@{
+    ViewData["Title"] = "Sign in";
+}
+
+<div class="login-page">
+
+    <div class="login-orb login-orb-one"></div>
+    <div class="login-orb login-orb-two"></div>
+    <div class="login-orb login-orb-three"></div>
+
+
+    <div class="login-card">
+
+        <div class="login-header">
+
+            <div class="page-eyebrow">
+                SUPPLIER SELECTION DSS
+            </div>
+
+            <h1>
+                Welcome back
+            </h1>
+
+            <p>
+                Đăng nhập để tiếp tục làm việc với hệ thống
+                hỗ trợ ra quyết định lựa chọn nhà cung cấp.
+            </p>
+
+        </div>
+
+
+        <form asp-action="Login"
+              method="post">
+
+            @Html.AntiForgeryToken()
+
+
+            <div asp-validation-summary="ModelOnly"
+                 class="validation-summary">
+            </div>
+
+
+            <div class="form-group">
+
+                <label asp-for="Username">
+                    Username
+                </label>
+
+                <input asp-for="Username"
+                       class="form-control"
+                       autocomplete="username" />
+
+                <span asp-validation-for="Username"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label asp-for="Password">
+                    Password
+                </label>
+
+                <input asp-for="Password"
+                       class="form-control"
+                       autocomplete="current-password" />
+
+                <span asp-validation-for="Password"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+
+            <div class="login-remember">
+
+                <label>
+
+                    <input asp-for="RememberMe" />
+
+                    <span>
+                        Remember me
+                    </span>
+
+                </label>
+
+            </div>
+
+
+            <button type="submit"
+                    class="btn-primary login-button">
+
+                Sign in
+
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

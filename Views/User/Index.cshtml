@@ -1,0 +1,434 @@
+﻿@model SupplierSelectionDSS.Models.UserIndexViewModel
+
+@{
+    ViewData["Title"] = "Users";
+}
+
+
+<!-- =========================================================
+     PAGE HEADER
+     ========================================================= -->
+
+<div class="page-header user-page-header">
+
+    <div>
+
+        <div class="page-eyebrow">
+            SYSTEM
+        </div>
+
+        <h1 class="page-title">
+            Users
+        </h1>
+
+        <p class="page-description">
+            Quản lý tài khoản, vai trò và trạng thái truy cập
+            của người dùng hệ thống.
+        </p>
+
+    </div>
+
+
+    <a asp-action="Create"
+       class="btn-primary">
+
+        New user
+
+    </a>
+
+</div>
+
+
+<!-- =========================================================
+     ALERT
+     ========================================================= -->
+@if (
+    TempData["SuccessMessage"]
+    is string successMessage)
+{
+    <div class="alert-success">
+
+        @successMessage
+
+    </div>
+}
+
+
+@if (
+    TempData["ErrorMessage"]
+    is string errorMessage)
+{
+    <div class="alert-danger">
+
+        @errorMessage
+
+    </div>
+}
+
+
+<!-- =========================================================
+     FILTER
+     ========================================================= -->
+
+<div class="filter-card">
+
+    <form asp-action="Index"
+          method="get"
+          class="user-filter">
+
+
+        <div class="filter-field">
+
+            <label for="keyword">
+                Search
+            </label>
+
+            <input id="keyword"
+                   name="keyword"
+                   value="@Model.Keyword"
+                   class="form-control"
+                   placeholder="Username, name or email..." />
+
+        </div>
+
+
+        <div class="filter-field">
+
+            <label for="role">
+                Role
+            </label>
+
+            <select id="role"
+                    name="role"
+                    class="form-control">
+
+                <option value="All"
+                        selected="@(Model.Role == "All")">
+                    All roles
+                </option>
+
+                <option value="Administrator"
+                        selected="@(Model.Role == "Administrator")">
+                    Administrator
+                </option>
+
+                <option value="PurchasingStaff"
+                        selected="@(Model.Role == "PurchasingStaff")">
+                    Purchasing Staff
+                </option>
+
+                <option value="Expert"
+                        selected="@(Model.Role == "Expert")">
+                    Expert
+                </option>
+
+                <option value="Manager"
+                        selected="@(Model.Role == "Manager")">
+                    Manager
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="filter-field">
+
+            <label for="status">
+                Status
+            </label>
+
+            <select id="status"
+                    name="status"
+                    class="form-control">
+
+                <option value="All"
+                        selected="@(Model.Status == "All")">
+                    All status
+                </option>
+
+                <option value="Active"
+                        selected="@(Model.Status == "Active")">
+                    Active
+                </option>
+
+                <option value="Locked"
+                        selected="@(Model.Status == "Locked")">
+                    Locked
+                </option>
+
+                <option value="Inactive"
+                        selected="@(Model.Status == "Inactive")">
+                    Inactive
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="filter-actions">
+
+            <button type="submit"
+                    class="btn-primary">
+
+                Search
+
+            </button>
+
+
+            <a asp-action="Index"
+               class="btn-outline">
+
+                Reset
+
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<!-- =========================================================
+     TABLE
+     ========================================================= -->
+
+<div class="table-card">
+
+    @if (Model.Users.Any())
+    {
+        <div class="data-table-wrapper">
+
+            <table class="data-table user-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Username
+                        </th>
+
+                        <th>
+                            User
+                        </th>
+
+                        <th>
+                            Role
+                        </th>
+
+                        <th>
+                            Contact
+                        </th>
+
+                        <th>
+                            Status
+                        </th>
+
+                        <th>
+                            Last login
+                        </th>
+
+                        <th>
+                            Actions
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    @foreach (
+                        var user
+                        in Model.Users)
+                    {
+                        <tr>
+
+
+                            <!-- Username -->
+
+                            <td>
+
+                                <strong>
+                                    @user.Username
+                                </strong>
+
+                            </td>
+
+
+                            <!-- User -->
+
+                            <td>
+
+                                <strong>
+                                    @user.FullName
+                                </strong>
+
+                                <span class="table-muted">
+                                    Created
+                                    @user.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")
+                                </span>
+
+                            </td>
+
+
+                            <!-- Role -->
+
+                            <td>
+
+                                <span class="
+                                    user-role-pill
+                                    user-role-@user.Role.ToLowerInvariant()">
+
+                                    @switch (user.Role)
+                                    {
+                                        case "Administrator":
+                                            @:Administrator
+                                            break;
+
+                                        case "PurchasingStaff":
+                                            @:Purchasing Staff
+                                            break;
+
+                                        case "Expert":
+                                            @:Expert
+                                            break;
+
+                                        case "Manager":
+                                            @:Manager
+                                            break;
+
+                                        default:
+                                            @user.Role
+                                            break;
+                                    }
+
+                                </span>
+
+                            </td>
+
+
+                            <!-- Contact -->
+
+                            <td>
+
+                                @if (
+                                    !string.IsNullOrWhiteSpace(
+                                        user.Email))
+                                {
+                                    <strong>
+                                        @user.Email
+                                    </strong>
+                                }
+
+                                @if (
+                                    !string.IsNullOrWhiteSpace(
+                                        user.Phone))
+                                {
+                                    <span class="table-muted">
+                                        @user.Phone
+                                    </span>
+                                }
+
+                                @if (
+                                    string.IsNullOrWhiteSpace(
+                                        user.Email) &&
+                                    string.IsNullOrWhiteSpace(
+                                        user.Phone))
+                                {
+                                    <span class="table-muted">
+                                        —
+                                    </span>
+                                }
+
+                            </td>
+
+
+                            <!-- Status -->
+
+                            <td>
+
+                                <span class="
+                                    status-pill
+                                    user-status-@user.Status.ToLowerInvariant()">
+
+                                    @user.Status
+
+                                </span>
+
+                            </td>
+
+
+                            <!-- Last Login -->
+
+                            <td>
+
+                                @if (user.LastLoginAt.HasValue)
+                                {
+                                    @user.LastLoginAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                }
+                                else
+                                {
+                                    <span class="table-muted">
+                                        Never
+                                    </span>
+                                }
+
+                            </td>
+
+
+                            <!-- Actions -->
+
+                            <td>
+
+                                <div class="table-actions">
+
+                                    <a asp-action="Edit"
+                                       asp-route-id="@user.UserId"
+                                       class="action-link">
+
+                                        Edit
+
+                                    </a>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+
+            <h3>
+                No users found.
+            </h3>
+
+            <p>
+                Không có tài khoản nào phù hợp với bộ lọc hiện tại.
+            </p>
+
+
+            <a asp-action="Create"
+               class="btn-primary">
+
+                New user
+
+            </a>
+
+        </div>
+    }
+
+</div>

@@ -1,0 +1,448 @@
+﻿@model SupplierSelectionDSS.Models.AuditLogIndexViewModel
+@using SupplierSelectionDSS.Services;
+
+@{
+    ViewData["Title"] = "Audit Logs";
+}
+
+
+<!-- =========================================================
+     PAGE HEADER
+     ========================================================= -->
+
+<div class="page-header audit-log-page-header">
+
+    <div>
+
+        <div class="page-eyebrow">
+            SYSTEM
+        </div>
+
+        <h1 class="page-title">
+            Audit logs
+        </h1>
+
+        <p class="page-description">
+            Theo dõi lịch sử thao tác của người dùng
+            và các quyết định trong hệ thống.
+        </p>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     FILTER
+     ========================================================= -->
+
+<div class="filter-card">
+
+    <form asp-action="Index"
+          method="get"
+          class="audit-log-filter">
+
+        <div class="filter-field">
+
+            <label for="keyword">
+                Search
+            </label>
+
+            <input id="keyword"
+                   name="keyword"
+                   value="@Model.Keyword"
+                   class="form-control"
+                   placeholder="User, action, target..." />
+
+        </div>
+
+
+        <div class="filter-field">
+
+            <label for="actionType">
+                Action
+            </label>
+
+            <select id="actionType"
+                    name="actionType"
+                    class="form-control">
+
+                <option value="All">
+                    All actions
+                </option>
+
+                @foreach (
+                    var action
+                    in new[]
+                    {
+                        AuditLogService.Actions.CreateUser,
+                        AuditLogService.Actions.UpdateUser,
+                        AuditLogService.Actions.CreateBatch,
+                        AuditLogService.Actions.StartBatch,
+                        AuditLogService.Actions.SaveEvaluation,
+                        AuditLogService.Actions.SaveAHP,
+                        AuditLogService.Actions.CalculateAHP,
+                        AuditLogService.Actions.CalculateTOPSIS,
+                        AuditLogService.Actions.Approve,
+                        AuditLogService.Actions.Reject,
+                        AuditLogService.Actions.Reevaluate
+                    })
+                {
+                    if (Model.ActionType == action)
+                    {
+                        <option value="@action"
+                                selected>
+                            @action
+                        </option>
+                    }
+                    else
+                    {
+                        <option value="@action">
+                            @action
+                        </option>
+                    }
+                }
+
+            </select>
+
+        </div>
+
+
+        <div class="filter-field">
+
+            <label for="userId">
+                User
+            </label>
+
+            <select id="userId"
+                    name="userId"
+                    class="form-control">
+
+                @if (!Model.UserId.HasValue)
+                {
+                    <option value=""
+                            selected>
+                        All users
+                    </option>
+                }
+                else
+                {
+                    <option value="">
+                        All users
+                    </option>
+                }
+
+
+                @foreach (
+                    var user
+                    in Model.Users)
+                {
+                    if (Model.UserId == user.UserId)
+                    {
+                        <option value="@user.UserId"
+                                selected>
+                            @user.FullName
+                            ·
+                            @user.Username
+                        </option>
+                    }
+                    else
+                    {
+                        <option value="@user.UserId">
+                            @user.FullName
+                            ·
+                            @user.Username
+                        </option>
+                    }
+                }
+
+            </select>
+
+        </div>
+
+
+        <div class="filter-actions">
+
+            <button type="submit"
+                    class="btn-primary">
+
+                Search
+
+            </button>
+
+
+            <a asp-action="Index"
+               class="btn-outline">
+
+                Reset
+
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<!-- =========================================================
+     SUMMARY
+     ========================================================= -->
+
+<div class="audit-log-summary">
+
+    <div class="surface-card audit-log-summary-card">
+
+        <span class="card-label">
+            LOG ENTRIES
+        </span>
+
+        <strong>
+            @Model.Logs.Count.ToString("N0")
+        </strong>
+
+        <span>
+            Matching records
+        </span>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     TABLE
+     ========================================================= -->
+
+<div class="table-card audit-log-table-card">
+
+    @if (Model.Logs.Any())
+    {
+        <div class="data-table-wrapper">
+
+            <table class="data-table audit-log-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Time
+                        </th>
+
+                        <th>
+                            User
+                        </th>
+
+                        <th>
+                            Action
+                        </th>
+
+                        <th>
+                            Target
+                        </th>
+
+                        <th>
+                            Description
+                        </th>
+
+                        <th>
+                            Change
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    @foreach (
+                        var log
+                        in Model.Logs)
+                    {
+                        <tr>
+
+                            <!-- Time -->
+
+                            <td class="audit-log-time">
+
+                                <strong>
+                                    @log.ActionTime.ToString("dd/MM/yyyy")
+                                </strong>
+
+                                <span class="table-muted">
+                                    @log.ActionTime.ToString("HH:mm:ss")
+                                </span>
+
+                            </td>
+
+
+                            <!-- User -->
+
+                            <td>
+
+                                <strong>
+                                    @log.FullName
+                                </strong>
+
+                                <span class="table-muted">
+                                    @log.Username
+                                </span>
+
+                            </td>
+
+
+                            <!-- Action -->
+
+                            <td>
+
+                                <span class="
+                                    audit-action-pill
+                                    audit-action-@log.ActionType
+                                    .ToLowerInvariant()
+                                    .Replace(" ", " -")">
+
+                                    @log.ActionType
+
+                                </span>
+
+                            </td>
+
+
+                            <!-- Target -->
+
+                            <td>
+
+                                @if (
+                                    !string.IsNullOrWhiteSpace(
+                                        log.TargetTable))
+                                {
+                                    <strong>
+                                        @log.TargetTable
+                                    </strong>
+
+                                    @if (log.TargetId.HasValue)
+                                    {
+                                        <span class="table-muted">
+                                            #@log.TargetId.Value
+                                        </span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="table-muted">
+                                        —
+                                    </span>
+                                }
+
+                            </td>
+
+
+                            <!-- Description -->
+
+                            <td>
+
+                                @if (
+                                    !string.IsNullOrWhiteSpace(
+                                        log.Description))
+                                {
+                                    <span class="audit-description">
+                                        @log.Description
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="table-muted">
+                                        —
+                                    </span>
+                                }
+
+                            </td>
+
+
+                            <!-- Change -->
+
+                            <td>
+
+                                @if (
+                                    !string.IsNullOrWhiteSpace(
+                                        log.OldValue) ||
+                                    !string.IsNullOrWhiteSpace(
+                                        log.NewValue))
+                                {
+                                    <details class="audit-change">
+
+                                        <summary>
+                                            View change
+                                        </summary>
+
+
+                                        @if (
+                                            !string.IsNullOrWhiteSpace(
+                                                log.OldValue))
+                                        {
+                                            <div>
+
+                                                <span>
+                                                    Old
+                                                </span>
+
+                                                <pre>@log.OldValue</pre>
+
+                                            </div>
+                                        }
+
+
+                                        @if (
+                                            !string.IsNullOrWhiteSpace(
+                                                log.NewValue))
+                                        {
+                                            <div>
+
+                                                <span>
+                                                    New
+                                                </span>
+
+                                                <pre>@log.NewValue</pre>
+
+                                            </div>
+                                        }
+
+                                    </details>
+                                }
+                                else
+                                {
+                                    <span class="table-muted">
+                                        —
+                                    </span>
+                                }
+
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+
+            <h3>
+                No audit logs.
+            </h3>
+
+            <p>
+                Không tìm thấy lịch sử thao tác phù hợp
+                với bộ lọc hiện tại.
+            </p>
+
+        </div>
+    }
+
+</div>

@@ -1,0 +1,1222 @@
+﻿/* =========================================================
+   EVALUATION BATCH HEADER
+   ========================================================= */
+
+.evaluation-batch-header {
+    margin-bottom: 28px;
+}
+
+.evaluation-batch-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+
+/* =========================================================
+   CREATE HEADER
+   ========================================================= */
+
+.evaluation-create-header {
+    margin-bottom: 24px;
+}
+
+
+/* =========================================================
+   CREATE SHELL
+   ========================================================= */
+
+.evaluation-create-shell {
+    width: 100%;
+}
+
+
+/* =========================================================
+   CREATE STEPPER
+   ========================================================= */
+
+.evaluation-create-stepper {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    margin-bottom: 18px;
+    padding: 16px 22px;
+    box-sizing: border-box;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    overflow-x: auto;
+}
+
+
+.create-step {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex: 0 0 auto;
+}
+
+
+.create-step-number {
+    width: 31px;
+    height: 31px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 31px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--canvas-soft);
+    color: var(--muted);
+    font-family: var(--font-serif);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+
+.create-step-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    white-space: nowrap;
+}
+
+
+    .create-step-copy strong {
+        color: var(--ink);
+        font-family: var(--font-serif);
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+
+    .create-step-copy span {
+        color: var(--muted);
+        font-size: 10px;
+    }
+
+
+.create-step.active
+.create-step-number {
+    background: var(--terracotta-soft);
+    border-color: var(--terracotta-soft);
+    color: var(--terracotta);
+}
+
+
+.create-step.active
+.create-step-copy strong {
+    color: var(--terracotta);
+}
+
+
+.create-step-line {
+    flex: 1;
+    min-width: 26px;
+    height: 1px;
+    margin: 0 14px;
+    background: var(--border);
+}
+
+
+/* =========================================================
+   CREATE GRID
+   ========================================================= */
+
+.evaluation-create-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 290px;
+    gap: 18px;
+    align-items: start;
+}
+
+
+.evaluation-create-main {
+    min-width: 0;
+}
+
+
+.evaluation-create-sidebar {
+    position: sticky;
+    top: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+
+/* =========================================================
+   CREATE FORM
+   ========================================================= */
+
+.evaluation-batch-form {
+    overflow: hidden;
+    padding: 0;
+}
+
+
+    .evaluation-batch-form > form {
+        width: 100%;
+    }
+
+
+/* =========================================================
+   CREATE SECTION
+   ========================================================= */
+
+.create-section {
+    padding: 28px 30px;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+
+    .create-section:last-of-type {
+        border-bottom: 0;
+    }
+
+
+.create-section-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+
+.create-section-index {
+    width: 31px;
+    height: 31px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 31px;
+    border-radius: 50%;
+    background: var(--canvas-soft);
+    color: var(--muted);
+    font-family: var(--font-serif);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+
+.create-section-heading h2 {
+    margin: 1px 0 0;
+    color: var(--ink);
+    font-family: var(--font-serif);
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+
+.create-section-heading p {
+    max-width: 720px;
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+
+/* =========================================================
+   FORM GRID
+   ========================================================= */
+
+.evaluation-create-main
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+
+.evaluation-create-main
+.form-group-full {
+    grid-column: 1 / -1;
+}
+
+
+.create-description {
+    min-height: 110px;
+    resize: vertical;
+}
+
+
+.field-helper {
+    margin-top: 5px;
+    color: var(--muted-soft);
+    font-size: 10px;
+    line-height: 1.4;
+}
+
+
+/* =========================================================
+   SCOPE CARD
+   ========================================================= */
+
+.create-scope-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--canvas-soft);
+}
+
+
+.create-scope-icon {
+    width: 42px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 42px;
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--sky-dark);
+    box-shadow: 0 1px 4px rgba(0,0,0,.04);
+}
+
+
+.create-scope-content {
+    min-width: 0;
+    flex: 1;
+}
+
+
+    .create-scope-content label {
+        margin-bottom: 6px;
+    }
+
+
+/* =========================================================
+   SELECTION HEADER
+   ========================================================= */
+
+.selection-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 12px;
+}
+
+
+    .selection-header > div {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+
+    .selection-header strong {
+        color: var(--ink);
+        font-family: var(--font-serif);
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+
+    .selection-header span {
+        color: var(--muted);
+        font-size: 10px;
+        line-height: 1.4;
+    }
+
+
+.selection-counter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 72px;
+    padding: 6px 10px;
+    border-radius: var(--radius-pill);
+    background: var(--canvas-soft);
+    color: var(--muted);
+    font-family: var(--font-serif);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   SELECTION GRID
+   ========================================================= */
+
+.create-selection-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+}
+
+
+/* =========================================================
+   SELECTION CARD
+   ========================================================= */
+
+.selection-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+    padding: 12px 13px;
+    box-sizing: border-box;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+
+
+    .selection-card:hover {
+        border-color: var(--border-strong);
+        background: var(--canvas-soft);
+        transform: translateY(-1px);
+    }
+
+
+    .selection-card.selected {
+        border-color: var(--terracotta-soft);
+        background: var(--terracotta-soft);
+        box-shadow: 0 0 0 1px rgba(172, 94, 72, .05);
+    }
+
+
+    .selection-card > input[type="checkbox"] {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+
+.selection-card-check {
+    width: 19px;
+    height: 19px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 19px;
+    border: 1px solid var(--border-strong);
+    border-radius: 5px;
+    background: var(--surface);
+    color: transparent;
+    font-size: 10px;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+
+
+.selection-card.selected
+.selection-card-check {
+    border-color: var(--terracotta);
+    background: var(--terracotta);
+    color: #fff;
+}
+
+
+.selection-card-content {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+
+    .selection-card-content strong {
+        color: var(--ink);
+        font-family: var(--font-serif);
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+
+
+.selection-item-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--body);
+    font-size: 12px;
+}
+
+
+.selection-item-meta {
+    color: var(--muted);
+    font-size: 10px;
+}
+
+
+.selection-card-icon {
+    flex: 0 0 auto;
+    color: var(--muted-soft);
+    font-size: 15px;
+}
+
+
+.selection-card.selected
+.selection-card-icon {
+    color: var(--terracotta);
+}
+
+
+/* =========================================================
+   EMPTY / LOADING / ERROR
+   ========================================================= */
+
+.create-selection-empty {
+    min-height: 150px;
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 24px;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--canvas-soft);
+    text-align: center;
+}
+
+
+    .create-selection-empty i {
+        margin-bottom: 4px;
+        color: var(--muted);
+        font-size: 22px;
+    }
+
+
+    .create-selection-empty strong {
+        color: var(--ink);
+        font-family: var(--font-serif);
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+
+    .create-selection-empty span {
+        max-width: 420px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.5;
+    }
+
+
+.selection-loading i {
+    animation: create-spin .8s linear infinite;
+}
+
+
+.selection-error {
+    border-color: rgba(177, 70, 61, .25);
+    background: rgba(177, 70, 61, .04);
+    color: var(--danger-dark);
+}
+
+
+@keyframes create-spin {
+
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* =========================================================
+   FORM ACTIONS
+   ========================================================= */
+
+.create-form-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 20px 30px;
+    background: var(--canvas-soft);
+    border-top: 1px solid var(--border);
+}
+
+
+    .create-form-actions
+    .btn-primary,
+    .create-form-actions
+    .btn-outline {
+        min-width: 118px;
+    }
+
+
+/* =========================================================
+   SUMMARY SIDEBAR
+   ========================================================= */
+
+.create-summary-card {
+    padding: 20px;
+    box-sizing: border-box;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+}
+
+
+    .create-summary-card h3 {
+        margin: 2px 0 0;
+        color: var(--ink);
+        font-family: var(--font-serif);
+        font-size: 21px;
+        font-weight: 500;
+        line-height: 1.2;
+    }
+
+
+    .create-summary-card > p {
+        margin: 7px 0 18px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.5;
+    }
+
+
+.create-summary-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+
+    .create-summary-item:last-of-type {
+        border-bottom: 0;
+    }
+
+
+.create-summary-item-icon {
+    width: 31px;
+    height: 31px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 31px;
+    border-radius: var(--radius-sm);
+    background: var(--canvas-soft);
+    color: var(--sky-dark);
+    font-size: 13px;
+}
+
+
+.create-summary-item > div:last-child {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+
+.create-summary-item span {
+    color: var(--muted);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+
+.create-summary-item strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--ink);
+    font-family: var(--font-serif);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+
+.create-summary-divider {
+    height: 1px;
+    margin: 14px 0;
+    background: var(--border);
+}
+
+
+/* =========================================================
+   READINESS
+   ========================================================= */
+
+.create-readiness {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+    border-radius: var(--radius-md);
+    background: var(--canvas-soft);
+}
+
+
+.create-readiness-dot {
+    width: 8px;
+    height: 8px;
+    flex: 0 0 8px;
+    margin-top: 4px;
+    border-radius: 50%;
+    background: var(--terracotta);
+}
+
+
+    .create-readiness-dot.ready {
+        background: var(--sage-dark);
+    }
+
+
+.create-readiness > div:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+
+.create-readiness strong {
+    color: var(--ink);
+    font-family: var(--font-serif);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+
+.create-readiness span {
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.4;
+}
+
+
+/* =========================================================
+   INFO CARD
+   ========================================================= */
+
+.create-info-card {
+    padding: 18px 20px;
+    background: linear-gradient( 135deg, var(--canvas-soft), var(--surface) );
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+}
+
+
+    .create-info-card h4 {
+        margin: 2px 0 14px;
+        color: var(--ink);
+        font-family: var(--font-serif);
+        font-size: 18px;
+        font-weight: 500;
+    }
+
+
+.create-info-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+
+    .create-info-step:last-child {
+        border-bottom: 0;
+    }
+
+
+    .create-info-step span {
+        width: 22px;
+        height: 22px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 22px;
+        border-radius: 50%;
+        background: var(--surface);
+        color: var(--muted);
+        font-family: var(--font-serif);
+        font-size: 9px;
+        font-weight: 600;
+    }
+
+
+    .create-info-step p {
+        margin: 2px 0 0;
+        color: var(--body);
+        font-size: 10px;
+        line-height: 1.4;
+    }
+
+
+/* =========================================================
+   BATCH WORKFLOW
+   ========================================================= */
+
+.batch-workflow {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    margin: 0 auto 28px;
+    padding: 22px 28px;
+    box-sizing: border-box;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+}
+
+
+/* =========================================================
+   STEP
+   ========================================================= */
+
+.batch-workflow-step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    color: var(--muted);
+}
+
+.batch-workflow-number {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 34px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--muted);
+    font-family: var(--font-serif);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.batch-workflow-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    white-space: nowrap;
+}
+
+    .batch-workflow-content span {
+        color: var(--ink);
+        font-family: var(--font-serif);
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .batch-workflow-content small {
+        color: var(--muted);
+        font-size: 11px;
+    }
+
+
+/* =========================================================
+   COMPLETE / CURRENT / DISABLED
+   ========================================================= */
+
+.batch-step-complete
+.batch-workflow-number {
+    border-color: var(--sage-soft);
+    background: var(--sage-soft);
+    color: var(--sage-dark);
+}
+
+.batch-step-complete
+.batch-workflow-content span {
+    color: var(--sage-dark);
+}
+
+
+.batch-step-current
+.batch-workflow-number {
+    border-color: var(--terracotta-soft);
+    background: var(--terracotta-soft);
+    color: var(--terracotta);
+}
+
+.batch-step-current
+.batch-workflow-content span {
+    color: var(--terracotta);
+}
+
+
+.batch-step-disabled {
+    opacity: 0.50;
+}
+
+
+/* =========================================================
+   CONNECTING LINE
+   ========================================================= */
+
+.batch-workflow-line {
+    flex: 1;
+    height: 1px;
+    min-width: 24px;
+    margin: 0 14px;
+    background: var(--border);
+}
+
+
+/* =========================================================
+   SUMMARY
+   ========================================================= */
+
+.batch-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.batch-summary-card {
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+.batch-summary-value {
+    color: var(--sky-dark);
+    font-family: var(--font-serif);
+    font-size: 36px;
+    font-weight: 500;
+    line-height: 1;
+}
+
+.batch-summary-value-text {
+    color: var(--ink);
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.batch-summary-meta {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+
+/* =========================================================
+   ACTION CARD
+   ========================================================= */
+
+.batch-action-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    margin-bottom: 56px;
+    padding: 28px 32px;
+    box-sizing: border-box;
+    background: var(--canvas-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+}
+
+.batch-action-content {
+    max-width: 680px;
+}
+
+    .batch-action-content .page-eyebrow {
+        margin-bottom: 6px;
+    }
+
+    .batch-action-content h2 {
+        margin: 0;
+        color: var(--ink);
+        font-family: var(--font-serif);
+        font-size: 30px;
+        font-weight: 500;
+        line-height: 1.1;
+    }
+
+    .batch-action-content p {
+        margin: 10px 0 0;
+        color: var(--body);
+        font-size: 15px;
+        line-height: 1.55;
+    }
+
+.batch-action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+}
+
+.batch-btn-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+
+/* =========================================================
+   PAGE ACTIONS
+   ========================================================= */
+
+.page-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+
+/* =========================================================
+   BATCH FILTER
+   ========================================================= */
+
+.filter-card .batch-filter {
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr) auto !important;
+    align-items: end;
+    column-gap: 16px;
+    row-gap: 0;
+    margin: 0;
+}
+
+
+    .filter-card .batch-filter .filter-field {
+        min-width: 0;
+        width: auto !important;
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+
+        .filter-card .batch-filter .filter-field label {
+            margin: 0;
+            color: var(--muted);
+            font-family: var(--font-serif);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.7px;
+            line-height: 1.2;
+            text-transform: uppercase;
+        }
+
+
+    .filter-card .batch-filter .form-control {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+
+    .filter-card .batch-filter .filter-actions {
+        width: auto !important;
+        height: 42px;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+    }
+
+
+        .filter-card .batch-filter .filter-actions .btn-primary,
+        .filter-card .batch-filter .filter-actions .btn-outline {
+            width: 88px !important;
+            height: 42px !important;
+            min-width: 88px !important;
+            max-width: 88px !important;
+            min-height: 42px !important;
+            flex: 0 0 88px !important;
+            padding: 0 !important;
+            box-sizing: border-box;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1100px) {
+
+    .evaluation-create-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .evaluation-create-sidebar {
+        position: static;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+
+    .batch-workflow {
+        overflow-x: auto;
+    }
+
+
+    .batch-workflow-step {
+        flex: 0 0 auto;
+    }
+
+
+    .batch-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+@media (max-width: 900px) {
+
+    .create-selection-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .evaluation-create-main
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .evaluation-create-main
+    .form-group-full {
+        grid-column: auto;
+    }
+
+
+    .evaluation-create-sidebar {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+@media (max-width: 800px) {
+
+    .batch-action-card {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+
+    .batch-action-buttons {
+        width: 100%;
+    }
+
+
+        .batch-action-buttons .btn-primary,
+        .batch-action-buttons .btn-outline {
+            flex: 1;
+        }
+
+
+    .create-form-actions {
+        align-items: stretch;
+        flex-direction: column-reverse;
+    }
+
+
+        .create-form-actions
+        .btn-primary,
+        .create-form-actions
+        .btn-outline {
+            width: 100%;
+        }
+}
+
+
+@media (max-width: 760px) {
+
+    .filter-card .batch-filter {
+        grid-template-columns: 1fr !important;
+        row-gap: 16px;
+    }
+
+
+        .filter-card .batch-filter .filter-actions {
+            height: auto;
+            margin-top: 0;
+        }
+
+
+    .evaluation-create-stepper {
+        padding: 14px 16px;
+    }
+
+
+    .create-section {
+        padding: 24px 20px;
+    }
+}
+
+
+@media (max-width: 600px) {
+
+    .evaluation-batch-header-actions {
+        width: 100%;
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+
+        .evaluation-batch-header-actions .btn-outline {
+            width: 100%;
+        }
+
+
+    .batch-summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .batch-action-buttons {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+
+        .batch-action-buttons .btn-primary,
+        .batch-action-buttons .btn-outline {
+            width: 100%;
+        }
+
+
+    .batch-workflow {
+        padding: 18px;
+    }
+
+
+    .batch-workflow-content small {
+        display: none;
+    }
+
+
+    .create-scope-card {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+
+    .create-selection-grid {
+        grid-template-columns: 1fr;
+    }
+}

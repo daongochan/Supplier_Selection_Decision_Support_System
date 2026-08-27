@@ -1,0 +1,299 @@
+﻿/* =========================================================
+   DASHBOARD HEADER
+   ========================================================= */
+
+.dashboard-page-header {
+    margin-bottom: 24px;
+}
+
+
+.dashboard-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+
+/* =========================================================
+   KPI GRID
+   ========================================================= */
+
+.dashboard-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+
+.dashboard-kpi-card {
+    min-height: 145px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 22px 24px;
+    box-sizing: border-box;
+}
+
+
+.dashboard-kpi-label {
+    color: var(--muted);
+    font-family: var(--font-serif);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+}
+
+
+.dashboard-kpi-value {
+    color: var(--sky-dark);
+    font-family: var(--font-serif);
+    font-size: 38px;
+    font-weight: 500;
+    line-height: 1;
+}
+
+
+.dashboard-kpi-value-blue {
+    color: var(--sky-dark);
+}
+
+
+.dashboard-kpi-value-green {
+    color: var(--sage-dark);
+}
+
+
+.dashboard-kpi-value-orange {
+    color: var(--terracotta);
+}
+
+
+.dashboard-kpi-meta {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+
+/* =========================================================
+   WORKFLOW OVERVIEW
+   ========================================================= */
+
+.dashboard-workflow-card {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 22px;
+    padding: 24px 28px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+}
+
+
+.dashboard-section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+
+    .dashboard-section-heading .section-title {
+        margin: 0;
+    }
+
+
+.dashboard-status-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+
+
+.dashboard-status-item {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--canvas-soft);
+}
+
+
+.dashboard-status-number {
+    width: 42px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 42px;
+    border-radius: 50%;
+    background: var(--surface-muted);
+    color: var(--ink);
+    font-family: var(--font-serif);
+    font-size: 17px;
+    font-weight: 600;
+}
+
+
+.dashboard-status-blue {
+    background: var(--sky-soft);
+    color: var(--sky-dark);
+}
+
+
+.dashboard-status-green {
+    background: var(--sage-soft);
+    color: var(--sage-dark);
+}
+
+
+.dashboard-status-red {
+    background: var(--terracotta-soft);
+    color: var(--terracotta);
+}
+
+
+.dashboard-status-item strong {
+    display: block;
+    color: var(--ink);
+    font-family: var(--font-serif);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+.dashboard-status-item span {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 10px;
+}
+
+
+/* =========================================================
+   TWO COLUMN
+   ========================================================= */
+
+.dashboard-two-column {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, .9fr);
+    gap: 20px;
+    align-items: start;
+}
+
+
+/* =========================================================
+   SECTION
+   ========================================================= */
+
+.dashboard-section {
+    min-width: 0;
+    margin-bottom: 24px;
+}
+
+
+/* =========================================================
+   BATCH TABLE
+   ========================================================= */
+
+.dashboard-batch-table,
+.dashboard-decision-table {
+    min-width: 700px;
+}
+
+
+    .dashboard-batch-table td,
+    .dashboard-decision-table td {
+        vertical-align: middle;
+    }
+
+
+        .dashboard-batch-table td strong,
+        .dashboard-decision-table td strong {
+            display: block;
+        }
+
+
+    .dashboard-batch-table .table-muted,
+    .dashboard-decision-table .table-muted {
+        display: block;
+        margin-top: 3px;
+    }
+
+
+.dashboard-batch-link {
+    color: var(--terracotta);
+    font-family: var(--font-serif);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+
+    .dashboard-batch-link:hover {
+        text-decoration: underline;
+    }
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1100px) {
+
+    .dashboard-kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+
+    .dashboard-status-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+
+    .dashboard-two-column {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+@media (max-width: 700px) {
+
+    .dashboard-page-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+
+    .dashboard-header-actions {
+        width: 100%;
+    }
+
+
+        .dashboard-header-actions
+        .btn-primary,
+        .dashboard-header-actions
+        .btn-outline {
+            flex: 1;
+        }
+
+
+    .dashboard-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .dashboard-status-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .dashboard-workflow-card {
+        padding: 20px;
+    }
+}

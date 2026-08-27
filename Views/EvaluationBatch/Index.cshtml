@@ -1,0 +1,317 @@
+﻿@model SupplierSelectionDSS.Models.EvaluationBatchIndexViewModel
+
+@{
+    ViewData["Title"] = "Evaluation Batches";
+}
+
+<div class="page-header">
+
+    <div>
+
+        <div class="page-eyebrow">
+            WORKFLOW
+        </div>
+
+        <h1 class="page-title">
+            Evaluation batches
+        </h1>
+
+        <p class="page-description">
+            Quản lý các đợt đánh giá nhà cung cấp theo từng
+            nhóm hàng hóa hoặc dịch vụ.
+        </p>
+
+    </div>
+
+
+    @if (User.IsInRole("Administrator") ||
+         User.IsInRole("PurchasingStaff"))
+    {
+        <a asp-action="Create"
+           class="btn-primary">
+
+            New batch
+
+        </a>
+    }
+
+</div>
+
+
+@if (TempData["SuccessMessage"] is string message)
+{
+    <div class="alert-success">
+        @message
+    </div>
+}
+
+
+<!-- =========================================================
+     FILTER
+     ========================================================= -->
+
+<div class="filter-card">
+
+    <form asp-action="Index"
+          method="get"
+          class="batch-filter">
+
+
+        <div class="filter-field">
+
+            <label for="keyword">
+                Search
+            </label>
+
+            <input id="keyword"
+                   name="keyword"
+                   value="@Model.Keyword"
+                   class="form-control"
+                   placeholder="Batch code or name..." />
+
+        </div>
+
+
+        <div class="filter-field">
+
+            <label for="status">
+                Status
+            </label>
+
+            <select id="status"
+                    name="status"
+                    class="form-control">
+
+                <option value="All"
+                        selected="@(Model.Status == "All")">
+
+                    All
+
+                </option>
+
+                <option value="Draft"
+                        selected="@(Model.Status == "Draft")">
+
+                    Draft
+
+                </option>
+
+                <option value="Evaluating"
+                        selected="@(Model.Status == "Evaluating")">
+
+                    Evaluating
+
+                </option>
+
+                <option value="Completed"
+                        selected="@(Model.Status == "Completed")">
+
+                    Completed
+
+                </option>
+
+                <option value="Cancelled"
+                        selected="@(Model.Status == "Cancelled")">
+
+                    Cancelled
+
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="filter-actions">
+
+            <button type="submit"
+                    class="btn-primary">
+
+                Search
+
+            </button>
+
+
+            <a asp-action="Index"
+               class="btn-outline">
+
+                Reset
+
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<!-- =========================================================
+     BATCH TABLE
+     ========================================================= -->
+
+<div class="table-card">
+
+    @if (Model.Batches.Any())
+    {
+        <div class="data-table-wrapper">
+
+            <table class="data-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Code
+                        </th>
+
+                        <th>
+                            Batch
+                        </th>
+
+                        <th>
+                            Product group
+                        </th>
+
+                        <th>
+                            Scope
+                        </th>
+
+                        <th>
+                            Status
+                        </th>
+
+                        <th>
+                            Created
+                        </th>
+
+                        <th>
+                            Action
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    @foreach (var batch
+                        in Model.Batches)
+                    {
+                        <tr>
+
+                            <td>
+
+                                <strong>
+                                    @batch.BatchCode
+                                </strong>
+
+                            </td>
+
+
+                            <td>
+
+                                <strong>
+                                    @batch.BatchName
+                                </strong>
+
+                            </td>
+
+
+                            <td>
+
+                                <strong>
+                                    @batch.GroupCode
+                                </strong>
+
+                                <span class="table-muted">
+                                    @batch.GroupName
+                                </span>
+
+                            </td>
+
+
+                            <td>
+
+                                <span class="table-muted">
+                                    @batch.SupplierCount suppliers
+                                </span>
+
+                                <span class="table-muted">
+                                    @batch.CriteriaCount criteria
+                                </span>
+
+                            </td>
+
+
+                            <td>
+
+                                <span class="status-pill
+                                    status-@batch.Status.ToLowerInvariant()">
+
+                                    @batch.Status
+
+                                </span>
+
+                            </td>
+
+
+                            <td>
+
+                                @batch.CreatedAt.ToString("dd/MM/yyyy")
+
+                            </td>
+
+
+                            <td>
+
+                                <a asp-action="Details"
+                                   asp-route-id="@batch.BatchId"
+                                   class="action-link">
+
+                                    View
+
+                                </a>
+
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+
+            <h3>
+                No evaluation batches yet.
+            </h3>
+
+            <p>
+                Create a batch to begin the supplier evaluation
+                workflow.
+            </p>
+
+
+            @if (User.IsInRole("Administrator") ||
+                 User.IsInRole("PurchasingStaff"))
+            {
+                <a asp-action="Create"
+                   class="btn-primary">
+
+                    New batch
+
+                </a>
+            }
+
+        </div>
+    }
+
+</div>

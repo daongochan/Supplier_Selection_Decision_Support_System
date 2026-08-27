@@ -1,0 +1,134 @@
+﻿@model SupplierSelectionDSS.Models.ProductGroupSuppliersViewModel
+
+@{
+    ViewData["Title"] = "Group Suppliers";
+}
+
+<div class="page-header">
+
+    <div>
+
+        <div class="page-eyebrow">
+            PRODUCT GROUP
+        </div>
+
+        <h1 class="page-title">
+            @Model.GroupName.
+        </h1>
+
+        <p class="page-description">
+            Chọn các nhà cung cấp có khả năng cung cấp nhóm hàng
+            này.
+        </p>
+
+    </div>
+
+
+    <a asp-action="Index"
+       class="btn-outline">
+        Back
+    </a>
+
+</div>
+
+
+@if (TempData["SuccessMessage"] is string message)
+{
+    <div class="alert-success">
+        @message
+    </div>
+}
+
+
+<div class="form-card">
+
+    <form asp-action="Suppliers"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+        <input type="hidden"
+               name="id"
+               value="@Model.GroupId" />
+
+
+        <div class="assignment-header">
+
+            <div>
+
+                <span class="card-label">
+                    @Model.GroupCode
+                </span>
+
+                <h2 class="card-title">
+                    Available suppliers
+                </h2>
+
+            </div>
+
+        </div>
+
+
+        <div class="supplier-selection-grid">
+
+            @foreach (var supplier in Model.Suppliers)
+            {
+                <label class="supplier-selection-item">
+
+                    <input type="checkbox"
+                           name="supplierIds"
+                           value="@supplier.SupplierId"
+                           checked="@supplier.Selected" />
+
+                    <span class="supplier-selection-content">
+
+                        <span class="supplier-selection-code">
+                            @supplier.SupplierCode
+                        </span>
+
+                        <span class="supplier-selection-name">
+                            @supplier.SupplierName
+                        </span>
+
+                    </span>
+
+                </label>
+            }
+
+        </div>
+
+
+        @if (!Model.Suppliers.Any())
+        {
+            <div class="empty-state">
+
+                <h3>
+                    No active suppliers.
+                </h3>
+
+                <p>
+                    Hãy tạo hoặc kích hoạt nhà cung cấp trước
+                    khi thực hiện gán.
+                </p>
+
+            </div>
+        }
+
+
+        <div class="form-actions">
+
+            <a asp-action="Index"
+               class="btn-outline">
+                Cancel
+            </a>
+
+            <button type="submit"
+                    class="btn-primary">
+                Save suppliers
+            </button>
+
+        </div>
+
+    </form>
+
+</div>

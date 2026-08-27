@@ -1,0 +1,668 @@
+﻿/* =========================================================
+   DECISION RESULT HEADER
+   ========================================================= */
+
+.decision-page-header {
+    margin-bottom: 22px;
+}
+
+.decision-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+
+/* =========================================================
+   DECISION WORKFLOW
+   ========================================================= */
+
+.decision-workflow {
+    width: 100%;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 24px;
+    padding: 18px 22px;
+    box-sizing: border-box;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    overflow-x: auto;
+}
+
+
+.decision-workflow-step {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 9px;
+    flex: 0 0 auto;
+    min-width: 0;
+    white-space: nowrap;
+}
+
+
+.decision-workflow-number {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 32px;
+    box-sizing: border-box;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--canvas-soft);
+    color: var(--muted);
+    font-family: var(--font-serif);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+
+.decision-workflow-copy {
+    display: flex !important;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+
+    .decision-workflow-copy strong {
+        display: block;
+        color: var(--ink);
+        font-family: var(--font-serif);
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+
+    .decision-workflow-copy small {
+        display: block;
+        color: var(--muted);
+        font-size: 10px;
+    }
+
+
+.decision-workflow-step.complete
+.decision-workflow-number {
+    border-color: var(--sage-soft);
+    background: var(--sage-soft);
+    color: var(--sage-dark);
+}
+
+
+.decision-workflow-step.complete
+.decision-workflow-copy strong {
+    color: var(--sage-dark);
+}
+
+
+.decision-workflow-step.current
+.decision-workflow-number {
+    border-color: var(--terracotta-soft);
+    background: var(--terracotta-soft);
+    color: var(--terracotta);
+}
+
+
+.decision-workflow-step.current
+.decision-workflow-copy strong {
+    color: var(--terracotta);
+}
+
+
+.decision-workflow-step.disabled {
+    opacity: .48;
+}
+
+
+.decision-workflow-line {
+    display: block !important;
+    flex: 1 1 auto;
+    min-width: 28px;
+    height: 1px;
+    margin: 0 14px;
+    background: var(--border);
+}
+
+
+/* =========================================================
+   RECOMMENDATION
+   ========================================================= */
+
+.decision-recommendation {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 20px;
+    padding: 28px 32px;
+    background: var(--sage-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+}
+
+
+    .decision-recommendation h2 {
+        margin: 0;
+        color: var(--ink);
+        font-family: var(--font-serif);
+        font-size: 30px;
+        font-weight: 500;
+        line-height: 1.2;
+    }
+
+
+    .decision-recommendation p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+
+.decision-winner-badge {
+    width: 64px;
+    height: 64px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 64px;
+    border-radius: 50%;
+    background: var(--sage-dark);
+    color: var(--surface);
+    font-family: var(--font-serif);
+    font-size: 22px;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   RANKING
+   ========================================================= */
+
+.decision-ranking-card {
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+
+.decision-card-header {
+    padding: 22px 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+
+    .decision-card-header .section-title {
+        margin: 0;
+    }
+
+
+.decision-winner-row td {
+    background: var(--sage-soft);
+}
+
+
+.decision-rank {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--surface-muted);
+    color: var(--muted);
+    font-family: var(--font-serif);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+.decision-winner-row .decision-rank {
+    background: var(--sage-dark);
+    color: var(--surface);
+}
+
+
+/* =========================================================
+   APPROVAL CARD
+   ========================================================= */
+
+.decision-approval-card {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 20px;
+    padding: 24px 28px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+}
+
+
+    .decision-approval-card h2 {
+        margin: 0;
+        color: var(--ink);
+        font-family: var(--font-serif);
+        font-size: 25px;
+        font-weight: 500;
+        line-height: 1.2;
+    }
+
+
+    .decision-approval-card p {
+        margin: 7px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+
+.decision-approval-description {
+    max-width: 820px;
+    margin: 8px 0 18px !important;
+    color: var(--body) !important;
+    font-size: 13px !important;
+    line-height: 1.55 !important;
+}
+
+
+/* =========================================================
+   SELECTED SUPPLIER
+   ========================================================= */
+
+.decision-selected-supplier {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 140px;
+    align-items: center;
+    gap: 13px;
+    margin-top: 18px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--canvas-soft);
+}
+
+
+.decision-selected-supplier-rank {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--sage-dark);
+    color: var(--surface);
+    font-family: var(--font-serif);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+.decision-selected-supplier-code {
+    display: block;
+    color: var(--terracotta);
+    font-family: var(--font-serif);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+
+.decision-selected-supplier > div:nth-child(2) strong {
+    display: block;
+    margin-top: 2px;
+    color: var(--ink);
+    font-family: var(--font-serif);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+.decision-selected-supplier-score {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+
+    .decision-selected-supplier-score span {
+        color: var(--muted);
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+    }
+
+
+    .decision-selected-supplier-score strong {
+        color: var(--ink);
+        font-family: var(--font-serif);
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+
+/* =========================================================
+   SUPPLIER SELECTION
+   ========================================================= */
+
+.decision-supplier-selection {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+
+.decision-supplier-option {
+    position: relative;
+    display: grid;
+    grid-template-columns: 22px 42px minmax(180px, 1fr) 130px;
+    align-items: center;
+    gap: 12px;
+    min-height: 62px;
+    padding: 11px 14px;
+    box-sizing: border-box;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+
+    .decision-supplier-option:hover {
+        background: var(--canvas-soft);
+        border-color: var(--border-strong);
+        transform: translateY(-1px);
+    }
+
+
+    .decision-supplier-option.recommended {
+        background: var(--canvas-soft);
+    }
+
+
+.decision-supplier-radio {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+
+.decision-supplier-radio-mark {
+    width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    border: 1px solid var(--border-strong);
+    border-radius: 50%;
+    background: var(--surface);
+}
+
+
+.decision-supplier-radio:checked + .decision-supplier-radio-mark {
+    border-color: var(--terracotta);
+}
+
+
+    .decision-supplier-radio:checked + .decision-supplier-radio-mark::after {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--terracotta);
+    }
+
+
+.decision-supplier-option:has( .decision-supplier-radio:checked ) {
+    border-color: var(--terracotta);
+    background: var(--terracotta-soft);
+    box-shadow: 0 0 0 1px rgba(172, 94, 72, .07);
+}
+
+
+.decision-supplier-rank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    padding: 5px 7px;
+    border-radius: var(--radius-pill);
+    background: var(--canvas-soft);
+    color: var(--muted);
+    font-family: var(--font-serif);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+
+.decision-supplier-main {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+
+    .decision-supplier-main strong {
+        color: var(--ink);
+        font-family: var(--font-serif);
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+
+    .decision-supplier-main span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--body);
+        font-size: 11px;
+    }
+
+
+.decision-supplier-score {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+
+    .decision-supplier-score small {
+        color: var(--muted);
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+    }
+
+
+    .decision-supplier-score strong {
+        color: var(--ink);
+        font-family: var(--font-serif);
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+
+/* =========================================================
+   APPROVAL ACTIONS
+   ========================================================= */
+
+.decision-approval-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+
+.decision-secondary-actions {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 10px;
+}
+
+
+    .decision-secondary-actions form {
+        margin: 0;
+    }
+
+
+/* =========================================================
+   APPROVAL SUMMARY
+   ========================================================= */
+
+.decision-approval-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+}
+
+
+    .decision-approval-summary > div {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: var(--canvas-soft);
+    }
+
+
+    .decision-approval-summary span {
+        color: var(--muted);
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+    }
+
+
+    .decision-approval-summary strong {
+        color: var(--ink);
+        font-family: var(--font-serif);
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+
+.decision-approval-notes {
+    margin-top: 14px !important;
+    padding: 11px 13px;
+    border-radius: var(--radius-md);
+    background: var(--canvas-soft);
+    color: var(--body) !important;
+    font-size: 12px !important;
+    line-height: 1.5 !important;
+}
+
+
+/* =========================================================
+   APPROVAL STATES
+   ========================================================= */
+
+.decision-approval-approved {
+    border-color: var(--sage-soft);
+}
+
+
+.decision-approval-rejected {
+    border-color: rgba(177, 70, 61, .18);
+    background: rgba(177, 70, 61, .025);
+}
+
+
+.decision-approval-pending {
+    border-color: var(--terracotta-soft);
+    background: var(--canvas-soft);
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    .decision-supplier-option {
+        grid-template-columns: 22px 38px minmax(140px, 1fr) 110px;
+    }
+
+
+    .decision-approval-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+@media (max-width: 700px) {
+
+    .decision-recommendation {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+
+    .decision-workflow {
+        justify-content: flex-start;
+        overflow-x: auto;
+    }
+
+
+    .decision-workflow-line {
+        flex: 0 0 26px;
+        min-width: 26px;
+        margin: 0 10px;
+    }
+
+
+    .decision-workflow-copy small {
+        display: none;
+    }
+
+
+    .decision-supplier-option {
+        grid-template-columns: 22px 38px 1fr;
+    }
+
+
+    .decision-supplier-score {
+        grid-column: 3;
+        align-items: flex-start;
+        margin-top: 2px;
+    }
+
+
+    .decision-approval-summary {
+        grid-template-columns: 1fr;
+    }
+
+
+    .decision-approval-actions,
+    .decision-secondary-actions {
+        width: 100%;
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+
+        .decision-approval-actions
+        .btn-primary,
+        .decision-secondary-actions
+        .btn-primary,
+        .decision-secondary-actions
+        .btn-outline {
+            width: 100%;
+        }
+}

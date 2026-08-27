@@ -1,0 +1,89 @@
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-serif);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+    .status-pill::before {
+        content: "•";
+        font-size: 15px;
+        line-height: 1;
+    }
+
+.status-active,
+.status-completed,
+.status-approved {
+    background: var(--sage-soft);
+    color: var(--sage-dark);
+}
+
+.status-inactive,
+.status-draft {
+    background: var(--surface-muted);
+    color: var(--muted);
+}
+
+.status-evaluating {
+    background: var(--sky-soft);
+    color: var(--sky-dark);
+}
+
+.status-pending,
+.status-pendingreevaluation {
+    background: var(--amber-soft);
+    color: var(--amber-dark);
+}
+
+.status-rejected,
+.status-cancelled {
+    background: var(--danger-soft);
+    color: var(--danger-dark);
+}
+
+
+/* =========================================================
+   ALERTS
+   ========================================================= */
+
+.alert-success {
+    margin-bottom: var(--space-6);
+    padding: 12px 16px;
+    border: 1px solid var(--sage-soft);
+    border-radius: var(--radius-md);
+    background: var(--sage-soft);
+    color: var(--sage-dark);
+    font-size: 14px;
+}
+
+.alert-warning {
+    margin-bottom: var(--space-6);
+    padding: 12px 16px;
+    border: 1px solid var(--amber-soft);
+    border-radius: var(--radius-md);
+    background: var(--amber-soft);
+    color: var(--amber-dark);
+    font-size: 14px;
+}
+
+.alert-danger {
+    margin-bottom: var(--space-6);
+    padding: 12px 16px;
+    border: 1px solid var(--danger-soft);
+    border-radius: var(--radius-md);
+    background: var(--danger-soft);
+    color: var(--danger-dark);
+    font-size: 14px;
+}
+
+

@@ -1,0 +1,274 @@
+﻿@model SupplierSelectionDSS.Models.UserFormViewModel
+
+@{
+    ViewData["Title"] = "Edit User";
+}
+
+
+<div class="page-header user-page-header">
+
+    <div>
+
+        <div class="page-eyebrow">
+            SYSTEM · USERS
+        </div>
+
+        <h1 class="page-title">
+            Edit user
+        </h1>
+
+        <p class="page-description">
+            Cập nhật thông tin và quyền truy cập của tài khoản.
+        </p>
+
+    </div>
+
+</div>
+
+
+<div class="user-form-shell">
+
+    <div class="form-card">
+
+        <form asp-action="Edit"
+              method="post">
+
+            @Html.AntiForgeryToken()
+
+
+            <input asp-for="UserId"
+                   type="hidden" />
+
+
+            <div asp-validation-summary="ModelOnly"
+                 class="validation-summary">
+            </div>
+
+
+            <div class="user-form-section">
+
+                <div class="user-form-heading">
+
+                    <div class="page-eyebrow">
+                        ACCOUNT
+                    </div>
+
+                    <h2>
+                        Account information
+                    </h2>
+
+                </div>
+
+
+                <div class="form-grid">
+
+
+                    <div class="form-group">
+
+                        <label asp-for="Username">
+                            Username
+                        </label>
+
+                        <input asp-for="Username"
+                               class="form-control"
+                               maxlength="50"
+                               readonly />
+
+                        <span class="field-helper">
+                            Username không thay đổi sau khi tài khoản được tạo.
+                        </span>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label asp-for="FullName">
+                            Full name
+                        </label>
+
+                        <input asp-for="FullName"
+                               class="form-control"
+                               maxlength="100" />
+
+                        <span asp-validation-for="FullName"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label asp-for="Email">
+                            Email
+                        </label>
+
+                        <input asp-for="Email"
+                               class="form-control"
+                               type="email"
+                               maxlength="100" />
+
+                        <span asp-validation-for="Email"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label asp-for="Phone">
+                            Phone
+                        </label>
+
+                        <input asp-for="Phone"
+                               class="form-control"
+                               maxlength="20" />
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label asp-for="Role">
+                            Role
+                        </label>
+
+                        <select asp-for="Role"
+                                class="form-control">
+
+                            <option value="Administrator">
+                                Administrator
+                            </option>
+
+                            <option value="PurchasingStaff">
+                                Purchasing Staff
+                            </option>
+
+                            <option value="Expert">
+                                Expert
+                            </option>
+
+                            <option value="Manager">
+                                Manager
+                            </option>
+
+                        </select>
+
+                        <span asp-validation-for="Role"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label asp-for="Status">
+                            Status
+                        </label>
+
+                        <select asp-for="Status"
+                                class="form-control">
+
+                            <option value="Active">
+                                Active
+                            </option>
+
+                            <option value="Locked">
+                                Locked
+                            </option>
+
+                            <option value="Inactive">
+                                Inactive
+                            </option>
+
+                        </select>
+
+                        <span asp-validation-for="Status"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="user-form-section">
+
+                <div class="user-form-heading">
+
+                    <div class="page-eyebrow">
+                        SECURITY
+                    </div>
+
+                    <h2>
+                        Password
+                    </h2>
+
+                    <p>
+                        Để trống nếu không muốn thay đổi mật khẩu hiện tại.
+                    </p>
+
+                </div>
+
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+
+                        <label asp-for="Password">
+                            New password
+                        </label>
+
+                        <input asp-for="Password"
+                               class="form-control"
+                               type="password"
+                               minlength="8"
+                               autocomplete="new-password" />
+
+                        <span asp-validation-for="Password"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="form-actions">
+
+                <a asp-action="Index"
+                   class="btn-outline">
+
+                    Cancel
+
+                </a>
+
+
+                <button type="submit"
+                        class="btn-primary">
+
+                    Save changes
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+}

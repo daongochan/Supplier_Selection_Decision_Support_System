@@ -1,0 +1,98 @@
+﻿@{
+    var isAuthenticated =
+        User.Identity?.IsAuthenticated == true;
+}
+
+<!DOCTYPE html>
+
+<html lang="vi">
+
+<head>
+
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>
+        @ViewData["Title"] - Supplier Selection DSS
+    </title>
+
+
+    <!-- =====================================================
+         FONT
+         ===================================================== -->
+
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com" />
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin="anonymous" />
+
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" />
+
+
+    <!-- =====================================================
+         DESIGN SYSTEM
+         ===================================================== -->
+
+    <link rel="stylesheet"
+          href="~/css/site.css"
+          asp-append-version="true" />
+
+
+    @await RenderSectionAsync(
+        "Styles",
+        required: false)
+
+</head>
+
+
+<body>
+
+    @if (isAuthenticated)
+    {
+        <div class="app-shell">
+
+            <partial name="_Sidebar" />
+
+
+            <div class="app-main">
+
+                <partial name="_Topbar" />
+
+
+                <main class="app-content">
+
+                    @RenderBody()
+
+                </main>
+
+            </div>
+
+        </div>
+    }
+    else
+    {
+        <main class="public-page">
+
+            @RenderBody()
+
+        </main>
+    }
+
+
+    <script src="~/js/site.js"
+            asp-append-version="true">
+    </script>
+
+
+    @await RenderSectionAsync(
+        "Scripts",
+        required: false)
+
+</body>
+
+</html>
