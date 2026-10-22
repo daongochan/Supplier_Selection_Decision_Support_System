@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SupplierSelectionDSS.Data;
 using SupplierSelectionDSS.Data.Entities;
 using SupplierSelectionDSS.Models;
@@ -39,12 +39,16 @@ public class UserService
     // SEARCH
     // =========================================================
 
-    public async Task<List<UserListItemViewModel>>
-        SearchAsync(
-            string? keyword,
-            string? role,
-            string? status)
+    public async Task<PagedResult<UserListItemViewModel>> SearchAsync(
+        string? keyword,
+        string? role,
+        string? status,
+        int pageNumber = 1,
+        int pageSize = 10)
     {
+        pageNumber = Math.Max(pageNumber, 1);
+        pageSize = Math.Max(pageSize, 1);
+
         keyword =
             keyword?.Trim();
 
@@ -115,7 +119,7 @@ public class UserService
         }
 
 
-        return await query
+        var projectedQuery = query
             .OrderBy(
                 x =>
                     x.FullName)
@@ -152,8 +156,9 @@ public class UserService
 
                         CreatedAt =
                             x.CreatedAt
-                    })
-            .ToListAsync();
+                    });
+
+        return await PagedResult<UserListItemViewModel>.CreateAsync(projectedQuery, pageNumber, pageSize);
     }
 
 

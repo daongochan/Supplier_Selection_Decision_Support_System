@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SupplierSelectionDSS.Services;
 using SupplierSelectionDSS.Constants;
@@ -27,14 +27,21 @@ public class AuditLogController : Controller
     public async Task<IActionResult> Index(
         string? keyword,
         string actionType = "All",
-        int? userId = null)
+        int? userId = null,
+        int page = 1,
+        int pageSize = 15)
     {
+        page = Math.Max(page, 1);
+        pageSize = Math.Max(pageSize, 1);
+
         var model =
             await _auditLogService
                 .SearchAsync(
                     keyword,
                     actionType,
-                    userId);
+                    userId,
+                    page,
+                    pageSize);
 
 
         return View(model);

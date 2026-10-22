@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SupplierSelectionDSS.Constants;
 using SupplierSelectionDSS.Data;
 using SupplierSelectionDSS.Data.Entities;
@@ -192,160 +192,184 @@ public class AHPService
         var evaluationTimestamp =
             DateTime.UtcNow;
 
-        await using var transaction =
-            await _context.Database.BeginTransactionAsync();
+        var strategy = _context.Database.CreateExecutionStrategy();
 
-        try
+        await strategy.ExecuteAsync(async () =>
         {
-            // -------------------------------------------------
-            // Remove previous matrix
-            // -------------------------------------------------
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
 
-            var existingComparisons =
-                await _context.AhppairwiseComparisons
-                    .Where(x =>
-                        x.BatchId == model.BatchId)
+            try
+            {
+                // -------------------------------------------------
+                // Remove previous matrix
+                // -------------------------------------------------
+
+                var existingComparisons =
+                    await _context.AhppairwiseComparisons
+                        .Where(x =>
+                            x.BatchId == model.BatchId)
+                        .ToListAsync();
+
+                if (existingComparisons.Count > 0)
+                {
+                    _context.AhppairwiseComparisons
+                        .RemoveRange(existingComparisons);
+                }
+
+                // -------------------------------------------------
+                // Insert diagonal
+                // -------------------------------------------------
+
+                foreach (var criterion in criteria)
+                {
+                    _context.AhppairwiseComparisons.Add(
+                        new AhppairwiseComparison
+                        {
+                            BatchId =
+                                model.BatchId,
+
+                            CriteriaRowId =
+                                criterion.CriteriaId,
+
+                            CriteriaColId =
+                                criterion.CriteriaId,
+
+                            ComparisonValue =
+                                1m,
+
+                            EvaluatedBy =
+                                evaluatedBy,
+
+                            EvaluatedAt =
+                                evaluationTimestamp
+                        });
+                }
+
+                // -------------------------------------------------
+                // Insert direct + inverse values
+                // -------------------------------------------------
+
+                foreach (var item in model.Comparisons)
+                {
+                    var value =
+                        Math.Round(
+                            item.Value,
+                            4,
+                            MidpointRounding.AwayFromZero);
+
+                    var inverseValue =
+                        Math.Round(
+                            1m / value,
+                            4,
+                            MidpointRounding.AwayFromZero);
+
+                    _context.AhppairwiseComparisons.Add(
+                        new AhppairwiseComparison
+                        {
+                            BatchId =
+                                model.BatchId,
+
+                            CriteriaRowId =
+                                item.CriteriaRowId,
+
+                            CriteriaColId =
+                                item.CriteriaColId,
+
+                            ComparisonValue =
+                                value,
+
+                            EvaluatedBy =
+                                evaluatedBy,
+
+                            EvaluatedAt =
+                                evaluationTimestamp
+                        });
+
+                    _context.AhppairwiseComparisons.Add(
+                        new AhppairwiseComparison
+                        {
+                            BatchId =
+                                model.BatchId,
+
+                            CriteriaRowId =
+                                item.CriteriaColId,
+
+                            CriteriaColId =
+                                item.CriteriaRowId,
+
+                            ComparisonValue =
+                                inverseValue,
+
+                            EvaluatedBy =
+                                evaluatedBy,
+
+                            EvaluatedAt =
+                                evaluationTimestamp
+                        });
+                }
+
+                await _context.SaveChangesAsync();
+
+                // -------------------------------------------------
+                // Invalidate previous AHP result
+                // -------------------------------------------------
+
+                var oldResult =
+                    await _context.Ahpresults
+                        .FirstOrDefaultAsync(
+                            x => x.BatchId == model.BatchId);
+
+                if (oldResult != null)
+                {
+                    _context.Ahpresults.Remove(oldResult);
+                }
+
+                // -------------------------------------------------
+                // Invalidate previous AHP weights
+                // -------------------------------------------------
+
+                var oldWeights =
+                    await _context.AhpcriteriaWeights
+                        .Where(x =>
+                            x.BatchId == model.BatchId)
+                        .ToListAsync();
+
+                if (oldWeights.Count > 0)
+                {
+                    _context.AhpcriteriaWeights
+                        .RemoveRange(oldWeights);
+                }
+
+                // -------------------------------------------------
+                // Invalidate stale TOPSIS results and ideals
+                // -------------------------------------------------
+                var staleTopsisResults = await _context.TopsisResults
+                    .Where(x => x.BatchId == model.BatchId)
                     .ToListAsync();
+                if (staleTopsisResults.Count > 0)
+                {
+                    _context.TopsisResults.RemoveRange(staleTopsisResults);
+                }
 
-            if (existingComparisons.Count > 0)
-            {
-                _context.AhppairwiseComparisons
-                    .RemoveRange(existingComparisons);
-            }
-
-            // -------------------------------------------------
-            // Insert diagonal
-            // -------------------------------------------------
-
-            foreach (var criterion in criteria)
-            {
-                _context.AhppairwiseComparisons.Add(
-                    new AhppairwiseComparison
-                    {
-                        BatchId =
-                            model.BatchId,
-
-                        CriteriaRowId =
-                            criterion.CriteriaId,
-
-                        CriteriaColId =
-                            criterion.CriteriaId,
-
-                        ComparisonValue =
-                            1m,
-
-                        EvaluatedBy =
-                            evaluatedBy,
-
-                        EvaluatedAt =
-                            evaluationTimestamp
-                    });
-            }
-
-            // -------------------------------------------------
-            // Insert direct + inverse values
-            // -------------------------------------------------
-
-            foreach (var item in model.Comparisons)
-            {
-                var value =
-                    Math.Round(
-                        item.Value,
-                        4,
-                        MidpointRounding.AwayFromZero);
-
-                var inverseValue =
-                    Math.Round(
-                        1m / value,
-                        4,
-                        MidpointRounding.AwayFromZero);
-
-                _context.AhppairwiseComparisons.Add(
-                    new AhppairwiseComparison
-                    {
-                        BatchId =
-                            model.BatchId,
-
-                        CriteriaRowId =
-                            item.CriteriaRowId,
-
-                        CriteriaColId =
-                            item.CriteriaColId,
-
-                        ComparisonValue =
-                            value,
-
-                        EvaluatedBy =
-                            evaluatedBy,
-
-                        EvaluatedAt =
-                            evaluationTimestamp
-                    });
-
-                _context.AhppairwiseComparisons.Add(
-                    new AhppairwiseComparison
-                    {
-                        BatchId =
-                            model.BatchId,
-
-                        CriteriaRowId =
-                            item.CriteriaColId,
-
-                        CriteriaColId =
-                            item.CriteriaRowId,
-
-                        ComparisonValue =
-                            inverseValue,
-
-                        EvaluatedBy =
-                            evaluatedBy,
-
-                        EvaluatedAt =
-                            evaluationTimestamp
-                    });
-            }
-
-            await _context.SaveChangesAsync();
-
-            // -------------------------------------------------
-            // Invalidate previous AHP result
-            // -------------------------------------------------
-
-            var oldResult =
-                await _context.Ahpresults
-                    .FirstOrDefaultAsync(
-                        x => x.BatchId == model.BatchId);
-
-            if (oldResult != null)
-            {
-                _context.Ahpresults.Remove(oldResult);
-            }
-
-            // -------------------------------------------------
-            // Invalidate previous AHP weights
-            // -------------------------------------------------
-
-            var oldWeights =
-                await _context.AhpcriteriaWeights
-                    .Where(x =>
-                        x.BatchId == model.BatchId)
+                var staleTopsisIdeals = await _context.TopsisIdealSolutions
+                    .Where(x => x.BatchId == model.BatchId)
                     .ToListAsync();
+                if (staleTopsisIdeals.Count > 0)
+                {
+                    _context.TopsisIdealSolutions.RemoveRange(staleTopsisIdeals);
+                }
 
-            if (oldWeights.Count > 0)
-            {
-                _context.AhpcriteriaWeights
-                    .RemoveRange(oldWeights);
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
             }
-
-            await _context.SaveChangesAsync();
-
-            await transaction.CommitAsync();
-        }
-        catch
-        {
-            await transaction.RollbackAsync();
-            throw;
-        }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        });
     }
 
     // =========================================================
@@ -447,165 +471,189 @@ public class AHPService
         // PERSIST RESULT
         // =====================================================
 
-        await using var transaction =
-            await _context.Database.BeginTransactionAsync();
+        var strategy = _context.Database.CreateExecutionStrategy();
 
-        try
+        return await strategy.ExecuteAsync(async () =>
         {
-            // -------------------------------------------------
-            // Remove old result
-            // -------------------------------------------------
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
 
-            var oldResult =
-                await _context.Ahpresults
-                    .FirstOrDefaultAsync(
-                        x => x.BatchId == batchId);
-
-            if (oldResult != null)
+            try
             {
-                _context.Ahpresults.Remove(oldResult);
-            }
+                // -------------------------------------------------
+                // Remove old result
+                // -------------------------------------------------
 
-            // -------------------------------------------------
-            // Remove old weights
-            // -------------------------------------------------
+                var oldResult =
+                    await _context.Ahpresults
+                        .FirstOrDefaultAsync(
+                            x => x.BatchId == batchId);
 
-            var oldWeights =
-                await _context.AhpcriteriaWeights
+                if (oldResult != null)
+                {
+                    _context.Ahpresults.Remove(oldResult);
+                }
+
+                // -------------------------------------------------
+                // Remove old weights
+                // -------------------------------------------------
+
+                var oldWeights =
+                    await _context.AhpcriteriaWeights
+                        .Where(x => x.BatchId == batchId)
+                        .ToListAsync();
+
+                if (oldWeights.Count > 0)
+                {
+                    _context.AhpcriteriaWeights
+                        .RemoveRange(oldWeights);
+                }
+
+                // -------------------------------------------------
+                // Invalidate stale TOPSIS results and ideals (weights changed)
+                // -------------------------------------------------
+                var staleTopsisResults = await _context.TopsisResults
                     .Where(x => x.BatchId == batchId)
                     .ToListAsync();
-
-            if (oldWeights.Count > 0)
-            {
-                _context.AhpcriteriaWeights
-                    .RemoveRange(oldWeights);
-            }
-
-            var calculatedAt =
-                DateTime.UtcNow;
-
-            // -------------------------------------------------
-            // Insert AHP result
-            // -------------------------------------------------
-
-            var resultEntity =
-                new Ahpresult
+                if (staleTopsisResults.Count > 0)
                 {
-                    BatchId =
-                        batchId,
+                    _context.TopsisResults.RemoveRange(staleTopsisResults);
+                }
 
-                    LambdaMax =
-                        ToDecimal(
-                            calculation.LambdaMax),
+                var staleTopsisIdeals = await _context.TopsisIdealSolutions
+                    .Where(x => x.BatchId == batchId)
+                    .ToListAsync();
+                if (staleTopsisIdeals.Count > 0)
+                {
+                    _context.TopsisIdealSolutions.RemoveRange(staleTopsisIdeals);
+                }
 
-                    Civalue =
-                        ToDecimal(
-                            calculation.CIValue),
+                var calculatedAt =
+                    DateTime.UtcNow;
 
-                    Rivalue =
-                        ToDecimal(
-                            calculation.RIValue),
+                // -------------------------------------------------
+                // Insert AHP result
+                // -------------------------------------------------
 
-                    Crvalue =
-                        ToDecimal(
-                            calculation.CRValue),
-
-                    IsConsistent =
-                        calculation.IsConsistent,
-
-                    N =
-                        calculation.N,
-
-                    CalculatedAt =
-                        calculatedAt
-                };
-
-            _context.Ahpresults
-                .Add(resultEntity);
-
-            // -------------------------------------------------
-            // Insert weights
-            // -------------------------------------------------
-
-            for (var i = 0; i < n; i++)
-            {
-                _context.AhpcriteriaWeights.Add(
-                    new AhpcriteriaWeight
+                var resultEntity =
+                    new Ahpresult
                     {
                         BatchId =
                             batchId,
 
-                        CriteriaId =
-                            criteria[i].CriteriaId,
-
-                        WeightValue =
+                        LambdaMax =
                             ToDecimal(
-                                calculation.Weights[i])
-                    });
+                                calculation.LambdaMax),
+
+                        Civalue =
+                            ToDecimal(
+                                calculation.CIValue),
+
+                        Rivalue =
+                            ToDecimal(
+                                calculation.RIValue),
+
+                        Crvalue =
+                            ToDecimal(
+                                calculation.CRValue),
+
+                        IsConsistent =
+                            calculation.IsConsistent,
+
+                        N =
+                            calculation.N,
+
+                        CalculatedAt =
+                            calculatedAt
+                    };
+
+                _context.Ahpresults
+                    .Add(resultEntity);
+
+                // -------------------------------------------------
+                // Insert weights
+                // -------------------------------------------------
+
+                for (var i = 0; i < n; i++)
+                {
+                    _context.AhpcriteriaWeights.Add(
+                        new AhpcriteriaWeight
+                        {
+                            BatchId =
+                                batchId,
+
+                            CriteriaId =
+                                criteria[i].CriteriaId,
+
+                            WeightValue =
+                                ToDecimal(
+                                    calculation.Weights[i])
+                        });
+                }
+
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                // -------------------------------------------------
+                // Return ViewModel
+                // -------------------------------------------------
+
+                return new AHPResultViewModel
+                {
+                    HasResult = true,
+
+                    BatchId =
+                        batchId,
+
+                    CriteriaCount =
+                        n,
+
+                    LambdaMax =
+                        calculation.LambdaMax,
+
+                    CIValue =
+                        calculation.CIValue,
+
+                    RIValue =
+                        calculation.RIValue,
+
+                    CRValue =
+                        calculation.CRValue,
+
+                    IsConsistent =
+                        calculation.IsConsistent,
+
+                    CalculatedAt =
+                        calculatedAt,
+
+                    Weights =
+                        criteria
+                            .Select(
+                                (criterion, index) =>
+                                    new AHPWeightViewModel
+                                    {
+                                        CriteriaId =
+                                            criterion.CriteriaId,
+
+                                        CriteriaCode =
+                                            criterion.CriteriaCode,
+
+                                        CriteriaName =
+                                            criterion.CriteriaName,
+
+                                        WeightValue =
+                                            calculation.Weights[index]
+                                    })
+                            .ToList()
+                };
             }
-
-            await _context.SaveChangesAsync();
-
-            await transaction.CommitAsync();
-
-            // -------------------------------------------------
-            // Return ViewModel
-            // -------------------------------------------------
-
-            return new AHPResultViewModel
+            catch
             {
-                HasResult = true,
-
-                BatchId =
-                    batchId,
-
-                CriteriaCount =
-                    n,
-
-                LambdaMax =
-                    calculation.LambdaMax,
-
-                CIValue =
-                    calculation.CIValue,
-
-                RIValue =
-                    calculation.RIValue,
-
-                CRValue =
-                    calculation.CRValue,
-
-                IsConsistent =
-                    calculation.IsConsistent,
-
-                CalculatedAt =
-                    calculatedAt,
-
-                Weights =
-                    criteria
-                        .Select(
-                            (criterion, index) =>
-                                new AHPWeightViewModel
-                                {
-                                    CriteriaId =
-                                        criterion.CriteriaId,
-
-                                    CriteriaCode =
-                                        criterion.CriteriaCode,
-
-                                    CriteriaName =
-                                        criterion.CriteriaName,
-
-                                    WeightValue =
-                                        calculation.Weights[index]
-                                })
-                        .ToList()
-            };
-        }
-        catch
-        {
-            await transaction.RollbackAsync();
-            throw;
-        }
+                await transaction.RollbackAsync();
+                throw;
+            }
+        });
     }
 
     // =========================================================

@@ -1,10 +1,10 @@
-﻿using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SupplierSelectionDSS.Models;
 using SupplierSelectionDSS.Services;
 using SupplierSelectionDSS.Constants;
+using SupplierSelectionDSS.Web.Extensions;
 
 namespace SupplierSelectionDSS.Controllers;
 
@@ -38,9 +38,16 @@ public class EvaluationController : Controller
     public async Task<IActionResult> Index(
         int batchId)
     {
+        if (batchId <= 0)
+        {
+            return NotFound();
+        }
+
+
         var model =
             await _evaluationService
-                .GetEvaluationAsync(batchId);
+                .GetEvaluationAsync(
+                    batchId);
 
 
         if (model == null)
@@ -49,12 +56,13 @@ public class EvaluationController : Controller
         }
 
 
-        return View(model);
+        return View(
+            model);
     }
 
 
     // =========================================================
-    // SAVE EVALUATION
+    // SAVE
     // =========================================================
 
     [HttpPost]
@@ -65,19 +73,12 @@ public class EvaluationController : Controller
     public async Task<IActionResult> Save(
         EvaluationScoreInputViewModel model)
     {
-        var userIdClaim =
-            User.FindFirst(
-                ClaimTypes.NameIdentifier);
-
-
-        if (
-            userIdClaim == null ||
-            !int.TryParse(
-                userIdClaim.Value,
-                out var evaluatedBy))
+        var userId = User.GetUserId();
+        if (!userId.HasValue)
         {
             return Unauthorized();
         }
+        var evaluatedBy = userId.Value;
 
 
         if (

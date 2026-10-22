@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace SupplierSelectionDSS.Services;
 
@@ -48,6 +48,11 @@ public class AHPCalculationService
      * n = 8  -> 1.41
      * n = 9  -> 1.45
      * n = 10 -> 1.49
+     * n = 11 -> 1.51
+     * n = 12 -> 1.54
+     * n = 13 -> 1.56
+     * n = 14 -> 1.57
+     * n = 15 -> 1.59
      */
 
     private static readonly IReadOnlyDictionary<int, double> RandomIndex =
@@ -62,7 +67,12 @@ public class AHPCalculationService
             [7] = 1.32,
             [8] = 1.41,
             [9] = 1.45,
-            [10] = 1.49
+            [10] = 1.49,
+            [11] = 1.51,
+            [12] = 1.54,
+            [13] = 1.56,
+            [14] = 1.57,
+            [15] = 1.59
         };
 
     // =========================================================
@@ -369,7 +379,7 @@ public class AHPCalculationService
         }
 
         throw new InvalidOperationException(
-            $"AHP hiện hỗ trợ tối đa 10 Criteria cho bảng RI chuẩn (n = {n}).");
+            $"AHP hiện hỗ trợ tối đa 15 tiêu chí cho bảng RI chuẩn Saaty (n = {n}).");
     }
 
     // =========================================================
@@ -386,25 +396,4 @@ public class AHPCalculationService
                 $"AHP matrix chứa giá trị không hữu hạn tại {location}.");
         }
     }
-}
-
-// =============================================================
-// AHP CALCULATION RESULT
-// =============================================================
-
-public class AHPCalculationResult
-{
-    public double[] Weights { get; init; } = Array.Empty<double>();
-
-    public double LambdaMax { get; init; }
-
-    public double CIValue { get; init; }
-
-    public double RIValue { get; init; }
-
-    public double CRValue { get; init; }
-
-    public bool IsConsistent { get; init; }
-
-    public int N { get; init; }
 }

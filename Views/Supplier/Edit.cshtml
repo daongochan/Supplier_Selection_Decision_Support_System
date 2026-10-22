@@ -1,4 +1,4 @@
-﻿@model SupplierSelectionDSS.Models.SupplierFormViewModel
+@model SupplierSelectionDSS.Models.SupplierFormViewModel
 
 @{
     ViewData["Title"] = "Edit Supplier";
@@ -43,143 +43,115 @@
 
         <div class="form-grid">
 
+            <!-- 1. Enterprise Identity -->
+            <div class="form-section">
+                <div class="form-section-title">Thông tin doanh nghiệp</div>
+                <div class="form-section-desc">Mã định danh và tên pháp lý của nhà cung cấp</div>
+            </div>
 
             <div class="form-group">
-
-                <label asp-for="SupplierCode">
-                    Supplier code
+                <label asp-for="SupplierCode" class="required-field">
+                    Mã nhà cung cấp
                 </label>
-
                 <input asp-for="SupplierCode"
                        class="form-control"
                        maxlength="20" />
-
-                <span asp-validation-for="SupplierCode"
-                      class="text-danger">
-                </span>
-
+                <span asp-validation-for="SupplierCode" class="text-danger"></span>
             </div>
 
-
             <div class="form-group">
-
-                <label asp-for="SupplierName">
-                    Supplier name
+                <label asp-for="SupplierName" class="required-field">
+                    Tên nhà cung cấp
                 </label>
-
                 <input asp-for="SupplierName"
                        class="form-control"
                        maxlength="200" />
-
-                <span asp-validation-for="SupplierName"
-                      class="text-danger">
-                </span>
-
+                <span asp-validation-for="SupplierName" class="text-danger"></span>
             </div>
 
+            <div class="form-group">
+                <label asp-for="TaxCode">
+                    Mã số thuế
+                </label>
+                <input asp-for="TaxCode"
+                       class="form-control"
+                       maxlength="20" />
+            </div>
 
             <div class="form-group">
-
-                <label asp-for="ContactPerson">
-                    Contact person
+                <label asp-for="BusinessField">
+                    Lĩnh vực kinh doanh
                 </label>
+                <input asp-for="BusinessField"
+                       class="form-control"
+                       maxlength="150" />
+            </div>
 
+            <!-- 2. Contact Information -->
+            <div class="form-section">
+                <div class="form-section-title">Thông tin liên hệ</div>
+                <div class="form-section-desc">Đầu mối làm việc và các kênh liên lạc trực tiếp</div>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="ContactPerson">
+                    Người liên hệ
+                </label>
                 <input asp-for="ContactPerson"
                        class="form-control"
                        maxlength="100" />
-
             </div>
 
-
             <div class="form-group">
-
                 <label asp-for="Email">
                     Email
                 </label>
-
                 <input asp-for="Email"
                        class="form-control"
                        type="email"
                        maxlength="100" />
-
             </div>
 
-
             <div class="form-group">
-
                 <label asp-for="Phone">
-                    Phone
+                    Số điện thoại
                 </label>
-
                 <input asp-for="Phone"
                        class="form-control"
                        maxlength="20" />
-
             </div>
 
-
             <div class="form-group">
-
-                <label asp-for="TaxCode">
-                    Tax code
-                </label>
-
-                <input asp-for="TaxCode"
-                       class="form-control"
-                       maxlength="20" />
-
-            </div>
-
-
-            <div class="form-group">
-
-                <label asp-for="BusinessField">
-                    Business field
-                </label>
-
-                <input asp-for="BusinessField"
-                       class="form-control"
-                       maxlength="150" />
-
-            </div>
-
-
-            <div class="form-group">
-
                 <label asp-for="Website">
                     Website
                 </label>
-
                 <input asp-for="Website"
                        class="form-control"
                        maxlength="255" />
-
             </div>
 
+            <!-- 3. Address & Terms -->
+            <div class="form-section">
+                <div class="form-section-title">Địa chỉ & Điều khoản</div>
+                <div class="form-section-desc">Địa chỉ trụ sở và các điều khoản giao dịch mặc định</div>
+            </div>
 
             <div class="form-group form-group-full">
-
                 <label asp-for="Address">
-                    Address
+                    Địa chỉ
                 </label>
-
                 <input asp-for="Address"
                        class="form-control"
                        maxlength="255" />
-
             </div>
 
-
             <div class="form-group form-group-full">
-
                 <label asp-for="PaymentTerms">
-                    Payment terms
+                    Điều khoản thanh toán
                 </label>
-
                 <textarea asp-for="PaymentTerms"
                           class="form-control"
                           maxlength="255"></textarea>
-
             </div>
 
         </div>

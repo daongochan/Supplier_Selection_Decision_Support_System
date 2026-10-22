@@ -1,4 +1,4 @@
-﻿using SupplierSelectionDSS.Constants;
+using SupplierSelectionDSS.Constants;
 
 namespace SupplierSelectionDSS.Services;
 
@@ -506,42 +506,4 @@ public class TOPSISCalculationService
                 $"Giá trị TOPSIS không hữu hạn tại {location}.");
         }
     }
-}
-
-// =============================================================
-// CALCULATION RESULT
-// =============================================================
-
-public class TOPSISCalculationResult
-{
-    public double[,] NormalizedMatrix { get; init; }
-        = new double[0, 0];
-
-    public double[,] WeightedMatrix { get; init; }
-        = new double[0, 0];
-
-    public double[] PISValues { get; init; }
-        = Array.Empty<double>();
-
-    public double[] NISValues { get; init; }
-        = Array.Empty<double>();
-
-    public TOPSISSupplierDistance[] Distances { get; init; }
-        = Array.Empty<TOPSISSupplierDistance>();
-
-    public int[] RankByIndex { get; init; }
-        = Array.Empty<int>();
-}
-
-// =============================================================
-// SUPPLIER DISTANCE RESULT
-// =============================================================
-
-public class TOPSISSupplierDistance
-{
-    public double DistanceToPIS { get; init; }
-
-    public double DistanceToNIS { get; init; }
-
-    public double ClosenessCoefficient { get; init; }
-}
+}

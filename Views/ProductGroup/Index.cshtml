@@ -1,4 +1,4 @@
-﻿@model SupplierSelectionDSS.Models.ProductGroupIndexViewModel
+@model SupplierSelectionDSS.Models.ProductGroupIndexViewModel
 
 @{
     ViewData["Title"] = "Product Groups";
@@ -27,12 +27,6 @@
 </div>
 
 
-@if (TempData["SuccessMessage"] is string message)
-{
-    <div class="alert-success">
-        @message
-    </div>
-}
 
 
 <div class="filter-card">
@@ -212,6 +206,8 @@
             </table>
 
         </div>
+
+        <partial name="_Pagination" model="Model" />
     }
     else
     {

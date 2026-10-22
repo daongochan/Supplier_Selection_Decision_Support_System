@@ -1,4 +1,4 @@
-﻿@model SupplierSelectionDSS.Models.EvaluationViewModel
+@model SupplierSelectionDSS.Models.EvaluationViewModel
 
 @{
     ViewData["Title"] = "Evaluation";
@@ -93,31 +93,6 @@
 </div>
 
 
-<!-- =========================================================
-     ALERTS
-     ========================================================= -->
-@if (
-    TempData["SuccessMessage"]
-    is string successMessage)
-{
-    <div class="alert-success">
-
-        @successMessage
-
-    </div>
-}
-
-
-@if (
-    TempData["ErrorMessage"]
-    is string errorMessage)
-{
-    <div class="alert-danger">
-
-        @errorMessage
-
-    </div>
-}
 
 
 <!-- =========================================================
@@ -171,7 +146,7 @@
             EVALUATION
         </span>
 
-        <strong>
+        <strong id="summaryCompletion">
             @completedCells / @totalCells
         </strong>
 
@@ -194,15 +169,15 @@
                 COMPLETION
             </div>
 
-            <strong>
+            <strong id="progressText">
                 @completedCells / @totalCells values entered
             </strong>
 
         </div>
 
 
-        <span class="
-            @(evaluationComplete
+        <span id="progressStatus"
+            class="@(evaluationComplete
                 ? "evaluation-progress-complete"
                 : "evaluation-progress-pending")">
 
@@ -217,7 +192,8 @@
 
     <div class="evaluation-progress-track">
 
-        <div class="evaluation-progress-bar"
+        <div id="progressBar"
+             class="evaluation-progress-bar"
              style="
             width:
             @(totalCells > 0
@@ -533,4 +509,61 @@
         </div>
 
     </div>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const inputs = document.querySelectorAll(".score-input");
+            const totalInputs = inputs.length;
+            const progressText = document.getElementById("progressText");
+            const progressBar = document.getElementById("progressBar");
+            const progressStatus = document.getElementById("progressStatus");
+            const summaryCompletion = document.getElementById("summaryCompletion");
+
+            function updateProgress() {
+                let filled = 0;
+                inputs.forEach(function (inp) {
+                    if (inp.value && inp.value.trim() !== "") {
+                        filled++;
+                    }
+                });
+
+                if (progressText) {
+                    progressText.textContent = filled + " / " + totalInputs + " values entered";
+                }
+                if (summaryCompletion) {
+                    summaryCompletion.textContent = filled + " / " + totalInputs;
+                }
+                if (progressBar && totalInputs > 0) {
+                    const pct = Math.min(100, (filled * 100 / totalInputs));
+                    progressBar.style.width = pct + "%";
+                }
+                if (progressStatus) {
+                    if (filled >= totalInputs && totalInputs > 0) {
+                        progressStatus.textContent = "Complete";
+                        progressStatus.className = "evaluation-progress-complete";
+                    } else {
+                        progressStatus.textContent = "In progress";
+                        progressStatus.className = "evaluation-progress-pending";
+                    }
+                }
+            }
+
+            inputs.forEach(function (inp) {
+                inp.addEventListener("input", function () {
+                    // Quick validation hint for rating 0-10
+                    if (inp.classList.contains("score-input-rating")) {
+                        const val = parseFloat(inp.value);
+                        if (!isNaN(val) && (val < 0 || val > 10)) {
+                            inp.style.borderColor = "var(--danger)";
+                        } else {
+                            inp.style.borderColor = "";
+                        }
+                    }
+                    updateProgress();
+                });
+            });
+        });
+    </script>
 }

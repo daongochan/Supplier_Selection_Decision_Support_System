@@ -1,8 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SupplierSelectionDSS.Data;
 using SupplierSelectionDSS.Data.Entities;
 using SupplierSelectionDSS.Models;
 using SupplierSelectionDSS.Constants;
+using SupplierSelectionDSS.Domain.Rules;
 
 namespace SupplierSelectionDSS.Services;
 
@@ -21,10 +22,11 @@ public class EvaluationBatchService
     // LIST
     // =========================================================
 
-    public async Task<List<EvaluationBatchListItemViewModel>>
-        SearchAsync(
-            string? keyword,
-            string? status)
+    public async Task<PagedResult<EvaluationBatchListItemViewModel>> SearchAsync(
+        string? keyword,
+        string? status,
+        int pageNumber = 1,
+        int pageSize = 10)
     {
         keyword = keyword?.Trim();
 
@@ -97,12 +99,13 @@ public class EvaluationBatchService
 
 
         // =========================================================
-        // RESULT
+        // RESULT WITH PAGINATION
         // =========================================================
 
-        return await query
-            .OrderByDescending(x => x.CreatedAt)
-            .ToListAsync();
+        var orderedQuery = query.OrderByDescending(x => x.CreatedAt);
+
+        return await PagedResult<EvaluationBatchListItemViewModel>
+            .CreateAsync(orderedQuery, pageNumber, pageSize);
     }
 
 
@@ -360,102 +363,98 @@ public class EvaluationBatchService
         }
 
 
-        await using var transaction =
-            await _context.Database
-                .BeginTransactionAsync();
+        var strategy = _context.Database.CreateExecutionStrategy();
 
-
-        try
+        return await strategy.ExecuteAsync(async () =>
         {
-            var batch =
-                new EvaluationBatch
+            await using var transaction =
+                await _context.Database
+                    .BeginTransactionAsync();
+
+            try
+            {
+                var batch =
+                    new EvaluationBatch
+                    {
+                        BatchCode =
+                            model.BatchCode.Trim(),
+
+                        BatchName =
+                            model.BatchName.Trim(),
+
+                        Description =
+                            model.Description?.Trim(),
+
+                        GroupId =
+                            model.GroupId!.Value,
+
+                        StartDate =
+                            model.StartDate,
+
+                        EndDate =
+                            model.EndDate,
+
+                        Status =
+                            BatchStatus.Draft,
+
+                        CreatedBy =
+                            createdBy,
+
+                        CreatedAt =
+                            DateTime.UtcNow
+                    };
+
+                _context.EvaluationBatches.Add(
+                    batch);
+
+                await _context.SaveChangesAsync();
+
+                var selectedSuppliers =
+                    await _context.Suppliers
+                        .Where(x =>
+                            selectedSupplierIds.Contains(x.SupplierId))
+                        .ToListAsync();
+
+                if (selectedSuppliers.Count != selectedSupplierIds.Count)
                 {
-                    BatchCode =
-                        model.BatchCode.Trim(),
+                    throw new InvalidOperationException(
+                        "Danh sách nhà cung cấp không hợp lệ.");
+                }
 
-                    BatchName =
-                        model.BatchName.Trim(),
+                foreach (var supplier in selectedSuppliers)
+                {
+                    batch.Suppliers.Add(supplier);
+                }
 
-                    Description =
-                        model.Description?.Trim(),
+                var criteria =
+                    await _context.Criteria
+                        .Where(
+                            x =>
+                                selectedCriteriaIds.Contains(
+                                    x.CriteriaId))
+                        .ToListAsync();
 
-                    GroupId =
-                        model.GroupId!.Value,
+                foreach (
+                    var criterion
+                    in criteria)
+                {
+                    batch.Criteria.Add(
+                        criterion);
+                }
 
-                    StartDate =
-                        model.StartDate,
+                await _context.SaveChangesAsync();
 
-                    EndDate =
-                        model.EndDate,
+                await transaction.CommitAsync();
 
-                    Status =
-                        BatchStatus.Draft,
-
-                    CreatedBy =
-                        createdBy,
-
-                    CreatedAt =
-                        DateTime.UtcNow
-                };
-
-
-            _context.EvaluationBatches.Add(
-                batch);
-
-
-            await _context.SaveChangesAsync();
-
-
-            var selectedSuppliers =
-                await _context.Suppliers
-                    .Where(x =>
-                        selectedSupplierIds.Contains(x.SupplierId))
-                    .ToListAsync();
-
-            if (selectedSuppliers.Count != selectedSupplierIds.Count)
-            {
-                throw new InvalidOperationException(
-                    "Danh sách nhà cung cấp không hợp lệ.");
+                return batch.BatchId;
             }
-
-            foreach (var supplier in selectedSuppliers)
+            catch
             {
-                batch.Suppliers.Add(supplier);
+                await transaction.RollbackAsync();
+
+                throw;
             }
-
-
-            var criteria =
-                await _context.Criteria
-                    .Where(
-                        x =>
-                            selectedCriteriaIds.Contains(
-                                x.CriteriaId))
-                    .ToListAsync();
-
-
-            foreach (
-                var criterion
-                in criteria)
-            {
-                batch.Criteria.Add(
-                    criterion);
-            }
-
-
-            await _context.SaveChangesAsync();
-
-
-            await transaction.CommitAsync();
-
-
-            return batch.BatchId;
-        }
-        catch
-        {
-            await transaction.RollbackAsync();
-
-            throw;
-        }
+        });
     }
 
 
@@ -496,16 +495,14 @@ public class EvaluationBatchService
 
 
         // =====================================================
-        // STATUS
+        // STATE RULES VALIDATION
         // =====================================================
 
-        if (batch.Status != BatchStatus.Draft)
-        {
-            throw new InvalidOperationException(
-                $"Không thể bắt đầu Batch " +
-                $"{batch.BatchCode} vì trạng thái hiện tại " +
-                $"là {batch.Status}.");
-        }
+        EvaluationBatchStateRules.EnsureCanStart(
+            batch.Status,
+            batch.Suppliers.Count,
+            batch.Criteria.Count,
+            batch.BatchCode);
 
 
         // =====================================================
@@ -647,6 +644,40 @@ public class EvaluationBatchService
         {
             batch.StartDate =
                 effectiveStartDate;
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
+
+    // =========================================================
+    // CANCEL BATCH
+    // =========================================================
+
+    public async Task CancelAsync(
+        int batchId,
+        string? reason = null)
+    {
+        var batch = await _context.EvaluationBatches
+            .FirstOrDefaultAsync(x => x.BatchId == batchId);
+
+        if (batch == null)
+        {
+            throw new InvalidOperationException(
+                "Evaluation Batch không tồn tại.");
+        }
+
+        EvaluationBatchStateRules.EnsureCanCancel(batch.Status);
+
+        batch.Status = BatchStatus.Cancelled;
+        batch.CancelledAt = DateTime.UtcNow;
+
+        if (!string.IsNullOrWhiteSpace(reason))
+        {
+            var note = $"[Lý do hủy]: {reason.Trim()}";
+            batch.Description = string.IsNullOrWhiteSpace(batch.Description)
+                ? note
+                : $"{batch.Description}\n{note}";
         }
 
         await _context.SaveChangesAsync();

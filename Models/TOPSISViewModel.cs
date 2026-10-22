@@ -1,4 +1,4 @@
-﻿namespace SupplierSelectionDSS.Models;
+namespace SupplierSelectionDSS.Models;
 
 public class TOPSISViewModel
 {
@@ -56,88 +56,4 @@ public class TOPSISViewModel
 
     public bool HasTOPSISResult =>
         Ranking.Any();
-}
-
-
-// =============================================================
-// CRITERIA
-// =============================================================
-
-public class TOPSISCriteriaViewModel
-{
-    public int CriteriaId { get; set; }
-
-    public string CriteriaCode { get; set; } = string.Empty;
-
-    public string CriteriaName { get; set; } = string.Empty;
-
-    public string CriteriaType { get; set; } = string.Empty;
-
-    public string? Unit { get; set; }
-
-    public decimal Weight { get; set; }
-
-    public double WeightPercentage =>
-        (double)Weight * 100.0;
-}
-
-
-// =============================================================
-// SUPPLIER DECISION MATRIX ROW
-// =============================================================
-
-public class TOPSISEvaluationRowViewModel
-{
-    public int SupplierId { get; set; }
-
-    public string SupplierCode { get; set; } = string.Empty;
-
-    public string SupplierName { get; set; } = string.Empty;
-
-    public Dictionary<int, decimal> Scores { get; set; }
-        = new();
-}
-
-
-// =============================================================
-// IDEAL SOLUTION
-// =============================================================
-
-public class TOPSISIdealViewModel
-{
-    public int CriteriaId { get; set; }
-
-    public string CriteriaCode { get; set; } = string.Empty;
-
-    public string CriteriaName { get; set; } = string.Empty;
-
-    public string CriteriaType { get; set; } = string.Empty;
-
-    public string? Unit { get; set; }
-
-    public decimal PISValue { get; set; }
-
-    public decimal NISValue { get; set; }
-}
-
-
-// =============================================================
-// RANKING
-// =============================================================
-
-public class TOPSISRankingViewModel
-{
-    public int SupplierId { get; set; }
-
-    public string SupplierCode { get; set; } = string.Empty;
-
-    public string SupplierName { get; set; } = string.Empty;
-
-    public decimal DistanceToPIS { get; set; }
-
-    public decimal DistanceToNIS { get; set; }
-
-    public decimal ClosenessCoefficient { get; set; }
-
-    public int RankNo { get; set; }
-}
+}

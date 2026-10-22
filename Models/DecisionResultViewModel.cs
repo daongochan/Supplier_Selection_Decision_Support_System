@@ -1,4 +1,4 @@
-﻿namespace SupplierSelectionDSS.Models;
+namespace SupplierSelectionDSS.Models;
 
 public class DecisionResultViewModel
 {
@@ -46,22 +46,4 @@ public class DecisionResultViewModel
     public DateTime? ApprovalDate { get; set; }
 
     public string? ApprovedByName { get; set; }
-}
-
-
-public class DecisionRankingViewModel
-{
-    public int SupplierId { get; set; }
-
-    public string SupplierCode { get; set; } = string.Empty;
-
-    public string SupplierName { get; set; } = string.Empty;
-
-    public decimal DistanceToPIS { get; set; }
-
-    public decimal DistanceToNIS { get; set; }
-
-    public decimal ClosenessCoefficient { get; set; }
-
-    public int RankNo { get; set; }
-}
+}

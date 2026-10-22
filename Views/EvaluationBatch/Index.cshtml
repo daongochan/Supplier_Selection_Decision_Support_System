@@ -1,4 +1,4 @@
-﻿@model SupplierSelectionDSS.Models.EvaluationBatchIndexViewModel
+@model SupplierSelectionDSS.Models.EvaluationBatchIndexViewModel
 
 @{
     ViewData["Title"] = "Evaluation Batches";
@@ -38,12 +38,6 @@
 </div>
 
 
-@if (TempData["SuccessMessage"] is string message)
-{
-    <div class="alert-success">
-        @message
-    </div>
-}
 
 
 <!-- =========================================================
@@ -285,6 +279,8 @@
             </table>
 
         </div>
+
+        <partial name="_Pagination" model="Model" />
     }
     else
     {

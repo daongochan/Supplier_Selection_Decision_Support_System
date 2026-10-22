@@ -1,4 +1,4 @@
-﻿/* =========================================================
+/* =========================================================
    DECISION RESULT HEADER
    ========================================================= */
 
@@ -173,11 +173,12 @@
     justify-content: center;
     flex: 0 0 64px;
     border-radius: 50%;
-    background: var(--sage-dark);
+    background: #c67d29;
     color: var(--surface);
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: 22px;
-    font-weight: 600;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(198, 125, 41, 0.35);
 }
 
 
@@ -203,7 +204,7 @@
 
 
 .decision-winner-row td {
-    background: var(--sage-soft);
+    background: rgba(198, 125, 41, 0.08) !important;
 }
 
 
@@ -216,15 +217,16 @@
     border-radius: 50%;
     background: var(--surface-muted);
     color: var(--muted);
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 
 .decision-winner-row .decision-rank {
-    background: var(--sage-dark);
-    color: var(--surface);
+    background: #c67d29 !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(198, 125, 41, 0.35);
 }
 
 
@@ -438,9 +440,9 @@
     border-radius: var(--radius-pill);
     background: var(--canvas-soft);
     color: var(--muted);
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 
@@ -494,27 +496,117 @@
 
 
 /* =========================================================
-   APPROVAL ACTIONS
+   APPROVAL ACTIONS TOOLBAR
    ========================================================= */
 
-.decision-approval-actions {
+.decision-approval-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-soft);
+    box-sizing: border-box;
+}
+
+
+.decision-toolbar-secondary {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-top: 16px;
+    flex-wrap: wrap;
 }
 
 
-.decision-secondary-actions {
+.decision-toolbar-primary {
     display: flex;
     align-items: center;
-    gap: 9px;
-    margin-top: 10px;
+    gap: 10px;
+    flex-shrink: 0;
 }
 
 
-    .decision-secondary-actions form {
-        margin: 0;
+.decision-approval-toolbar button,
+.decision-approval-toolbar .btn-primary,
+.decision-approval-toolbar .btn-outline {
+    height: 42px !important;
+    min-height: 42px !important;
+    max-height: 42px !important;
+    padding: 0 22px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    font-family: var(--font-serif) !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    line-height: 1 !important;
+    border-radius: var(--radius-pill) !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+    gap: 8px !important;
+    cursor: pointer !important;
+    transition: all 0.16s ease !important;
+}
+
+
+.decision-approval-toolbar button i,
+.decision-approval-toolbar a i {
+    font-size: 14px !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    margin: 0 !important;
+}
+
+
+/* Primary Approve Button */
+.decision-toolbar-primary .btn-primary {
+    background: var(--terracotta) !important;
+    color: #ffffff !important;
+    border: 1px solid var(--terracotta) !important;
+    box-shadow: 0 2px 8px rgba(29, 78, 216, 0.18) !important;
+}
+
+    .decision-toolbar-primary .btn-primary:hover {
+        background: var(--terracotta-dark) !important;
+        border-color: var(--terracotta-dark) !important;
+        color: #ffffff !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 14px rgba(29, 78, 216, 0.28) !important;
+    }
+
+
+/* Reject Button */
+.btn-outline-danger {
+    background: var(--surface) !important;
+    color: var(--danger, #b02a37) !important;
+    border: 1px solid var(--danger-border, #f8c9ce) !important;
+    box-shadow: none !important;
+}
+
+    .btn-outline-danger:hover {
+        background: var(--danger-soft, #fdf0f1) !important;
+        border-color: var(--danger, #b02a37) !important;
+        color: var(--danger-dark, #8c1c27) !important;
+        transform: translateY(-1px) !important;
+    }
+
+
+/* Re-evaluate Button */
+.btn-outline-warning {
+    background: var(--surface) !important;
+    color: var(--amber-dark, #744208) !important;
+    border: 1px solid var(--amber-border, #fbe4be) !important;
+    box-shadow: none !important;
+}
+
+    .btn-outline-warning:hover {
+        background: var(--amber-soft, #fef7ec) !important;
+        border-color: var(--amber, #92540c) !important;
+        color: var(--amber-dark, #744208) !important;
+        transform: translateY(-1px) !important;
     }
 
 
@@ -525,7 +617,7 @@
 .decision-approval-summary {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
+    gap: 14px;
     margin-top: 18px;
 }
 
@@ -533,28 +625,55 @@
     .decision-approval-summary > div {
         display: flex;
         flex-direction: column;
-        gap: 3px;
-        padding: 12px 14px;
+        gap: 6px;
+        padding: 13px 16px;
         border: 1px solid var(--border);
         border-radius: var(--radius-md);
         background: var(--canvas-soft);
+        min-height: 64px;
+        box-sizing: border-box;
     }
 
 
     .decision-approval-summary span {
         color: var(--muted);
-        font-size: 9px;
+        font-size: 10px;
         text-transform: uppercase;
-        letter-spacing: .04em;
+        letter-spacing: .05em;
+        font-weight: 600;
     }
 
 
     .decision-approval-summary strong {
         color: var(--ink);
         font-family: var(--font-serif);
-        font-size: 12px;
+        font-size: 13.5px;
         font-weight: 600;
+        line-height: 1.3;
     }
+
+.decision-supplier-highlight {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.decision-supplier-code-tag {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 2px 7px !important;
+    border-radius: 4px !important;
+    background: var(--terracotta-soft, #eff6ff) !important;
+    color: var(--terracotta, #1d4ed8) !important;
+    border: 1px solid var(--terracotta-border, #bfdbfe) !important;
+    font-family: var(--font-sans, system-ui) !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
+    line-height: 1.3 !important;
+    text-transform: none !important;
+}
 
 
 .decision-approval-notes {
@@ -569,11 +688,89 @@
 
 
 /* =========================================================
-   APPROVAL STATES
+   APPROVAL STATES & FINAL APPROVAL HERO
    ========================================================= */
 
 .decision-approval-approved {
-    border-color: var(--sage-soft);
+    border-color: var(--sage-border, #b7e4c7) !important;
+    background: var(--surface) !important;
+    box-shadow: 0 4px 18px rgba(45, 106, 79, 0.07), var(--shadow-card) !important;
+}
+
+.decision-approval-header {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+    margin-bottom: 18px !important;
+}
+
+.decision-approval-title {
+    margin: 4px 0 0 !important;
+    color: var(--ink) !important;
+    font-family: var(--font-serif) !important;
+    font-size: 26px !important;
+    font-weight: 500 !important;
+    line-height: 1.2 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.decision-approval-title i {
+    font-size: 24px !important;
+    color: #2d6a4f !important;
+    line-height: 1 !important;
+}
+
+.decision-approved-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 6px 14px !important;
+    border-radius: var(--radius-pill) !important;
+    background: #e8f5ed !important;
+    color: #1b4332 !important;
+    border: 1px solid #b7e4c7 !important;
+    font-family: var(--font-sans, system-ui) !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.3px !important;
+    white-space: nowrap !important;
+    box-shadow: 0 1px 3px rgba(45, 106, 79, 0.08) !important;
+    margin-top: 4px !important;
+}
+
+.decision-approved-badge i {
+    font-size: 13px !important;
+    color: #2d6a4f !important;
+    margin: 0 !important;
+}
+
+.decision-approval-notes-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 18px;
+    padding: 13px 18px;
+    background: var(--canvas-soft);
+    border-left: 3px solid var(--terracotta);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.decision-notes-label {
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.decision-notes-content {
+    color: var(--body);
 }
 
 
@@ -649,20 +846,31 @@
     }
 
 
-    .decision-approval-actions,
-    .decision-secondary-actions {
-        width: 100%;
+    .decision-approval-toolbar {
+        flex-direction: column-reverse;
         align-items: stretch;
-        flex-direction: column;
+        gap: 12px;
     }
 
+    .decision-toolbar-primary,
+    .decision-toolbar-secondary {
+        width: 100%;
+        display: flex;
+    }
 
-        .decision-approval-actions
-        .btn-primary,
-        .decision-secondary-actions
-        .btn-primary,
-        .decision-secondary-actions
-        .btn-outline {
-            width: 100%;
-        }
+    .decision-toolbar-primary button,
+    .decision-toolbar-primary .btn-primary {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .decision-toolbar-secondary {
+        gap: 10px;
+    }
+
+    .decision-toolbar-secondary button,
+    .decision-toolbar-secondary .btn-outline {
+        flex: 1;
+        justify-content: center;
+    }
 }

@@ -1,4 +1,4 @@
-﻿/* =========================================================
+/* =========================================================
    EVALUATION BATCH HEADER
    ========================================================= */
 
@@ -961,6 +961,39 @@
     align-items: center;
     gap: 10px;
     flex: 0 0 auto;
+}
+
+.batch-action-buttons .btn-primary,
+.batch-action-buttons .btn-outline,
+.batch-action-buttons button {
+    height: 42px !important;
+    min-height: 42px !important;
+    max-height: 42px !important;
+    padding: 0 20px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    font-family: var(--font-serif) !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    line-height: 1 !important;
+    border-radius: var(--radius-pill) !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+    gap: 8px !important;
+    cursor: pointer !important;
+    transition: all 0.16s ease !important;
+}
+
+.batch-action-buttons .btn-primary i,
+.batch-action-buttons .btn-outline i,
+.batch-action-buttons button i {
+    font-size: 14px !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    margin: 0 !important;
 }
 
 .batch-btn-disabled {

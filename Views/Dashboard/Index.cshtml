@@ -1,4 +1,4 @@
-﻿@model SupplierSelectionDSS.Models.DashboardViewModel
+@model SupplierSelectionDSS.Models.DashboardViewModel
 
 @{
     ViewData["Title"] = "Dashboard";
@@ -40,124 +40,45 @@
 
 <div class="dashboard-grid dashboard-grid-4">
 
-
     <!-- Suppliers -->
-
-    <div class="dashboard-card dashboard-card-accent">
-
+    <a asp-controller="Supplier" asp-action="Index" class="dashboard-card dashboard-card-accent text-decoration-none">
         <div class="dashboard-card-top">
-
-            <span class="card-label">
-                SUPPLIERS
-            </span>
-
+            <span class="card-label">SUPPLIERS</span>
             <span class="semantic-dot"></span>
-
         </div>
-
-
-        <strong class="card-value">
-            @Model.SupplierCount.ToString("00")
-        </strong>
-
-
-        <span class="card-meta">
-
-            @Model.ActiveSupplierCount
-            active suppliers
-
-        </span>
-
-    </div>
-
+        <strong class="card-value">@Model.SupplierCount.ToString("00")</strong>
+        <span class="card-meta">@Model.ActiveSupplierCount active suppliers</span>
+    </a>
 
     <!-- Criteria -->
-
-    <div class="dashboard-card dashboard-card-lavender">
-
+    <a asp-controller="Criteria" asp-action="Index" class="dashboard-card dashboard-card-lavender text-decoration-none">
         <div class="dashboard-card-top">
-
-            <span class="card-label">
-                CRITERIA
-            </span>
-
+            <span class="card-label">CRITERIA</span>
             <span class="semantic-dot"></span>
-
         </div>
-
-
-        <strong class="card-value">
-            @Model.CriteriaCount.ToString("00")
-        </strong>
-
-
-        <span class="card-meta">
-
-            @Model.ActiveCriteriaCount
-            active criteria
-
-        </span>
-
-    </div>
-
+        <strong class="card-value">@Model.CriteriaCount.ToString("00")</strong>
+        <span class="card-meta">@Model.ActiveCriteriaCount active criteria</span>
+    </a>
 
     <!-- Evaluation batches -->
-
-    <div class="dashboard-card dashboard-card-sky">
-
+    <a asp-controller="EvaluationBatch" asp-action="Index" class="dashboard-card dashboard-card-sky text-decoration-none">
         <div class="dashboard-card-top">
-
-            <span class="card-label">
-                EVALUATION BATCHES
-            </span>
-
+            <span class="card-label">EVALUATION BATCHES</span>
             <span class="semantic-dot"></span>
-
         </div>
-
-
-        <strong class="card-value">
-            @Model.EvaluationBatchCount.ToString("00")
-        </strong>
-
-
-        <span class="card-meta">
-
-            @Model.DraftBatchCount
-            draft
-
-        </span>
-
-    </div>
-
+        <strong class="card-value">@Model.EvaluationBatchCount.ToString("00")</strong>
+        <span class="card-meta">@Model.DraftBatchCount draft</span>
+    </a>
 
     <!-- Completed -->
-
-    <div class="dashboard-card dashboard-card-sage">
-
+    <a asp-controller="EvaluationBatch" asp-action="Index" asp-route-status="Completed" class="dashboard-card dashboard-card-sage text-decoration-none">
         <div class="dashboard-card-top">
-
-            <span class="card-label">
-                COMPLETED
-            </span>
-
+            <span class="card-label">COMPLETED</span>
             <span class="semantic-dot"></span>
-
         </div>
-
-
-        <strong class="card-value">
-            @Model.CompletedBatchCount.ToString("00")
-        </strong>
-
-
-        <span class="card-meta">
-
-            Completed evaluations
-
-        </span>
-
-    </div>
+        <strong class="card-value">@Model.CompletedBatchCount.ToString("00")</strong>
+        <span class="card-meta">Completed evaluations</span>
+    </a>
 
 </div>
 
@@ -212,18 +133,28 @@
 
                                 <td>
 
-                                    <strong>
-                                        @batch.BatchCode
-                                    </strong>
+                                    <a asp-controller="EvaluationBatch"
+                                       asp-action="Details"
+                                       asp-route-id="@batch.BatchId"
+                                       class="text-decoration-none">
+                                        <strong>
+                                            @batch.BatchCode
+                                        </strong>
+                                    </a>
 
                                 </td>
 
 
                                 <td>
 
-                                    <strong>
-                                        @batch.BatchName
-                                    </strong>
+                                    <a asp-controller="EvaluationBatch"
+                                       asp-action="Details"
+                                       asp-route-id="@batch.BatchId"
+                                       class="text-decoration-none text-body">
+                                        <strong>
+                                            @batch.BatchName
+                                        </strong>
+                                    </a>
 
                                 </td>
 
@@ -365,9 +296,14 @@
 
                                 <td>
 
-                                    <strong>
-                                        @ranking.BatchCode
-                                    </strong>
+                                    <a asp-controller="EvaluationBatch"
+                                       asp-action="Details"
+                                       asp-route-id="@ranking.BatchId"
+                                       class="text-decoration-none">
+                                        <strong>
+                                            @ranking.BatchCode
+                                        </strong>
+                                    </a>
 
                                     <span class="table-muted">
                                         @ranking.BatchName
@@ -378,7 +314,7 @@
 
                                 <td>
 
-                                    <strong>
+                                    <strong style="font-family: var(--font-sans); font-variant-numeric: tabular-nums;">
                                         @ranking.ClosenessCoefficient.ToString("0.000")
                                     </strong>
 

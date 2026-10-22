@@ -1,10 +1,11 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SupplierSelectionDSS.Models;
 using SupplierSelectionDSS.Services;
 using SupplierSelectionDSS.Constants;
+using SupplierSelectionDSS.Web.Extensions;
 
 namespace SupplierSelectionDSS.Controllers;
 
@@ -36,8 +37,20 @@ public class UserController : Controller
     public async Task<IActionResult> Index(
         string? keyword,
         string role = "All",
-        string status = "All")
+        string status = "All",
+        int page = 1,
+        int pageSize = 10)
     {
+        page = Math.Max(page, 1);
+        pageSize = Math.Max(pageSize, 1);
+
+        var paged = await _userService.SearchAsync(
+            keyword,
+            role,
+            status,
+            page,
+            pageSize);
+
         var model =
             new UserIndexViewModel
             {
@@ -51,10 +64,19 @@ public class UserController : Controller
                     status,
 
                 Users =
-                    await _userService.SearchAsync(
-                        keyword,
-                        role,
-                        status)
+                    paged.Items.ToList(),
+
+                PageNumber =
+                    paged.PageNumber,
+
+                PageSize =
+                    paged.PageSize,
+
+                TotalCount =
+                    paged.TotalCount,
+
+                TotalPages =
+                    paged.TotalPages
             };
 
 
@@ -93,7 +115,7 @@ public class UserController : Controller
 
 
         var currentUserId =
-            GetCurrentUserId();
+            User.GetUserId();
 
 
         if (!currentUserId.HasValue)
@@ -113,7 +135,7 @@ public class UserController : Controller
             await _auditLogService
                 .LogAsync(
                     currentUserId.Value,
-                    AuditLogService.Actions.CreateUser,
+                    AuditActions.CreateUser,
                     "Users",
                     newUserId,
                     null,
@@ -217,7 +239,7 @@ public class UserController : Controller
 
 
         var currentUserId =
-            GetCurrentUserId();
+            User.GetUserId();
 
 
         if (!currentUserId.HasValue)
@@ -296,7 +318,7 @@ public class UserController : Controller
             await _auditLogService
                 .LogAsync(
                     currentUserId.Value,
-                    AuditLogService.Actions.UpdateUser,
+                    AuditActions.UpdateUser,
                     "Users",
                     updatedUser.UserId,
                     oldValue,
@@ -330,26 +352,6 @@ public class UserController : Controller
     // =========================================================
     // SUPPORT
     // =========================================================
-
-    private int? GetCurrentUserId()
-    {
-        var claim =
-            User.FindFirst(
-                ClaimTypes.NameIdentifier);
-
-
-        if (
-            claim == null ||
-            !int.TryParse(
-                claim.Value,
-                out var userId))
-        {
-            return null;
-        }
-
-
-        return userId;
-    }
 
 
     private static void Normalize(

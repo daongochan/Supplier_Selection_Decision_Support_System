@@ -1,19 +1,36 @@
-﻿@{
-    var currentPage = (int)(ViewData["PageNumber"] ?? 1);
-    var totalPages = (int)(ViewData["TotalPages"] ?? 0);
-    var totalCount = (int)(ViewData["TotalCount"] ?? 0);
-    var startItem = (int)(ViewData["StartItemNumber"] ?? 0);
-    var endItem = (int)(ViewData["EndItemNumber"] ?? 0);
-    var hasPrev = (bool)(ViewData["HasPreviousPage"] ?? false);
-    var hasNext = (bool)(ViewData["HasNextPage"] ?? false);
-    var keyword = ViewData["Keyword"] as string;
-    var status = ViewData["Status"] as string;
-    var pageSize = (int)(ViewData["PageSize"] ?? 10);
-    var action = (ViewData["Action"] as string) ?? "Index";
+@model SupplierSelectionDSS.Models.IPagedResult
+
+@{
+    var currentPage = Model?.PageNumber ?? (int)(ViewData["PageNumber"] ?? 1);
+    var totalPages = Model?.TotalPages ?? (int)(ViewData["TotalPages"] ?? 0);
+    var totalCount = Model?.TotalCount ?? (int)(ViewData["TotalCount"] ?? 0);
+    var startItem = Model?.StartItemNumber ?? (int)(ViewData["StartItemNumber"] ?? 0);
+    var endItem = Model?.EndItemNumber ?? (int)(ViewData["EndItemNumber"] ?? 0);
+    var hasPrev = Model?.HasPreviousPage ?? (bool)(ViewData["HasPreviousPage"] ?? false);
+    var hasNext = Model?.HasNextPage ?? (bool)(ViewData["HasNextPage"] ?? false);
+    var pageSize = Model?.PageSize ?? (int)(ViewData["PageSize"] ?? 10);
+    var action = (ViewData["Action"] as string) ?? ViewContext.RouteData.Values["action"]?.ToString() ?? "Index";
 
     const int pageWindow = 2;
     var startPage = Math.Max(1, currentPage - pageWindow);
     var endPage = totalPages == 0 ? 1 : Math.Min(totalPages, currentPage + pageWindow);
+
+    var baseRouteData = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+    foreach (var q in Context.Request.Query)
+    {
+        if (!string.Equals(q.Key, "page", StringComparison.OrdinalIgnoreCase))
+        {
+            baseRouteData[q.Key] = q.Value.ToString();
+        }
+    }
+
+    Dictionary<string, string> GetRouteData(int p)
+    {
+        var dict = new Dictionary<string, string>(baseRouteData, StringComparer.OrdinalIgnoreCase);
+        dict["page"] = p.ToString();
+        dict["pageSize"] = pageSize.ToString();
+        return dict;
+    }
 }
 
 @if (totalCount > 0)
@@ -21,12 +38,13 @@
     <div class="pagination-footer">
 
         <div class="pagination-summary">
-            Showing
+            Hiển thị
             <strong>@startItem</strong>
             –
             <strong>@endItem</strong>
-            of
+            trên tổng số
             <strong>@totalCount</strong>
+            kết quả
         </div>
 
         @if (totalPages > 1)
@@ -36,10 +54,7 @@
                 @if (hasPrev)
                 {
                     <a asp-action="@action"
-                       asp-route-keyword="@keyword"
-                       asp-route-status="@status"
-                       asp-route-page="@(currentPage - 1)"
-                       asp-route-pageSize="@pageSize"
+                       asp-all-route-data="GetRouteData(currentPage - 1)"
                        class="page-link"
                        aria-label="Previous">‹</a>
                 }
@@ -51,10 +66,7 @@
                 @if (startPage > 1)
                 {
                     <a asp-action="@action"
-                       asp-route-keyword="@keyword"
-                       asp-route-status="@status"
-                       asp-route-page="1"
-                       asp-route-pageSize="@pageSize"
+                       asp-all-route-data="GetRouteData(1)"
                        class="page-link">1</a>
 
                     @if (startPage > 2)
@@ -72,10 +84,7 @@
                     else
                     {
                         <a asp-action="@action"
-                           asp-route-keyword="@keyword"
-                           asp-route-status="@status"
-                           asp-route-page="@p"
-                           asp-route-pageSize="@pageSize"
+                           asp-all-route-data="GetRouteData(p)"
                            class="page-link">@p</a>
                     }
                 }
@@ -88,20 +97,14 @@
                     }
 
                     <a asp-action="@action"
-                       asp-route-keyword="@keyword"
-                       asp-route-status="@status"
-                       asp-route-page="@totalPages"
-                       asp-route-pageSize="@pageSize"
+                       asp-all-route-data="GetRouteData(totalPages)"
                        class="page-link">@totalPages</a>
                 }
 
                 @if (hasNext)
                 {
                     <a asp-action="@action"
-                       asp-route-keyword="@keyword"
-                       asp-route-status="@status"
-                       asp-route-page="@(currentPage + 1)"
-                       asp-route-pageSize="@pageSize"
+                       asp-all-route-data="GetRouteData(currentPage + 1)"
                        class="page-link"
                        aria-label="Next">›</a>
                 }

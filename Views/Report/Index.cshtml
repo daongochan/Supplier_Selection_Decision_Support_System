@@ -1,4 +1,4 @@
-﻿@model SupplierSelectionDSS.Models.ReportIndexViewModel
+@model SupplierSelectionDSS.Models.ReportIndexViewModel
 
 @{
     ViewData["Title"] = "Reports";
@@ -58,26 +58,6 @@
 
 
 <!-- =========================================================
-     ALERTS
-     ========================================================= -->
-
-@if (TempData["SuccessMessage"] is string successMessage)
-{
-    <div class="alert-success">
-        @successMessage
-    </div>
-}
-
-
-@if (TempData["ErrorMessage"] is string errorMessage)
-{
-    <div class="alert-danger">
-        @errorMessage
-    </div>
-}
-
-
-<!-- =========================================================
      REPORT STATUS
      ========================================================= -->
 
@@ -93,7 +73,7 @@
         @if (canGenerate)
         {
             <h2>
-                Batch is ready for reporting.
+                Batch is ready for reporting
             </h2>
 
             <p>
@@ -105,7 +85,7 @@
         else
         {
             <h2>
-                Report generation is locked.
+                Report generation is locked
             </h2>
 
             <p>

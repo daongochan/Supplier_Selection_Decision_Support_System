@@ -70,3 +70,325 @@
         text-decoration: underline;
     }
 
+
+/* =========================================================
+   BREADCRUMB
+   ========================================================= */
+
+.dss-breadcrumb {
+    margin: 0 0 16px 0;
+    padding: 0;
+    line-height: 1;
+}
+
+.dss-breadcrumb-trail {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-family: var(--font-serif);
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1;
+}
+
+.dss-breadcrumb-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    text-decoration: none;
+    font-weight: 400;
+    line-height: 1;
+    transition: color 0.16s ease;
+}
+
+    .dss-breadcrumb-link:hover {
+        color: var(--terracotta);
+        text-decoration: underline;
+    }
+
+    .dss-breadcrumb-link i {
+        font-size: 13px;
+        line-height: 1;
+        display: inline-block;
+    }
+
+.dss-breadcrumb-separator {
+    display: inline-flex;
+    align-items: center;
+    color: var(--border-strong);
+    font-size: 10px;
+    line-height: 1;
+    user-select: none;
+}
+
+    .dss-breadcrumb-separator i {
+        font-size: 10px;
+        line-height: 1;
+    }
+
+.dss-breadcrumb-current {
+    display: inline-flex;
+    align-items: center;
+    color: var(--ink);
+    font-weight: 500;
+    line-height: 1;
+}
+
+
+/* =========================================================
+   TOAST NOTIFICATION SYSTEM
+   ========================================================= */
+
+.toast-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 400px;
+    width: calc(100vw - 48px);
+    pointer-events: none;
+}
+
+.dss-toast {
+    pointer-events: auto;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 18px;
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    box-shadow: 0 10px 30px rgba(36, 33, 30, 0.12);
+    border: 1px solid var(--border);
+    animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.dss-toast-icon {
+    font-size: 20px;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.dss-toast-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.dss-toast-title {
+    font-family: var(--font-serif);
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 2px;
+    color: var(--ink);
+}
+
+.dss-toast-message {
+    font-family: var(--font-serif);
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--body);
+    word-break: break-word;
+}
+
+.dss-toast-close {
+    background: none;
+    border: none;
+    padding: 2px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 18px;
+    line-height: 1;
+    border-radius: var(--radius-sm);
+    transition: color 0.15s ease;
+}
+
+.dss-toast-close:hover {
+    color: var(--ink);
+}
+
+/* Toast Variants */
+.dss-toast-success {
+    border-left: 4px solid var(--sage-dark);
+}
+.dss-toast-success .dss-toast-icon {
+    color: var(--sage-dark);
+}
+
+.dss-toast-danger {
+    border-left: 4px solid var(--danger);
+}
+.dss-toast-danger .dss-toast-icon {
+    color: var(--danger);
+}
+
+.dss-toast-warning {
+    border-left: 4px solid var(--amber);
+}
+.dss-toast-warning .dss-toast-icon {
+    color: var(--amber);
+}
+
+.dss-toast-info {
+    border-left: 4px solid var(--sky);
+}
+.dss-toast-info .dss-toast-icon {
+    color: var(--sky);
+}
+
+
+/* =========================================================
+   CONFIRMATION MODAL
+   ========================================================= */
+
+.dss-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(36, 33, 30, 0.45);
+    backdrop-filter: blur(4px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: modalFadeIn 0.2s ease-out forwards;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.dss-modal-box {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 20px 50px rgba(36, 33, 30, 0.2);
+    width: 100%;
+    max-width: 480px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    animation: modalPopIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalPopIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.dss-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.dss-modal-title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dss-modal-title-group i {
+    font-size: 22px;
+}
+
+.dss-modal-title {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.dss-modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--muted);
+    padding: 4px;
+    border-radius: var(--radius-sm);
+    transition: color 0.15s ease;
+}
+
+.dss-modal-close:hover {
+    color: var(--ink);
+}
+
+.dss-modal-body {
+    padding: 20px 24px;
+}
+
+.dss-modal-text {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--body);
+}
+
+.dss-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 24px;
+    background: var(--surface-soft);
+    border-top: 1px solid var(--border-soft);
+}
+
+
+/* =========================================================
+   BUTTON LOADING / DOUBLE SUBMIT
+   ========================================================= */
+
+.btn-loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.75;
+    cursor: not-allowed !important;
+}
+
+.btn-loading .spinner-border-sm {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-right: 6px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border 0.75s linear infinite;
+    vertical-align: -2px;
+}
+
+@keyframes spinner-border {
+    to { transform: rotate(360deg); }
+}
+
+

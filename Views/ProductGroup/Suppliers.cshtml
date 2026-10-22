@@ -1,4 +1,4 @@
-﻿@model SupplierSelectionDSS.Models.ProductGroupSuppliersViewModel
+@model SupplierSelectionDSS.Models.ProductGroupSuppliersViewModel
 
 @{
     ViewData["Title"] = "Group Suppliers";
@@ -13,7 +13,7 @@
         </div>
 
         <h1 class="page-title">
-            @Model.GroupName.
+            @Model.GroupName
         </h1>
 
         <p class="page-description">
@@ -30,14 +30,6 @@
     </a>
 
 </div>
-
-
-@if (TempData["SuccessMessage"] is string message)
-{
-    <div class="alert-success">
-        @message
-    </div>
-}
 
 
 <div class="form-card">

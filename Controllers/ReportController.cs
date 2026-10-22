@@ -1,9 +1,10 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SupplierSelectionDSS.Services;
 using SupplierSelectionDSS.Constants;
+using SupplierSelectionDSS.Web.Extensions;
 
 namespace SupplierSelectionDSS.Controllers;
 
@@ -119,20 +120,12 @@ public class ReportController : Controller
         // CURRENT USER
         // =====================================================
 
-        var claim =
-            User.FindFirst(
-                ClaimTypes.NameIdentifier);
-
-
-        if (
-            claim == null ||
-            !int.TryParse(
-                claim.Value,
-                out var downloadedBy) ||
-            downloadedBy <= 0)
+        var userId = User.GetUserId();
+        if (!userId.HasValue)
         {
             return Unauthorized();
         }
+        var downloadedBy = userId.Value;
 
 
         // =====================================================
@@ -169,8 +162,8 @@ public class ReportController : Controller
 
             var actionType =
                 reportType == "PDF"
-                    ? "Download PDF"
-                    : "Download Excel";
+                    ? AuditActions.DownloadPdf
+                    : AuditActions.DownloadExcel;
 
 
             var newValue =
@@ -255,20 +248,12 @@ public class ReportController : Controller
         // CURRENT USER
         // =====================================================
 
-        var claim =
-            User.FindFirst(
-                ClaimTypes.NameIdentifier);
-
-
-        if (
-            claim == null ||
-            !int.TryParse(
-                claim.Value,
-                out var generatedBy) ||
-            generatedBy <= 0)
+        var userId = User.GetUserId();
+        if (!userId.HasValue)
         {
             return Unauthorized();
         }
+        var generatedBy = userId.Value;
 
 
         try

@@ -1,17 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using SupplierSelectionDSS.Data.Entities;
+using SupplierSelectionDSS.Constants;
 using SupplierSelectionDSS.Models;
 using SupplierSelectionDSS.Services;
-using System.ComponentModel.DataAnnotations;
-using System.Runtime.Intrinsics.Arm;
-using System.Security.Claims;
+using SupplierSelectionDSS.Web.Extensions;
 using System.Text.Json;
-using System.Text.RegularExpressions;
-using static System.Net.Mime.MediaTypeNames;
-using SupplierSelectionDSS.Constants;
-
 
 namespace SupplierSelectionDSS.Controllers;
 
@@ -117,20 +110,12 @@ public class AHPController : Controller
         // CURRENT USER
         // =====================================================
 
-        var userIdClaim =
-            User.FindFirst(
-                ClaimTypes.NameIdentifier);
-
-
-        if (
-            userIdClaim == null ||
-            !int.TryParse(
-                userIdClaim.Value,
-                out var evaluatedBy) ||
-            evaluatedBy <= 0)
+        var userId = User.GetUserId();
+        if (!userId.HasValue)
         {
             return Unauthorized();
         }
+        var evaluatedBy = userId.Value;
 
 
         // =====================================================
@@ -287,20 +272,12 @@ public class AHPController : Controller
         // CURRENT USER
         // =====================================================
 
-        var userIdClaim =
-            User.FindFirst(
-                ClaimTypes.NameIdentifier);
-
-
-        if (
-            userIdClaim == null ||
-            !int.TryParse(
-                userIdClaim.Value,
-                out var calculatedBy) ||
-            calculatedBy <= 0)
+        var userId = User.GetUserId();
+        if (!userId.HasValue)
         {
             return Unauthorized();
         }
+        var calculatedBy = userId.Value;
 
 
         try

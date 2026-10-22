@@ -1,4 +1,4 @@
-﻿@model SupplierSelectionDSS.Models.TOPSISViewModel
+@model SupplierSelectionDSS.Models.TOPSISViewModel
 
 @{
     ViewData["Title"] = "TOPSIS";
@@ -13,7 +13,7 @@
         </div>
 
         <h1 class="page-title">
-            Supplier ranking.
+            Supplier ranking
         </h1>
 
         <p class="page-description">
@@ -32,22 +32,6 @@
 </div>
 
 
-@if (TempData["SuccessMessage"] is string successMessage)
-{
-    <div class="alert-success">
-        @successMessage
-    </div>
-}
-
-
-@if (TempData["ErrorMessage"] is string errorMessage)
-{
-    <div class="alert-danger">
-        @errorMessage
-    </div>
-}
-
-
 <!-- =========================================================
      AHP STATUS
      ========================================================= -->
@@ -61,7 +45,7 @@
         </div>
 
         <h2>
-            Criteria weights.
+            Criteria weights
         </h2>
 
     </div>
@@ -161,7 +145,7 @@
             </div>
 
             <h2 class="section-title">
-                Raw evaluation values.
+                Raw evaluation values
             </h2>
 
         </div>
@@ -287,7 +271,7 @@
             </div>
 
             <h2>
-                Calculate supplier ranking.
+                Calculate supplier ranking
             </h2>
 
             <p>
@@ -300,7 +284,10 @@
 
 
         <button type="submit"
-                class="btn-primary">
+                class="btn-primary"
+                data-dss-confirm="Tính toán TOPSIS sẽ tính toán lại xếp hạng các nhà cung cấp dựa trên ma trận đánh giá và trọng số AHP. Bạn có muốn tiếp tục?"
+                data-dss-title="Xác nhận tính TOPSIS"
+                data-dss-btn-text="Tính toán">
 
             Calculate TOPSIS
 
@@ -317,7 +304,7 @@ else
         </div>
 
         <h2>
-            AHP must be consistent first.
+            AHP must be consistent first
         </h2>
 
         <p>
@@ -345,7 +332,7 @@ else
                 </div>
 
                 <h2 class="section-title">
-                    PIS & NIS.
+                    PIS & NIS (Ideal Solutions)
                 </h2>
 
             </div>
@@ -446,7 +433,7 @@ else
                 </div>
 
                 <h2 class="section-title">
-                    Supplier ranking.
+                    Supplier ranking
                 </h2>
 
             </div>
@@ -479,7 +466,7 @@ else
                         </th>
 
                         <th>
-                            Closeness
+                            Closeness (Ci*)
                         </th>
 
                     </tr>
@@ -494,13 +481,18 @@ else
                             .OrderBy(
                                 x => x.RankNo))
                     {
-                        <tr class="@(ranking.RankNo == 1
-                                                            ? "topsis-winner-row"
-                                                            : "")">
+                        var isWinner = ranking.RankNo == 1;
+                        var pct = Math.Clamp((double)ranking.ClosenessCoefficient * 100, 0, 100);
+
+                        <tr class="@(isWinner ? "topsis-winner-row" : "")">
 
                             <td>
 
-                                <span class="topsis-rank">
+                                <span class="topsis-rank @(isWinner ? "topsis-rank-winner" : "")">
+                                    @if (isWinner)
+                                    {
+                                        <i class="bi bi-trophy-fill me-1"></i>
+                                    }
                                     @ranking.RankNo
                                 </span>
 
@@ -532,9 +524,14 @@ else
 
                             <td>
 
-                                <strong class="topsis-score">
-                                    @ranking.ClosenessCoefficient.ToString("0.000000")
-                                </strong>
+                                <div style="display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-width: 140px;">
+                                    <div style="flex: 1; height: 6px; background: var(--surface-muted); border-radius: 999px; overflow: hidden; min-width: 50px;">
+                                        <div style="height: 100%; width: @(pct)%; background: @(isWinner ? "#c67d29" : "var(--lavender-dark)"); border-radius: 999px;"></div>
+                                    </div>
+                                    <strong class="topsis-score" style="font-family: var(--font-sans); font-variant-numeric: tabular-nums;">
+                                        @ranking.ClosenessCoefficient.ToString("0.000000")
+                                    </strong>
+                                </div>
 
                             </td>
 
@@ -561,9 +558,9 @@ else
                 NEXT STEP
             </div>
 
-            <h3>
+            <h2>
                 TOPSIS calculation completed.
-            </h3>
+            </h2>
 
             <p>
                 Kết quả xếp hạng nhà cung cấp đã được lưu.

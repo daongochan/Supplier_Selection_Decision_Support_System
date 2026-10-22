@@ -1,9 +1,14 @@
-﻿/* =========================================================
+/* =========================================================
    TABLE
    ========================================================= */
 
 .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
     overflow: hidden;
+    margin-bottom: var(--space-6);
 }
 
 .data-table-wrapper {
@@ -15,31 +20,45 @@
     width: 100%;
     min-width: 720px;
     border-collapse: collapse;
-    font-family: var(--font-serif);
-    font-size: 15px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    text-align: left;
 }
 
     .data-table th {
-        padding: 14px 20px;
+        padding: 12px 18px;
+        background: var(--surface-muted);
         border-bottom: 1px solid var(--border);
         color: var(--muted);
-        font-size: 12px;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        text-align: center;
+        font-family: var(--font-sans);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        text-align: left;
         white-space: nowrap;
     }
 
     .data-table td {
-        padding: 17px 20px;
+        padding: 14px 18px;
         border-bottom: 1px solid var(--border-soft);
         color: var(--body);
         vertical-align: middle;
+        text-align: left;
+    }
+
+    .data-table th.text-center,
+    .data-table td.text-center {
         text-align: center;
     }
 
+    .data-table th.text-end,
+    .data-table td.text-end {
+        text-align: right;
+    }
+
     .data-table tbody tr {
-        transition: background 0.14s ease;
+        transition: background 0.12s ease;
     }
 
         .data-table tbody tr:hover {
@@ -50,17 +69,62 @@
             border-bottom: none;
         }
 
+    .data-table a,
+    .data-table td a {
+        color: inherit;
+        text-decoration: none !important;
+        transition: color 0.15s ease;
+    }
+
+    .data-table a:hover,
+    .data-table td a:hover {
+        color: var(--terracotta);
+        text-decoration: none !important;
+    }
+
 
 /* =========================================================
    TABLE ACTIONS
    ========================================================= */
 
 .table-actions {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 12px;
+    justify-content: flex-start;
+    gap: 10px;
     white-space: nowrap;
 }
+
+.action-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--terracotta);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+    .action-link:hover {
+        color: var(--terracotta-dark);
+        text-decoration: underline;
+    }
+
+    .action-link.danger,
+    .action-link.text-danger {
+        color: var(--danger);
+    }
+
+        .action-link.danger:hover,
+        .action-link.text-danger:hover {
+            color: var(--danger-dark);
+        }
 
 
 /* =========================================================

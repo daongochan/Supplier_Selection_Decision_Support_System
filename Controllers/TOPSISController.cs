@@ -1,14 +1,15 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SupplierSelectionDSS.Models;
 using SupplierSelectionDSS.Services;
 using System.Security.Claims;
 using System.Text.Json;
 using SupplierSelectionDSS.Constants;
+using SupplierSelectionDSS.Web.Extensions;
 
 namespace SupplierSelectionDSS.Controllers;
 
-[Authorize(Roles = "Administrator,Expert")]
+[Authorize(Roles = UserRole.Administrator + "," + UserRole.Expert)]
 public class TOPSISController : Controller
 {
     private readonly TOPSISService _topsisService;
@@ -93,17 +94,8 @@ public class TOPSISController : Controller
         // CURRENT USER
         // =====================================================
 
-        var userIdClaim =
-            User.FindFirst(
-                ClaimTypes.NameIdentifier);
-
-
-        if (
-            userIdClaim == null ||
-            !int.TryParse(
-                userIdClaim.Value,
-                out var calculatedBy) ||
-            calculatedBy <= 0)
+        var calculatedBy = User.GetUserId();
+        if (!calculatedBy.HasValue)
         {
             return Unauthorized();
         }

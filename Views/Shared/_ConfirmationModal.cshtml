@@ -1,0 +1,176 @@
+<!-- =========================================================
+     ENTERPRISE DSS CONFIRMATION MODAL
+     ========================================================= -->
+<div id="dssConfirmModal"
+     class="dss-modal-overlay"
+     aria-hidden="true"
+     role="dialog"
+     aria-modal="true"
+     style="display:none;"
+     onclick="if (event.target === this) DSS.closeConfirmModal();">
+
+    <div class="dss-modal-box">
+
+        <div class="dss-modal-header">
+            <div class="dss-modal-title-group">
+                <i id="dssConfirmIcon" class="bi bi-question-circle-fill text-warning"></i>
+                <h3 id="dssConfirmTitle" class="dss-modal-title">Xác nhận thao tác</h3>
+            </div>
+            <button type="button" class="dss-modal-close" onclick="DSS.closeConfirmModal()" aria-label="Close">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <div class="dss-modal-body">
+            <p id="dssConfirmMessage" class="dss-modal-text">Bạn có chắc chắn muốn thực hiện thao tác này?</p>
+            <div id="dssConfirmInputGroup" style="display:none; margin-top: 14px;">
+                <label id="dssConfirmInputLabel" class="form-label" for="dssConfirmInput">Ghi chú / Lý do:</label>
+                <textarea id="dssConfirmInput" class="form-textarea" rows="3" placeholder="Nhập lý do hoặc ý kiến..."></textarea>
+            </div>
+        </div>
+
+        <div class="dss-modal-footer">
+            <button type="button" class="btn-outline" onclick="DSS.closeConfirmModal()">Hủy bỏ</button>
+            <button type="button" id="dssConfirmSubmitBtn" class="btn-primary">Xác nhận</button>
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+    #dssConfirmModal.dss-modal-overlay,
+    .dss-modal-overlay {
+        position: fixed !important;
+        inset: 0 !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(36, 33, 30, 0.6) !important;
+        backdrop-filter: blur(4px) !important;
+        -webkit-backdrop-filter: blur(4px) !important;
+        z-index: 999999 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 20px !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+    }
+
+    #dssConfirmModal[style*="display: none"],
+    #dssConfirmModal[style*="display:none"] {
+        display: none !important;
+    }
+
+    #dssConfirmModal .dss-modal-box,
+    .dss-modal-box {
+        background: #ffffff !important;
+        background: var(--surface, #ffffff) !important;
+        border-radius: var(--radius-lg, 12px) !important;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+        width: 100% !important;
+        max-width: 500px !important;
+        border: 1px solid var(--border, #e5e0d8) !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        box-sizing: border-box !important;
+        margin: auto !important;
+        animation: modalPopIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    }
+
+    #dssConfirmModal .dss-modal-header,
+    .dss-modal-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 18px 24px 14px !important;
+        border-bottom: 1px solid var(--border-soft, #ece7df) !important;
+        background: var(--surface, #ffffff) !important;
+    }
+
+    #dssConfirmModal .dss-modal-title-group,
+    .dss-modal-title-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+    }
+
+    #dssConfirmModal .dss-modal-title-group i,
+    .dss-modal-title-group i {
+        font-size: 22px !important;
+        line-height: 1 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+    }
+
+    #dssConfirmModal .dss-modal-title,
+    .dss-modal-title {
+        margin: 0 !important;
+        font-family: var(--font-serif, "Source Serif 4", serif) !important;
+        font-size: 18px !important;
+        font-weight: 600 !important;
+        color: var(--ink, #1a1917) !important;
+        line-height: 1.2 !important;
+    }
+
+    #dssConfirmModal .dss-modal-close,
+    .dss-modal-close {
+        background: none !important;
+        border: none !important;
+        cursor: pointer !important;
+        font-size: 16px !important;
+        color: var(--muted, #7c776e) !important;
+        padding: 6px 8px !important;
+        border-radius: var(--radius-sm, 4px) !important;
+        line-height: 1 !important;
+        transition: color 0.15s ease, background 0.15s ease !important;
+    }
+
+    #dssConfirmModal .dss-modal-close:hover,
+    .dss-modal-close:hover {
+        color: var(--ink, #1a1917) !important;
+        background: var(--surface-muted, #f4f0ea) !important;
+    }
+
+    #dssConfirmModal .dss-modal-body,
+    .dss-modal-body {
+        padding: 20px 24px !important;
+        background: var(--surface, #ffffff) !important;
+    }
+
+    #dssConfirmModal .dss-modal-text,
+    .dss-modal-text {
+        margin: 0 !important;
+        font-family: var(--font-serif, "Source Serif 4", serif) !important;
+        font-size: 14px !important;
+        line-height: 1.6 !important;
+        color: var(--body, #423e39) !important;
+    }
+
+    #dssConfirmModal .dss-modal-footer,
+    .dss-modal-footer {
+        display: flex !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        gap: 12px !important;
+        padding: 14px 24px !important;
+        background: var(--surface-soft, #fbf9f6) !important;
+        border-top: 1px solid var(--border-soft, #ece7df) !important;
+    }
+
+    @@keyframes modalPopIn {
+        from {
+            opacity: 0;
+            transform: scale(0.94) translateY(12px);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+</style>

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SupplierSelectionDSS.Data;
 using SupplierSelectionDSS.Data.Entities;
 using SupplierSelectionDSS.Models;
@@ -604,157 +604,151 @@ public class TOPSISService
         // 10. SAVE RESULT
         // =====================================================
 
-        await using var transaction =
-            await _context.Database
-                .BeginTransactionAsync();
+        var strategy = _context.Database.CreateExecutionStrategy();
 
-
-        try
+        await strategy.ExecuteAsync(async () =>
         {
-            // -------------------------------------------------
-            // DELETE OLD IDEALS
-            // -------------------------------------------------
+            await using var transaction =
+                await _context.Database
+                    .BeginTransactionAsync();
 
-            var oldIdeals =
-                await _context.TopsisIdealSolutions
-                    .Where(
-                        x => x.BatchId == batchId)
-                    .ToListAsync();
-
-
-            if (oldIdeals.Any())
+            try
             {
-                _context.TopsisIdealSolutions
-                    .RemoveRange(oldIdeals);
+                // -------------------------------------------------
+                // DELETE OLD IDEALS
+                // -------------------------------------------------
+
+                var oldIdeals =
+                    await _context.TopsisIdealSolutions
+                        .Where(
+                            x => x.BatchId == batchId)
+                        .ToListAsync();
+
+                if (oldIdeals.Any())
+                {
+                    _context.TopsisIdealSolutions
+                        .RemoveRange(oldIdeals);
+                }
+
+                // -------------------------------------------------
+                // DELETE OLD RANKING
+                // -------------------------------------------------
+
+                var oldResults =
+                    await _context.TopsisResults
+                        .Where(
+                            x => x.BatchId == batchId)
+                        .ToListAsync();
+
+                if (oldResults.Any())
+                {
+                    _context.TopsisResults
+                        .RemoveRange(oldResults);
+                }
+
+                await _context.SaveChangesAsync();
+
+                // -------------------------------------------------
+                // SAVE PIS / NIS
+                // -------------------------------------------------
+
+                for (var j = 0;
+                     j < criteriaCount;
+                     j++)
+                {
+                    var ideal =
+                        new TopsisIdealSolution
+                        {
+                            BatchId =
+                                batchId,
+
+                            CriteriaId =
+                                criteria[j].CriteriaId,
+
+                            // IMPORTANT:
+                            // Entity thực tế dùng Pisvalue
+                            Pisvalue =
+                                (decimal)
+                                Math.Round(
+                                    calculation.PISValues[j],
+                                    6),
+
+                            // IMPORTANT:
+                            // Entity thực tế dùng Nisvalue
+                            Nisvalue =
+                                (decimal)
+                                Math.Round(
+                                    calculation.NISValues[j],
+                                    6)
+                        };
+
+                    _context.TopsisIdealSolutions
+                        .Add(ideal);
+                }
+
+                // -------------------------------------------------
+                // SAVE SUPPLIER RESULTS
+                // -------------------------------------------------
+
+                for (var i = 0;
+                     i < supplierCount;
+                     i++)
+                {
+                    var distance =
+                        calculation.Distances[i];
+
+                    var result =
+                        new TopsisResult
+                        {
+                            BatchId =
+                                batchId,
+
+                            SupplierId =
+                                suppliers[i].SupplierId,
+
+                            // IMPORTANT:
+                            // Entity dùng DistanceToPis
+                            DistanceToPis =
+                                (decimal)
+                                Math.Round(
+                                    distance.DistanceToPIS,
+                                    6),
+
+                            // IMPORTANT:
+                            // Entity dùng DistanceToNis
+                            DistanceToNis =
+                                (decimal)
+                                Math.Round(
+                                    distance.DistanceToNIS,
+                                    6),
+
+                            ClosenessCoefficient =
+                                (decimal)
+                                Math.Round(
+                                    distance.ClosenessCoefficient,
+                                    6),
+
+                            RankNo =
+                                calculation.RankByIndex[i],
+
+                            CalculatedAt =
+                                DateTime.UtcNow
+                        };
+
+                    _context.TopsisResults
+                        .Add(result);
+                }
+
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
             }
-
-
-            // -------------------------------------------------
-            // DELETE OLD RANKING
-            // -------------------------------------------------
-
-            var oldResults =
-                await _context.TopsisResults
-                    .Where(
-                        x => x.BatchId == batchId)
-                    .ToListAsync();
-
-
-            if (oldResults.Any())
+            catch
             {
-                _context.TopsisResults
-                    .RemoveRange(oldResults);
+                await transaction.RollbackAsync();
+
+                throw;
             }
-
-
-            await _context.SaveChangesAsync();
-
-
-            // -------------------------------------------------
-            // SAVE PIS / NIS
-            // -------------------------------------------------
-
-            for (var j = 0;
-                 j < criteriaCount;
-                 j++)
-            {
-                var ideal =
-                    new TopsisIdealSolution
-                    {
-                        BatchId =
-                            batchId,
-
-                        CriteriaId =
-                            criteria[j].CriteriaId,
-
-                        // IMPORTANT:
-                        // Entity thực tế dùng Pisvalue
-                        Pisvalue =
-                            (decimal)
-                            Math.Round(
-                                calculation.PISValues[j],
-                                6),
-
-                        // IMPORTANT:
-                        // Entity thực tế dùng Nisvalue
-                        Nisvalue =
-                            (decimal)
-                            Math.Round(
-                                calculation.NISValues[j],
-                                6)
-                    };
-
-
-                _context.TopsisIdealSolutions
-                    .Add(ideal);
-            }
-
-
-            // -------------------------------------------------
-            // SAVE SUPPLIER RESULTS
-            // -------------------------------------------------
-
-            for (var i = 0;
-                 i < supplierCount;
-                 i++)
-            {
-                var distance =
-                    calculation.Distances[i];
-
-
-                var result =
-                    new TopsisResult
-                    {
-                        BatchId =
-                            batchId,
-
-                        SupplierId =
-                            suppliers[i].SupplierId,
-
-                        // IMPORTANT:
-                        // Entity dùng DistanceToPis
-                        DistanceToPis =
-                            (decimal)
-                            Math.Round(
-                                distance.DistanceToPIS,
-                                6),
-
-                        // IMPORTANT:
-                        // Entity dùng DistanceToNis
-                        DistanceToNis =
-                            (decimal)
-                            Math.Round(
-                                distance.DistanceToNIS,
-                                6),
-
-                        ClosenessCoefficient =
-                            (decimal)
-                            Math.Round(
-                                distance.ClosenessCoefficient,
-                                6),
-
-                        RankNo =
-                            calculation.RankByIndex[i],
-
-                        CalculatedAt =
-                            DateTime.UtcNow
-                    };
-
-
-                _context.TopsisResults
-                    .Add(result);
-            }
-
-
-            await _context.SaveChangesAsync();
-
-            await transaction.CommitAsync();
-        }
-        catch
-        {
-            await transaction.RollbackAsync();
-
-            throw;
-        }
+        });
     }
 }
