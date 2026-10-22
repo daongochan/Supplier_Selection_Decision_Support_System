@@ -63,9 +63,13 @@ public class SecurityAndHardeningTests : IDisposable
 
         var mockLogger = new Mock<ILogger<ReportService>>();
         var auditLogService = new AuditLogService(_context);
+        var topsisCalc = new TOPSISCalculationService();
+        var sens = new SensitivityAnalysisService(topsisCalc);
+        var topsisService = new TOPSISService(_context, topsisCalc, sens);
 
-        return new ReportService(_context, mockEnv.Object, auditLogService, mockConfig.Object, mockLogger.Object);
+        return new ReportService(_context, mockEnv.Object, auditLogService, mockConfig.Object, mockLogger.Object, topsisService);
     }
+
 
     [Fact]
     public async Task ReportService_GetDownloadAsync_PathTraversal_ReturnsNull()

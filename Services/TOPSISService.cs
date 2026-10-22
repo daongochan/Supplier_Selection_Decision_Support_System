@@ -10,19 +10,20 @@ public class TOPSISService
 {
     private readonly ApplicationDbContext _context;
 
-    private readonly TOPSISCalculationService
-        _calculationService;
+    private readonly TOPSISCalculationService _calculationService;
 
+    private readonly SensitivityAnalysisService _sensitivityService;
 
     public TOPSISService(
         ApplicationDbContext context,
-        TOPSISCalculationService calculationService)
+        TOPSISCalculationService calculationService,
+        SensitivityAnalysisService sensitivityService)
     {
         _context = context;
-
-        _calculationService =
-            calculationService;
+        _calculationService = calculationService;
+        _sensitivityService = sensitivityService;
     }
+
 
 
     // =========================================================
@@ -306,9 +307,99 @@ public class TOPSISService
                 });
         }
 
+        // =====================================================
+        // INTERMEDIATE MATRICES & SENSITIVITY ANALYSIS
+        // =====================================================
+        if (results.Any() && model.Suppliers.Count >= 2 && model.Criteria.Any())
+        {
+            var sCount = model.Suppliers.Count;
+            var cCount = model.Criteria.Count;
+            var dMatrix = new double[sCount, cCount];
+            var wArray = new double[cCount];
+            var cTypes = new string[cCount];
+
+            var canCalc = true;
+            for (var j = 0; j < cCount; j++)
+            {
+                wArray[j] = (double)model.Criteria[j].Weight;
+                cTypes[j] = model.Criteria[j].CriteriaType ?? string.Empty;
+
+                for (var i = 0; i < sCount; i++)
+                {
+                    if (model.Suppliers[i].Scores.TryGetValue(model.Criteria[j].CriteriaId, out var val))
+                    {
+                        dMatrix[i, j] = (double)val;
+                    }
+                    else
+                    {
+                        canCalc = false;
+                        break;
+                    }
+                }
+                if (!canCalc) break;
+            }
+
+            if (canCalc)
+            {
+                var calc = _calculationService.Calculate(dMatrix, wArray, cTypes);
+                model.HasTies = calc.HasTies;
+                model.IsIndistinguishable = calc.IsIndistinguishable;
+
+                foreach (var zIdx in calc.ZeroVarianceCriteriaIndices)
+                {
+                    if (zIdx >= 0 && zIdx < cCount)
+                    {
+                        model.ZeroVarianceCriteriaCodes.Add(model.Criteria[zIdx].CriteriaCode);
+                    }
+                }
+
+                for (var i = 0; i < sCount; i++)
+                {
+                    var normRow = new TOPSISMatrixRowViewModel
+                    {
+                        SupplierId = model.Suppliers[i].SupplierId,
+                        SupplierCode = model.Suppliers[i].SupplierCode,
+                        SupplierName = model.Suppliers[i].SupplierName
+                    };
+                    var weightRow = new TOPSISMatrixRowViewModel
+                    {
+                        SupplierId = model.Suppliers[i].SupplierId,
+                        SupplierCode = model.Suppliers[i].SupplierCode,
+                        SupplierName = model.Suppliers[i].SupplierName
+                    };
+
+                    for (var j = 0; j < cCount; j++)
+                    {
+                        var cId = model.Criteria[j].CriteriaId;
+                        normRow.Values[cId] = (decimal)Math.Round(calc.NormalizedMatrix[i, j], 6);
+                        weightRow.Values[cId] = (decimal)Math.Round(calc.WeightedMatrix[i, j], 6);
+                    }
+
+                    model.NormalizedMatrix.Add(normRow);
+                    model.WeightedMatrix.Add(weightRow);
+                }
+
+                var top = model.Ranking.OrderBy(x => x.RankNo).FirstOrDefault();
+                if (top != null)
+                {
+                    model.SensitivityAnalysis = _sensitivityService.Analyze(
+                        model.BatchId,
+                        model.BatchCode,
+                        dMatrix,
+                        wArray,
+                        cTypes,
+                        model.Criteria,
+                        model.Suppliers,
+                        top.SupplierCode,
+                        top.SupplierName,
+                        top.ClosenessCoefficient);
+                }
+            }
+        }
 
         return model;
     }
+
 
 
     // =========================================================

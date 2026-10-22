@@ -21,7 +21,11 @@ public static class ClosedXmlExcelReportExporter
         BuildExcelEvaluationSheet(workbook, data);
         BuildExcelAHPResultsSheet(workbook, data);
         BuildExcelTOPSISSheet(workbook, data);
+        BuildExcelNormalizedSheet(workbook, data);
+        BuildExcelWeightedSheet(workbook, data);
+        BuildExcelSensitivitySheet(workbook, data);
     }
+
 
     private static void BuildExcelSummarySheet(
         XLWorkbook workbook,
@@ -204,4 +208,125 @@ public static class ClosedXmlExcelReportExporter
         ws.Row(1).Style.Font.Bold = true;
         ws.Columns().AdjustToContents();
     }
+
+    private static void BuildExcelNormalizedSheet(
+        XLWorkbook workbook,
+        ReportData data)
+    {
+        if (!data.NormalizedMatrix.Any()) return;
+
+        var ws = workbook.Worksheets.Add("Normalized Matrix");
+        ws.Cell(1, 1).Value = "Supplier";
+
+        var criteria = data.Batch.Criteria.OrderBy(x => x.CriteriaCode).ToList();
+        for (var j = 0; j < criteria.Count; j++)
+        {
+            ws.Cell(1, j + 2).Value = $"{criteria[j].CriteriaCode} ({criteria[j].CriteriaType})";
+        }
+
+        var row = 2;
+        foreach (var supplier in data.NormalizedMatrix)
+        {
+            ws.Cell(row, 1).Value = $"{supplier.SupplierCode} - {supplier.SupplierName}";
+            for (var j = 0; j < criteria.Count; j++)
+            {
+                if (supplier.Values.TryGetValue(criteria[j].CriteriaId, out var val))
+                {
+                    ws.Cell(row, j + 2).Value = (double)val;
+                }
+            }
+            row++;
+        }
+
+        ws.Row(1).Style.Font.Bold = true;
+        ws.Columns().AdjustToContents();
+    }
+
+    private static void BuildExcelWeightedSheet(
+        XLWorkbook workbook,
+        ReportData data)
+    {
+        if (!data.WeightedMatrix.Any()) return;
+
+        var ws = workbook.Worksheets.Add("Weighted Matrix");
+        ws.Cell(1, 1).Value = "Supplier";
+
+        var criteria = data.Batch.Criteria.OrderBy(x => x.CriteriaCode).ToList();
+        for (var j = 0; j < criteria.Count; j++)
+        {
+            ws.Cell(1, j + 2).Value = criteria[j].CriteriaCode;
+        }
+
+        var row = 2;
+        foreach (var supplier in data.WeightedMatrix)
+        {
+            ws.Cell(row, 1).Value = $"{supplier.SupplierCode} - {supplier.SupplierName}";
+            for (var j = 0; j < criteria.Count; j++)
+            {
+                if (supplier.Values.TryGetValue(criteria[j].CriteriaId, out var val))
+                {
+                    ws.Cell(row, j + 2).Value = (double)val;
+                }
+            }
+            row++;
+        }
+
+        ws.Row(1).Style.Font.Bold = true;
+        ws.Columns().AdjustToContents();
+    }
+
+    private static void BuildExcelSensitivitySheet(
+        XLWorkbook workbook,
+        ReportData data)
+    {
+        if (data.SensitivityAnalysis == null) return;
+
+        var ws = workbook.Worksheets.Add("Sensitivity Analysis");
+        ws.Cell(1, 1).Value = "SENSITIVITY ANALYSIS (PHÂN TÍCH ĐỘ NHẠY)";
+        ws.Cell(3, 1).Value = "Base Top Supplier";
+        ws.Cell(3, 2).Value = $"{data.SensitivityAnalysis.BaseTopSupplierCode} - {data.SensitivityAnalysis.BaseTopSupplierName}";
+
+        ws.Cell(4, 1).Value = "Base Closeness";
+        ws.Cell(4, 2).Value = (double)data.SensitivityAnalysis.BaseTopSupplierCloseness;
+
+        ws.Cell(5, 1).Value = "Robustness (%)";
+        ws.Cell(5, 2).Value = data.SensitivityAnalysis.RobustnessPercentage;
+
+        ws.Cell(6, 1).Value = "Overall Robust";
+        ws.Cell(6, 2).Value = data.SensitivityAnalysis.IsOverallRobust ? "Yes" : "No";
+
+        ws.Cell(7, 1).Value = "Summary";
+        ws.Cell(7, 2).Value = data.SensitivityAnalysis.SummaryMessage;
+
+        var row = 9;
+        ws.Cell(row, 1).Value = "Criteria";
+        ws.Cell(row, 2).Value = "Base Weight";
+        ws.Cell(row, 3).Value = "Delta (%)";
+        ws.Cell(row, 4).Value = "New Weight";
+        ws.Cell(row, 5).Value = "Top Supplier";
+        ws.Cell(row, 6).Value = "Closeness";
+        ws.Cell(row, 7).Value = "Stable?";
+
+        ws.Row(1).Style.Font.Bold = true;
+        ws.Row(row).Style.Font.Bold = true;
+
+        row++;
+        foreach (var scenario in data.SensitivityAnalysis.Scenarios)
+        {
+            foreach (var run in scenario.Runs)
+            {
+                ws.Cell(row, 1).Value = $"{scenario.CriteriaCode} - {scenario.CriteriaName}";
+                ws.Cell(row, 2).Value = (double)scenario.BaseWeight;
+                ws.Cell(row, 3).Value = $"{run.DeltaPercent:+0;-0;0}%";
+                ws.Cell(row, 4).Value = (double)run.NewWeight;
+                ws.Cell(row, 5).Value = $"{run.TopSupplierCode} - {run.TopSupplierName}";
+                ws.Cell(row, 6).Value = (double)run.TopSupplierCloseness;
+                ws.Cell(row, 7).Value = run.IsStable ? "Stable" : "Shifted";
+                row++;
+            }
+        }
+
+        ws.Columns().AdjustToContents();
+    }
 }
+

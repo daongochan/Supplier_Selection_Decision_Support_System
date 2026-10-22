@@ -115,6 +115,7 @@ builder.Services.AddScoped<AHPService>();
 
 builder.Services.AddScoped<TOPSISCalculationService>();
 builder.Services.AddScoped<TOPSISService>();
+builder.Services.AddScoped<SensitivityAnalysisService>();
 
 // =========================================================
 // DECISION & REPORTING

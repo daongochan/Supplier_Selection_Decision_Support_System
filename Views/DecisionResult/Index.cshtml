@@ -356,10 +356,46 @@ else
 
     </div>
 
+    <!-- =====================================================
+         SENSITIVITY ANALYSIS
+         ===================================================== -->
+    @if (Model.SensitivityAnalysis != null && Model.SensitivityAnalysis.Scenarios.Any())
+    {
+        <div class="table-card decision-ranking-card" style="margin-top: 24px;">
+            <div class="decision-card-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+                <div>
+                    <div class="page-eyebrow">
+                        ACADEMIC ROBUSTNESS · PHÂN TÍCH ĐỘ NHẠY
+                    </div>
+                    <h2 class="section-title">
+                        Tính ổn định của quyết định (Sensitivity Analysis ±10%, ±20%)
+                    </h2>
+                    <p class="table-muted" style="margin-top: 6px; font-size: 14px; max-width: 780px;">
+                        @Model.SensitivityAnalysis.SummaryMessage
+                    </p>
+                </div>
+                <div>
+                    @if (Model.SensitivityAnalysis.IsOverallRobust)
+                    {
+                        <span class="badge" style="background: var(--sage-soft); color: var(--sage-dark); font-weight: 600; padding: 6px 12px; border-radius: 999px; font-size: 13px;">
+                            ✓ Vững bền 100% (Không đổi #1)
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge" style="background: var(--danger-soft); color: var(--danger-dark); font-weight: 600; padding: 6px 12px; border-radius: 999px; font-size: 13px;">
+                            ⚠️ Độ vững bền: @Model.SensitivityAnalysis.RobustnessPercentage%
+                        </span>
+                    }
+                </div>
+            </div>
+        </div>
+    }
 
     <!-- =====================================================
          APPROVAL
          ===================================================== -->
+
     @if (
             Model.HasApproval &&
             string.Equals(

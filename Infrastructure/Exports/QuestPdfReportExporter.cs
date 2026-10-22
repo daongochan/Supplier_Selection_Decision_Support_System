@@ -144,11 +144,28 @@ public static class QuestPdfReportExporter
                                 }
                             });
 
+                        if (data.SensitivityAnalysis != null)
+                        {
+                            column.Item()
+                                .PaddingTop(8)
+                                .Text("Sensitivity Analysis (Phân tích độ nhạy ±10%, ±20%)")
+                                .Bold()
+                                .FontSize(13);
+
+                            column.Item()
+                                .Text($"Độ vững bền: {data.SensitivityAnalysis.RobustnessPercentage:0.0}% · " +
+                                      $"{(data.SensitivityAnalysis.IsOverallRobust ? "Quyết định ổn định" : "Nhạy cảm với biến động")}");
+
+                            column.Item()
+                                .Text(data.SensitivityAnalysis.SummaryMessage);
+                        }
+
                         column.Item()
                             .PaddingTop(8)
                             .Text("Final Decision")
                             .Bold()
                             .FontSize(13);
+
 
                         if (data.Approval != null)
                         {

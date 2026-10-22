@@ -9,13 +9,16 @@ namespace SupplierSelectionDSS.Services;
 public class DecisionResultService
 {
     private readonly ApplicationDbContext _context;
-
+    private readonly TOPSISService _topsisService;
 
     public DecisionResultService(
-        ApplicationDbContext context)
+        ApplicationDbContext context,
+        TOPSISService topsisService)
     {
         _context = context;
+        _topsisService = topsisService;
     }
+
 
 
     // =========================================================
@@ -213,9 +216,15 @@ public class DecisionResultService
             }
         }
 
+        if (model.Ranking.Any())
+        {
+            var topsisWs = await _topsisService.GetWorkspaceAsync(batchId);
+            model.SensitivityAnalysis = topsisWs?.SensitivityAnalysis;
+        }
 
         return model;
     }
+
 
 
     // =========================================================

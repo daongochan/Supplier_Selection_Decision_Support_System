@@ -19,7 +19,14 @@ public class ReportData
     public List<TopsisResult> TopsisResults { get; set; } = new();
 
     public Approval? Approval { get; set; }
+
+    public List<Models.TOPSISMatrixRowViewModel> NormalizedMatrix { get; set; } = new();
+
+    public List<Models.TOPSISMatrixRowViewModel> WeightedMatrix { get; set; } = new();
+
+    public Models.SensitivityAnalysisResultViewModel? SensitivityAnalysis { get; set; }
 }
+
 
 public class ReportAHPWeight
 {

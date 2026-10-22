@@ -46,4 +46,10 @@ public class DecisionResultViewModel
     public DateTime? ApprovalDate { get; set; }
 
     public string? ApprovedByName { get; set; }
-}
+
+    /// <summary>
+    /// Kết quả phân tích độ nhạy (biến thiên trọng số +-10%, +-20%).
+    /// </summary>
+    public SensitivityAnalysisResultViewModel? SensitivityAnalysis { get; set; }
+}
+

@@ -19,30 +19,24 @@ public class ReportService
     private readonly IConfiguration _configuration;
 
     private readonly ILogger<ReportService> _logger;
-
+    private readonly TOPSISService _topsisService;
 
     public ReportService(
         ApplicationDbContext context,
         IWebHostEnvironment environment,
         AuditLogService auditLogService,
         IConfiguration configuration,
-        ILogger<ReportService> logger)
+        ILogger<ReportService> logger,
+        TOPSISService topsisService)
     {
-        _context =
-            context;
-
-        _environment =
-            environment;
-
-        _auditLogService =
-            auditLogService;
-
-        _configuration =
-            configuration;
-
-        _logger =
-            logger;
+        _context = context;
+        _environment = environment;
+        _auditLogService = auditLogService;
+        _configuration = configuration;
+        _logger = logger;
+        _topsisService = topsisService;
     }
+
 
 
     // =========================================================
@@ -749,33 +743,29 @@ public class ReportService
                 .FirstOrDefaultAsync();
 
 
-        return new ReportData
+        var reportData = new ReportData
         {
-            Batch =
-                batch,
-
-            Scores =
-                scores,
-
-            AhpResult =
-                ahpResult,
-
-            AhpWeights =
-                ahpWeights,
-
-            AhpComparisons =
-                ahpComparisons,
-
-            Ideals =
-                ideals,
-
-            TopsisResults =
-                topsis,
-
-            Approval =
-                approval
+            Batch = batch,
+            Scores = scores,
+            AhpResult = ahpResult,
+            AhpWeights = ahpWeights,
+            AhpComparisons = ahpComparisons,
+            Ideals = ideals,
+            TopsisResults = topsis,
+            Approval = approval
         };
+
+        var topsisWs = await _topsisService.GetWorkspaceAsync(batchId);
+        if (topsisWs != null)
+        {
+            reportData.NormalizedMatrix = topsisWs.NormalizedMatrix;
+            reportData.WeightedMatrix = topsisWs.WeightedMatrix;
+            reportData.SensitivityAnalysis = topsisWs.SensitivityAnalysis;
+        }
+
+        return reportData;
     }
+
 
 
     // =========================================================
