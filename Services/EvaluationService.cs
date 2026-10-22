@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using SupplierSelectionDSS.Data;
 using SupplierSelectionDSS.Data.Entities;
+using SupplierSelectionDSS.Exceptions;
 using SupplierSelectionDSS.Models;
 using SupplierSelectionDSS.Constants;
 
@@ -9,10 +12,14 @@ namespace SupplierSelectionDSS.Services;
 public class EvaluationService
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<EvaluationService> _logger;
 
-    public EvaluationService(ApplicationDbContext context)
+    public EvaluationService(
+        ApplicationDbContext context,
+        ILogger<EvaluationService>? logger = null)
     {
         _context = context;
+        _logger = logger ?? NullLogger<EvaluationService>.Instance;
     }
 
 
@@ -150,7 +157,7 @@ public class EvaluationService
 
         if (batch == null)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Evaluation batch không tồn tại.");
         }
 
@@ -161,7 +168,7 @@ public class EvaluationService
                 BatchStatus.Evaluating.ToString(),
                 StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Evaluation batch chưa ở trạng thái đánh giá hoặc đã khóa, không thể nhập dữ liệu.");
         }
 
@@ -185,7 +192,7 @@ public class EvaluationService
 
         if (model.Rows == null || model.Rows.Count == 0)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Không có dữ liệu đánh giá để lưu.");
         }
 
@@ -197,7 +204,7 @@ public class EvaluationService
 
         if (duplicateSupplierIds.Count > 0)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Dữ liệu đánh giá chứa Supplier bị trùng.");
         }
 
@@ -222,7 +229,7 @@ public class EvaluationService
 
             if (!supplierIds.Contains(row.SupplierId))
             {
-                throw new InvalidOperationException(
+                throw new BusinessRuleException(
                     "Supplier không thuộc Evaluation Batch.");
             }
 
@@ -358,6 +365,12 @@ public class EvaluationService
         }
 
         await _context.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Lưu bảng điểm đánh giá cho đợt ID {BatchId} bởi User {UserId} thành công ({RowCount} nhà cung cấp).",
+            model.BatchId,
+            evaluatedBy,
+            model.Rows?.Count ?? 0);
     }
 
 
@@ -382,7 +395,7 @@ public class EvaluationService
             if (score < 0m ||
                 score > 10m)
             {
-                throw new InvalidOperationException(
+                throw new BusinessRuleException(
                     $"Tiêu chí '{criterion.CriteriaName}' " +
                     "sử dụng thang điểm 0–10.");
             }
@@ -411,7 +424,7 @@ public class EvaluationService
 
         if (score < 0m)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 $"Giá trị của tiêu chí '{criterion.CriteriaName}' " +
                 "không được âm.");
         }

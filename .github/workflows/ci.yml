@@ -20,6 +20,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Verify database schema synchronization and safety guards
+        run: python tools/verify/verify_schema_sync.py
+
       - name: Setup .NET 10 SDK
         uses: actions/setup-dotnet@v4
         with:

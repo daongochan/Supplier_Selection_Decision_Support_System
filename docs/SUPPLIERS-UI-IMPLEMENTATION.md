@@ -112,25 +112,25 @@ Dựa trên tài liệu yêu cầu và ảnh tham chiếu (Reference UI):
 ## 4. Các tệp bị ảnh hưởng (Files Affected)
 
 1. **Models / ViewModels**:
-   - [`Models/SupplierIndexViewModel.cs`](file:///d:/DEAN/Projects/SupplierSelectionDSS/Models/SupplierIndexViewModel.cs):
+   - [`Models/SupplierIndexViewModel.cs`](../Models/SupplierIndexViewModel.cs):
      Bổ sung các trường KPI (`TotalSuppliers`, `ActiveSuppliers`, `InactiveSuppliers`, `TotalGroups`), trường lọc nhóm hàng (`GroupId`), và danh sách `Groups` cho dropdown.
 2. **Services**:
-   - [`Services/SupplierService.cs`](file:///d:/DEAN/Projects/SupplierSelectionDSS/Services/SupplierService.cs):
+   - [`Services/SupplierService.cs`](../Services/SupplierService.cs):
      - Thêm `.Include(x => x.Groups)` vào `SearchAsync`.
      - Thêm tham số lọc `int? groupId = null` vào `SearchAsync`.
      - Thêm hàm `GetKpiSummaryAsync()` lấy số liệu thống kê thực tế.
      - Thêm hàm `GetActiveGroupsAsync()` lấy danh sách nhóm hàng hoạt động cho dropdown lọc.
 3. **Controllers**:
-   - [`Controllers/SupplierController.cs`](file:///d:/DEAN/Projects/SupplierSelectionDSS/Controllers/SupplierController.cs):
+   - [`Controllers/SupplierController.cs`](../Controllers/SupplierController.cs):
      - Nhận tham số `int? groupId` trong action `Index`.
      - Gọi service lấy KPI và danh sách nhóm hàng, nạp vào `SupplierIndexViewModel`.
 4. **Views**:
-   - [`Views/Supplier/Index.cshtml`](file:///d:/DEAN/Projects/SupplierSelectionDSS/Views/Supplier/Index.cshtml):
+   - [`Views/Supplier/Index.cshtml`](../Views/Supplier/Index.cshtml):
      - Viết lại toàn bộ giao diện theo chuẩn thiết kế mục tiêu: KPI grid, Search card nâng cấp, Bảng dữ liệu hiện đại, Dropdown actions, Modal xác nhận, Empty state.
 5. **CSS / Styles**:
-   - [`wwwroot/css/pages/supplier.css`](file:///d:/DEAN/Projects/SupplierSelectionDSS/wwwroot/css/pages/supplier.css):
+   - [`wwwroot/css/pages/supplier.css`](../wwwroot/css/pages/supplier.css):
      - Thêm định kiểu cho KPI cards, Filter card, Table wrapper, Status pills, Dropdown action menu, Responsive breakpoints.
-   - [`wwwroot/css/site.css`](file:///d:/DEAN/Projects/SupplierSelectionDSS/wwwroot/css/site.css):
+   - [`wwwroot/css/site.css`](../wwwroot/css/site.css):
      - Cập nhật phiên bản import cache-busting.
 
 ---

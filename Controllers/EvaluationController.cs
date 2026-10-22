@@ -1,9 +1,12 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using SupplierSelectionDSS.Constants;
+using SupplierSelectionDSS.Exceptions;
 using SupplierSelectionDSS.Models;
 using SupplierSelectionDSS.Services;
-using SupplierSelectionDSS.Constants;
 using SupplierSelectionDSS.Web.Extensions;
 
 namespace SupplierSelectionDSS.Controllers;
@@ -14,19 +17,17 @@ namespace SupplierSelectionDSS.Controllers;
 public class EvaluationController : Controller
 {
     private readonly EvaluationService _evaluationService;
-
     private readonly AuditLogService _auditLogService;
-
+    private readonly ILogger<EvaluationController> _logger;
 
     public EvaluationController(
         EvaluationService evaluationService,
-        AuditLogService auditLogService)
+        AuditLogService auditLogService,
+        ILogger<EvaluationController>? logger = null)
     {
-        _evaluationService =
-            evaluationService;
-
-        _auditLogService =
-            auditLogService;
+        _evaluationService = evaluationService;
+        _auditLogService = auditLogService;
+        _logger = logger ?? NullLogger<EvaluationController>.Instance;
     }
 
 
@@ -199,7 +200,7 @@ public class EvaluationController : Controller
             }
         }
         catch (
-            InvalidOperationException ex)
+            BusinessRuleException ex)
         {
             TempData["ErrorMessage"] =
                 ex.Message;
@@ -209,6 +210,15 @@ public class EvaluationController : Controller
         {
             TempData["ErrorMessage"] =
                 ex.Message;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Lỗi khi lưu bảng điểm đánh giá cho đợt {BatchId}.",
+                model.BatchId);
+            TempData["ErrorMessage"] =
+                "Có lỗi xảy ra trong quá trình lưu bảng điểm. Vui lòng thử lại sau.";
         }
 
 

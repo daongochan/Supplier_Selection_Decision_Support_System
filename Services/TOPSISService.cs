@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using SupplierSelectionDSS.Data;
 using SupplierSelectionDSS.Data.Entities;
+using SupplierSelectionDSS.Exceptions;
 using SupplierSelectionDSS.Models;
 using SupplierSelectionDSS.Constants;
 
@@ -9,19 +12,20 @@ namespace SupplierSelectionDSS.Services;
 public class TOPSISService
 {
     private readonly ApplicationDbContext _context;
-
     private readonly TOPSISCalculationService _calculationService;
-
     private readonly SensitivityAnalysisService _sensitivityService;
+    private readonly ILogger<TOPSISService> _logger;
 
     public TOPSISService(
         ApplicationDbContext context,
         TOPSISCalculationService calculationService,
-        SensitivityAnalysisService sensitivityService)
+        SensitivityAnalysisService sensitivityService,
+        ILogger<TOPSISService>? logger = null)
     {
         _context = context;
         _calculationService = calculationService;
         _sensitivityService = sensitivityService;
+        _logger = logger ?? NullLogger<TOPSISService>.Instance;
     }
 
 
@@ -409,6 +413,8 @@ public class TOPSISService
     public async Task CalculateAsync(
         int batchId)
     {
+        _logger.LogInformation("Bắt đầu tính toán xếp hạng TOPSIS cho đợt đánh giá ID {BatchId}.", batchId);
+
         var batch =
             await _context.EvaluationBatches
                 .Include(x => x.Suppliers)
@@ -419,7 +425,7 @@ public class TOPSISService
 
         if (batch == null)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Evaluation Batch không tồn tại.");
         }
 
@@ -429,7 +435,7 @@ public class TOPSISService
             BatchStatus.Evaluating.ToString(),
             StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Chỉ được tính TOPSIS khi Batch đang ở trạng thái Evaluating.");
         }
 
@@ -447,7 +453,7 @@ public class TOPSISService
 
         if (ahpResult == null)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Chưa có kết quả AHP. " +
                 "Hãy thực hiện Calculate AHP trước khi chạy TOPSIS.");
         }
@@ -459,7 +465,7 @@ public class TOPSISService
 
         if (!ahpResult.IsConsistent)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 $"AHP chưa đạt tính nhất quán. " +
                 $"CR = {ahpResult.Crvalue:0.0000}. " +
                 "Hãy xem lại ma trận AHP trước khi chạy TOPSIS.");
@@ -479,7 +485,7 @@ public class TOPSISService
 
         if (!criteria.Any())
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Batch chưa có Criteria.");
         }
 
@@ -497,7 +503,7 @@ public class TOPSISService
 
         if (suppliers.Count < 2)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "TOPSIS yêu cầu ít nhất 2 Supplier trong Batch.");
         }
 
@@ -524,7 +530,7 @@ public class TOPSISService
         if (weightRecords.Count !=
             criteriaCount)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "AHPCriteriaWeights chưa đầy đủ. " +
                 "Hãy Calculate AHP lại.");
         }
@@ -542,7 +548,7 @@ public class TOPSISService
             criteriaId =>
                 criteria.All(c => c.CriteriaId != criteriaId)))
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Danh sách trọng số AHP chứa Criteria không thuộc Batch.");
         }
 
@@ -560,7 +566,7 @@ public class TOPSISService
                 criteria[j].CriteriaId,
                 out var weight))
             {
-                throw new InvalidOperationException(
+                throw new BusinessRuleException(
                     $"Thiếu trọng số AHP cho " +
                     $"{criteria[j].CriteriaCode}.");
             }
@@ -570,7 +576,7 @@ public class TOPSISService
                 double.IsInfinity(weight) ||
                 weight <= 0)
             {
-                throw new InvalidOperationException(
+                throw new BusinessRuleException(
                     $"Trọng số AHP của {criteria[j].CriteriaCode} không hợp lệ.");
             }
 
@@ -614,7 +620,7 @@ public class TOPSISService
         if (scores.Count !=
             expectedScoreCount)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 $"Ma trận đánh giá chưa đầy đủ. " +
                 $"Cần {expectedScoreCount} giá trị " +
                 $"nhưng hiện có {scores.Count}.");
@@ -643,7 +649,7 @@ public class TOPSISService
                     (suppliers[i].SupplierId, criteria[j].CriteriaId),
                     out var scoreValue))
                 {
-                    throw new InvalidOperationException(
+                    throw new BusinessRuleException(
                         $"Thiếu Evaluation Score cho " +
                         $"{suppliers[i].SupplierCode} / " +
                         $"{criteria[j].CriteriaCode}.");
@@ -653,7 +659,7 @@ public class TOPSISService
                 if (scoreValue < 0 ||
                     scoreValue == decimal.MaxValue)
                 {
-                    throw new InvalidOperationException(
+                    throw new BusinessRuleException(
                         $"Evaluation Score của " +
                         $"{suppliers[i].SupplierCode} / " +
                         $"{criteria[j].CriteriaCode} không hợp lệ.");
@@ -833,11 +839,19 @@ public class TOPSISService
                 await _context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
+
+                _logger.LogInformation(
+                    "Tính toán xếp hạng TOPSIS thành công cho đợt đánh giá ID {BatchId} với {SupplierCount} nhà cung cấp.",
+                    batchId,
+                    supplierCount);
             }
-            catch
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-
+                _logger.LogError(
+                    ex,
+                    "Lỗi khi tính toán xếp hạng TOPSIS cho đợt đánh giá ID {BatchId}.",
+                    batchId);
                 throw;
             }
         });

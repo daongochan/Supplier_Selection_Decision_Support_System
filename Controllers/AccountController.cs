@@ -1,8 +1,8 @@
-using System.Collections.Concurrent;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using SupplierSelectionDSS.Constants;
 using SupplierSelectionDSS.Data;
@@ -16,21 +16,21 @@ public class AccountController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly AuditLogService _auditLogService;
+    private readonly ILoginAttemptService _loginAttemptService;
     private readonly ILogger<AccountController> _logger;
 
-    // Chuỗi hash BCrypt giả hợp lệ (cost = 11) dùng để triệt tiêu chênh lệch thời gian khi username không tồn tại (chống timing attack)
-    private const string DummyPasswordHash = "$2a$11$e87.6b8eA8K1vQc0lFz.GeP8o0W8vQWq7XwWJmI6F7m8Q9W8vQWq7";
-
-    // Quản lý số lần thử sai theo username (chống Brute-force / Credential Stuffing)
-    private static readonly ConcurrentDictionary<string, (int Attempts, DateTime LockoutEndUtc)> LoginFailures = new(StringComparer.OrdinalIgnoreCase);
+    // Chuỗi hash BCrypt hợp lệ (cost = 11) dùng để triệt tiêu chênh lệch thời gian khi username không tồn tại (chống timing attack)
+    private const string DummyPasswordHash = "$2a$11$En7MyyM43NQeLY/ogUTCvOgkL4hJR5ciZg0DfqjByIr4U.VcJaT/W";
 
     public AccountController(
         ApplicationDbContext context,
         AuditLogService auditLogService,
+        ILoginAttemptService loginAttemptService,
         ILogger<AccountController> logger)
     {
         _context = context;
         _auditLogService = auditLogService;
+        _loginAttemptService = loginAttemptService;
         _logger = logger;
     }
 
@@ -49,6 +49,7 @@ public class AccountController : Controller
     // POST: /Account/Login
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("LoginLimiter")]
     public async Task<IActionResult> Login(LoginViewModel model)
     {
         if (!ModelState.IsValid)
@@ -57,16 +58,18 @@ public class AccountController : Controller
         }
 
         var username = model.Username.Trim();
+        var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+        var sanitizedUser = _loginAttemptService.SanitizeUsernameForLogging(username);
 
-        // 1. Kiểm tra trạng thái khóa tạm thời (Lockout)
-        if (LoginFailures.TryGetValue(username, out var failureRecord) && failureRecord.LockoutEndUtc > DateTime.UtcNow)
+        // 1. Kiểm tra trạng thái khóa tạm thời (Lockout theo cặp IP + Username trên IMemoryCache)
+        var (isLockedOut, remainingMinutes) = await _loginAttemptService.CheckLockoutAsync(username, remoteIp);
+        if (isLockedOut)
         {
-            var remainingMinutes = Math.Max(1, (int)Math.Ceiling((failureRecord.LockoutEndUtc - DateTime.UtcNow).TotalMinutes));
             ModelState.AddModelError(
                 string.Empty,
                 $"Tài khoản tạm thời bị khóa do nhập sai mật khẩu nhiều lần. Vui lòng thử lại sau {remainingMinutes} phút.");
 
-            _logger.LogWarning("Tài khoản {Username} đang trong thời gian lockout đến {LockoutEnd}", username, failureRecord.LockoutEndUtc);
+            _logger.LogWarning("IP {Ip} đang trong thời gian lockout đối với tài khoản {Username}", remoteIp, sanitizedUser);
             return View(model);
         }
 
@@ -85,31 +88,23 @@ public class AccountController : Controller
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Lỗi kiểm tra băm mật khẩu cho tài khoản {Username}", username);
+            _logger.LogWarning(ex, "Lỗi kiểm tra băm mật khẩu cho tài khoản {Username}", sanitizedUser);
             passwordValid = false;
         }
 
         // 3. Nếu user không tồn tại hoặc mật khẩu không khớp: ghi nhận lỗi chung để tránh user enumeration
         if (user == null || !passwordValid)
         {
-            var updated = LoginFailures.AddOrUpdate(
-                username,
-                _ => (1, DateTime.MinValue),
-                (_, current) =>
-                {
-                    var count = current.Attempts + 1;
-                    var lockout = count >= 5 ? DateTime.UtcNow.AddMinutes(15) : DateTime.MinValue;
-                    return (count, lockout);
-                });
+            var attempts = await _loginAttemptService.RecordFailedAttemptAsync(username, remoteIp);
 
             await _auditLogService.LogAsync(
                 user?.UserId,
                 AuditActions.LoginFailed,
                 nameof(User),
                 user?.UserId,
-                description: $"Đăng nhập thất bại cho tài khoản '{username}' (lần thử thứ {updated.Attempts}).");
+                description: $"Đăng nhập thất bại từ IP {remoteIp} cho tài khoản '{sanitizedUser}' (lần thử thứ {attempts}).");
 
-            _logger.LogWarning("Đăng nhập thất bại cho '{Username}'. Số lần sai liên tiếp: {Attempts}", username, updated.Attempts);
+            _logger.LogWarning("Đăng nhập thất bại từ IP {Ip} cho tài khoản '{Username}'. Lần sai liên tiếp: {Attempts}", remoteIp, sanitizedUser, attempts);
 
             ModelState.AddModelError(
                 string.Empty,
@@ -128,7 +123,7 @@ public class AccountController : Controller
                 user.UserId,
                 description: $"Đăng nhập bị từ chối do trạng thái tài khoản là '{user.Status}'.");
 
-            _logger.LogWarning("Đăng nhập bị từ chối cho tài khoản '{Username}' với trạng thái {Status}", username, user.Status);
+            _logger.LogWarning("Đăng nhập bị từ chối cho tài khoản '{Username}' với trạng thái {Status}", sanitizedUser, user.Status);
 
             ModelState.AddModelError(
                 string.Empty,
@@ -137,8 +132,8 @@ public class AccountController : Controller
             return View(model);
         }
 
-        // 5. Đăng nhập thành công: xóa lịch sử thử sai
-        LoginFailures.TryRemove(username, out _);
+        // 5. Đăng nhập thành công: reset lịch sử thử sai cho cặp (IP, Username)
+        await _loginAttemptService.ResetAttemptsAsync(username, remoteIp);
 
         var claims = new List<Claim>
         {

@@ -1,10 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using SupplierSelectionDSS.Constants;
+using SupplierSelectionDSS.Exceptions;
 using SupplierSelectionDSS.Services;
+using SupplierSelectionDSS.Web.Extensions;
 using System.Security.Claims;
 using System.Text.Json;
-using SupplierSelectionDSS.Constants;
-using SupplierSelectionDSS.Web.Extensions;
 
 namespace SupplierSelectionDSS.Controllers;
 
@@ -12,19 +15,17 @@ namespace SupplierSelectionDSS.Controllers;
 public class DecisionResultController : Controller
 {
     private readonly DecisionResultService _service;
-
     private readonly AuditLogService _auditLogService;
-
+    private readonly ILogger<DecisionResultController> _logger;
 
     public DecisionResultController(
         DecisionResultService service,
-        AuditLogService auditLogService)
+        AuditLogService auditLogService,
+        ILogger<DecisionResultController>? logger = null)
     {
-        _service =
-            service;
-
-        _auditLogService =
-            auditLogService;
+        _service = service;
+        _auditLogService = auditLogService;
+        _logger = logger ?? NullLogger<DecisionResultController>.Instance;
     }
 
 
@@ -255,16 +256,25 @@ public class DecisionResultController : Controller
                 "Nhà cung cấp đã được phê duyệt.";
         }
         catch (
-            ArgumentException ex)
+            BusinessRuleException ex)
         {
             TempData["ErrorMessage"] =
                 ex.Message;
         }
         catch (
-            InvalidOperationException ex)
+            ArgumentException ex)
         {
             TempData["ErrorMessage"] =
                 ex.Message;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Lỗi khi phê duyệt kết quả cho đợt {BatchId}.",
+                batchId);
+            TempData["ErrorMessage"] =
+                "Có lỗi xảy ra khi phê duyệt kết quả. Vui lòng thử lại sau.";
         }
 
 
@@ -389,16 +399,25 @@ public class DecisionResultController : Controller
                 "Bạn có thể yêu cầu đánh giá lại.";
         }
         catch (
-            ArgumentException ex)
+            BusinessRuleException ex)
         {
             TempData["ErrorMessage"] =
                 ex.Message;
         }
         catch (
-            InvalidOperationException ex)
+            ArgumentException ex)
         {
             TempData["ErrorMessage"] =
                 ex.Message;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Lỗi khi từ chối kết quả cho đợt {BatchId}.",
+                batchId);
+            TempData["ErrorMessage"] =
+                "Có lỗi xảy ra khi từ chối kết quả. Vui lòng thử lại sau.";
         }
 
 
@@ -524,16 +543,25 @@ public class DecisionResultController : Controller
                 "Dữ liệu Evaluation, AHP và TOPSIS cũ đã được vô hiệu hóa.";
         }
         catch (
-            ArgumentException ex)
+            BusinessRuleException ex)
         {
             TempData["ErrorMessage"] =
                 ex.Message;
         }
         catch (
-            InvalidOperationException ex)
+            ArgumentException ex)
         {
             TempData["ErrorMessage"] =
                 ex.Message;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Lỗi khi yêu cầu đánh giá lại cho đợt {BatchId}.",
+                batchId);
+            TempData["ErrorMessage"] =
+                "Có lỗi xảy ra khi yêu cầu đánh giá lại. Vui lòng thử lại sau.";
         }
 
 

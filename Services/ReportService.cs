@@ -5,6 +5,7 @@ using SupplierSelectionDSS.Models;
 using SupplierSelectionDSS.Infrastructure.Exports;
 using System.Globalization;
 using System.Text.Json;
+using SupplierSelectionDSS.Constants;
 
 namespace SupplierSelectionDSS.Services;
 
@@ -196,7 +197,7 @@ public class ReportService
                     batchId,
 
                 ReportType =
-                    "PDF",
+                    ReportTypes.Pdf,
 
                 GeneratedBy =
                     generatedBy,
@@ -235,7 +236,7 @@ public class ReportService
                 report.ReportId,
 
             ReportType =
-                "PDF",
+                ReportTypes.Pdf,
 
             FileName =
                 fileName,
@@ -300,7 +301,7 @@ public class ReportService
                     batchId,
 
                 ReportType =
-                    "Excel",
+                    ReportTypes.Excel,
 
                 GeneratedBy =
                     generatedBy,
@@ -339,7 +340,7 @@ public class ReportService
                 report.ReportId,
 
             ReportType =
-                "Excel",
+                ReportTypes.Excel,
 
             FileName =
                 fileName,
@@ -399,7 +400,7 @@ public class ReportService
             var actionType =
                 string.Equals(
                     report.ReportType,
-                    "PDF",
+                    ReportTypes.Pdf,
                     StringComparison.OrdinalIgnoreCase)
                     ? "Generate PDF"
                     : "Generate Excel";
@@ -408,7 +409,7 @@ public class ReportService
             var description =
                 string.Equals(
                     report.ReportType,
-                    "PDF",
+                    ReportTypes.Pdf,
                     StringComparison.OrdinalIgnoreCase)
                     ? $"Tạo báo cáo PDF cho Batch {batch.BatchCode}."
                     : $"Tạo báo cáo Excel cho Batch {batch.BatchCode}.";
@@ -522,7 +523,7 @@ public class ReportService
         var contentType =
             string.Equals(
                 report.ReportType,
-                "PDF",
+                ReportTypes.Pdf,
                 StringComparison.OrdinalIgnoreCase)
                 ? "application/pdf"
                 : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";

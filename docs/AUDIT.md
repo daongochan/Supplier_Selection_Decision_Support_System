@@ -134,3 +134,48 @@ Mức độ nghiêm trọng:
 - [x] **Phase 5:** Nâng cao chất lượng mã nguồn: Bật nullable/analyzer về 0 cảnh báo, thay chuỗi cứng, tối ưu hóa service.
 - [x] **Phase 6:** Tính năng học thuật: Hiển thị các bảng trung gian TOPSIS và Phân tích độ nhạy (Sensitivity Analysis ±10%, ±20%) trên UI, Excel và PDF.
 - [x] **Phase 7:** Tài liệu hóa toàn diện (`README.md`, `ALGORITHMS.md`, `ARCHITECTURE.md`, `CHANGELOG.md`, `AUDIT.md`) và GitHub Actions CI.
+
+---
+
+## VI. RÀ SOÁT & HOÀN THIỆN VÒNG 2 (POST-HARDENING FOLLOW-UP)
+
+Sau đợt rà soát độc lập và thực thi củng cố chất lượng vòng 2 (nhánh `fix/post-hardening-followup`, PR #2), các mục tồn đọng đã được giải quyết triệt để và kiểm chứng bằng bằng chứng thực tế:
+
+### 1. Khắc phục Build và CI GitHub Actions
+- **P0 Compile Error:** Đã sửa kiểu trả về của `PagedResult<EvaluationBatchListItemViewModel>.CreateAsync` tại `EvaluationBatchService.cs:93` và bổ sung `@using SupplierSelectionDSS.Constants` trong `Views/_ViewImports.cshtml`.
+- **Theme & Assets:** Tải font `Inter`, `Outfit` và thư viện Bootstrap Icons về lưu trữ cục bộ trong `wwwroot/css/` và `wwwroot/lib/`, loại bỏ phụ thuộc CDN bên ngoài.
+- **Line Endings:** Chuẩn hóa toàn bộ kho mã nguồn theo `.gitattributes` (`git add --renormalize .`), khắc phục lỗi cảnh báo CRLF/LF.
+- **Kết quả CI:** Workflow GitHub Actions `.github/workflows/ci.yml` chạy thành công (Status: Success / Green).
+
+### 2. An toàn CSDL & Tính liên kết tài liệu
+- **Safety Guard:** Bổ sung chốt an toàn `SET NOEXEC ON` và biến `@ConfirmRecreate = 'YES'` cho các tệp `database/01_schema.sql`, `database/scripts/00_Create_Database.sql`, và `database/scripts/Run_All.sql`. Ngăn chặn việc chạy nhầm làm mất dữ liệu.
+- **Kiểm chứng Đồng bộ CSDL:** Tạo kịch bản tự động `tools/verify/verify_schema_sync.py` đối chiếu tính nhất quán giữa 11 script đơn lẻ và file chạy gộp `Run_All.sql` (17 bảng, 7 triggers, 2 views, 16 indexes), tích hợp trực tiếp vào CI.
+- **Chuẩn hóa Link:** Toàn bộ đường dẫn tuyệt đối dạng `file:///` trong `database/` và `docs/` đã được chuyển thành relative markdown links.
+
+### 3. Bảo mật Đăng nhập & Tệp Báo cáo
+- **Kiểm soát Đăng nhập:** Tách biệt `ILoginAttemptService` & `LoginAttemptService` sử dụng `IMemoryCache` có giới hạn bộ nhớ (`SizeLimit = 10,000`, sliding expiration 15 phút, khóa theo cặp `IP + Username`) kết hợp ASP.NET Core IP `RateLimiter` (`"LoginLimiter"`).
+- **Mật khẩu Hash Demo:** Thay thế hash giả lập bằng hash BCrypt chuẩn hợp lệ `$2a$11$En7MyyM43NQeLY/ogUTCvOgkL4hJR5ciZg0DfqjByIr4U.VcJaT/W` (khớp với mật khẩu mặc định `Admin@123456`).
+- **Static Files Middleware Chặn Báo Cáo:** Đặt middleware chặn truy cập tĩnh trước `app.UseStaticFiles()` trong `Program.cs`, trả về mã HTTP 404 cho mọi truy vấn tới `/reports/*` bất kể chữ hoa hay chữ thường.
+- **Kiểm thử Bảo mật:** Bổ sung `LoginAttemptServiceTests.cs` (7 test cases) và `SecurityIntegrationTests.cs` (4 integration tests) kiểm chứng trực tiếp trên test server.
+
+### 4. Nâng cao Chất lượng Mã nguồn (Refactoring)
+- **Loại bỏ Magic Strings:** Thay thế toàn bộ chuỗi `"PDF"` và `"Excel"` bằng `ReportTypes.Pdf` và `ReportTypes.Excel`.
+- **Dọn dẹp Policy Thừa:** Xóa bỏ `Web/Authorization/PolicyNames.cs` và 8 định nghĩa policy không sử dụng trong `Program.cs`, giữ lại cấu hình phân quyền gọn gàng theo Role (`[Authorize(Roles = ...)]`).
+- **Xử lý Ngoại lệ Thân thiện:** Tạo lớp ngoại lệ nghiệp vụ `BusinessRuleException` (kế thừa `InvalidOperationException`), inject `ILogger<T>` cho tất cả controller và service, hiển thị thông báo tiếng Việt an toàn ra giao diện và ghi log chi tiết trên server.
+
+### 5. Kiểm soát Đồng thời Lạc quan (Optimistic Concurrency Control)
+- **Cột RowVersion:** Bổ sung cột `RowVersion ROWVERSION NOT NULL` trên bảng `EvaluationBatches` trong CSDL và kịch bản vá `database/patches/20261022_add_rowversion.sql`.
+- **Cấu hình EF Core:** Thêm thuộc tính `[Timestamp] public byte[] RowVersion { get; set; }` và ánh xạ Fluent API `.IsRowVersion()`.
+- **Xử lý Ngoại lệ:** Bắt `DbUpdateConcurrencyException` trong `EvaluationBatchService` (`StartAsync`, `CancelAsync`) và `DecisionResultService` (`CreateApprovalAsync`, `RequestReevaluationAsync`), ném thông báo: *"Dữ liệu đợt đánh giá vừa được người khác thay đổi, vui lòng tải lại trang."*.
+- **Kiểm thử Đồng thời:** Bổ sung unit tests kiểm chứng hành vi khi xảy ra xung đột `DbUpdateConcurrencyException`.
+
+### 6. Số liệu Kiểm thử & Độ bao phủ Thực tế (Measured Code Coverage)
+- **Công cụ đo lường:** Thu thập tự động qua `dotnet test --collect:"XPlat Code Coverage"` (Cobertura format).
+- **Tổng số lượng kiểm thử:** **141 tests** (141 Passed, 0 Failed, 0 Skipped).
+- **Độ bao phủ các service lõi thuật toán:**
+  - `AHPCalculationService`: **85.48% lines** (159/186 dòng), **80.88% branches**.
+  - `TOPSISCalculationService`: **94.95% lines** (301/317 dòng), **89.02% branches**.
+  - `SensitivityAnalysisService`: **95.20% lines** (119/125 dòng), **90.62% branches**.
+- **Kiểm chứng Thuật toán:** Sai số phương pháp trung bình nhân (RGMM) so với Principal Eigenvector trên ma trận chuẩn 4x4 của Saaty là **$0.001196$ ($\approx 1.2 \times 10^{-3}$)**, bảo toàn tuyệt đối thứ tự ưu tiên và kết quả TOPSIS (`tools/verify/verify_mcdm.py`).
+- **Hướng dẫn dọn dẹp lịch sử:** Soạn thảo `docs/HISTORY_CLEANUP.md` hướng dẫn quy trình dùng `git-filter-repo` trên bản mirror clone riêng biệt.
+

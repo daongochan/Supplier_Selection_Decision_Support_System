@@ -2,9 +2,12 @@ using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using SupplierSelectionDSS.Constants;
+using SupplierSelectionDSS.Exceptions;
 using SupplierSelectionDSS.Models;
 using SupplierSelectionDSS.Services;
-using SupplierSelectionDSS.Constants;
 using SupplierSelectionDSS.Web.Extensions;
 
 namespace SupplierSelectionDSS.Controllers;
@@ -15,19 +18,17 @@ namespace SupplierSelectionDSS.Controllers;
 public class EvaluationBatchController : Controller
 {
     private readonly EvaluationBatchService _batchService;
-
     private readonly AuditLogService _auditLogService;
-
+    private readonly ILogger<EvaluationBatchController> _logger;
 
     public EvaluationBatchController(
         EvaluationBatchService batchService,
-        AuditLogService auditLogService)
+        AuditLogService auditLogService,
+        ILogger<EvaluationBatchController>? logger = null)
     {
-        _batchService =
-            batchService;
-
-        _auditLogService =
-            auditLogService;
+        _batchService = batchService;
+        _auditLogService = auditLogService;
+        _logger = logger ?? NullLogger<EvaluationBatchController>.Instance;
     }
 
 
@@ -243,7 +244,7 @@ public class EvaluationBatchController : Controller
                 });
         }
         catch (
-            InvalidOperationException ex)
+            BusinessRuleException ex)
         {
             ModelState.AddModelError(
                 string.Empty,
@@ -286,11 +287,15 @@ public class EvaluationBatchController : Controller
 
             return View(model);
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(
+                ex,
+                "Lỗi khi tạo đợt đánh giá mới.");
+
             ModelState.AddModelError(
                 string.Empty,
-                "Không thể tạo đợt đánh giá.");
+                "Không thể tạo đợt đánh giá. Vui lòng thử lại sau.");
 
 
             await LoadCreateDataAsync();
@@ -428,7 +433,7 @@ public class EvaluationBatchController : Controller
                 });
         }
         catch (
-            InvalidOperationException ex)
+            BusinessRuleException ex)
         {
             TempData["ErrorMessage"] =
                 ex.Message;
@@ -455,10 +460,15 @@ public class EvaluationBatchController : Controller
                     id
                 });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(
+                ex,
+                "Lỗi khi bắt đầu đợt đánh giá ID {BatchId}.",
+                id);
+
             TempData["ErrorMessage"] =
-                "Không thể bắt đầu đợt đánh giá.";
+                "Không thể bắt đầu đợt đánh giá. Vui lòng thử lại sau.";
 
 
             return RedirectToAction(
@@ -540,14 +550,15 @@ public class EvaluationBatchController : Controller
             TempData["SuccessMessage"] = $"Đợt đánh giá '{batch.BatchCode}' đã được hủy thành công.";
             return RedirectToAction(nameof(Details), new { id });
         }
-        catch (InvalidOperationException ex)
+        catch (BusinessRuleException ex)
         {
             TempData["ErrorMessage"] = ex.Message;
             return RedirectToAction(nameof(Details), new { id });
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            TempData["ErrorMessage"] = "Có lỗi xảy ra khi hủy đợt đánh giá.";
+            _logger.LogError(ex, "Lỗi khi hủy đợt đánh giá ID {BatchId}.", id);
+            TempData["ErrorMessage"] = "Có lỗi xảy ra khi hủy đợt đánh giá. Vui lòng thử lại sau.";
             return RedirectToAction(nameof(Details), new { id });
         }
     }

@@ -56,7 +56,7 @@ Hệ thống được phân cấp theo 5 lớp layer chặt chẽ từ sau ra tr
 
 ## 3. Color System & Design Tokens
 
-Tận dụng và chuẩn hóa hệ thống Design Tokens trong [`tokens.css`](file:///d:/DEAN/Projects/SupplierSelectionDSS/wwwroot/css/tokens.css):
+Tận dụng và chuẩn hóa hệ thống Design Tokens trong [`tokens.css`](../wwwroot/css/tokens.css):
 
 ### 3.1. Background & Surface Tokens
 | Token Name | Value | Purpose |

@@ -22,13 +22,18 @@ Phương pháp AHP do Thomas L. Saaty đề xuất được sử dụng để x�
 
 ### 1.2. Tính toán Trọng số: Phương pháp Trung bình Nhân theo hàng (RGMM)
 
-Hệ thống triển khai phương pháp **Row Geometric Mean Method (RGMM)** (còn gọi là Logarithmic Least Squares Method). Đây là phương pháp chuẩn học thuật, bảo toàn tính nghịch đảo và xấp xỉ chính xác eigenvector chính của ma trận:
+Hệ thống triển khai phương pháp **Row Geometric Mean Method (RGMM)** (còn gọi là Logarithmic Least Squares Method). Đây là phương pháp chuẩn học thuật trong tài liệu AHP của Saaty, bảo toàn tính nghịch đảo ($w_i / w_j \approx a_{ij}$) và xấp xỉ chính xác eigenvector chính của ma trận:
 
 1. **Tính trung bình nhân theo từng hàng:**
    $$r_i = \left( \prod_{j=1}^n a_{ij} \right)^{1/n} \quad \forall i = 1, \dots, n$$
 
 2. **Chuẩn hóa vector trọng số (Tổng bằng 1.0):**
    $$w_i = \frac{r_i}{\sum_{k=1}^n r_k} \quad \forall i = 1, \dots, n$$
+
+> **So sánh với Vector riêng chính xác (Principal Eigenvector):**
+> - Với ma trận nhất quán hoàn toàn ($CR = 0$), kết quả RGMM trùng khớp tuyệt đối với Principal Eigenvector (sai số $0.0$).
+> - Với ma trận thực tế không nhất quán nhưng chấp nhận được ($CR \le 0.10$), ví dụ ma trận chuẩn 4x4 của Saaty ($CR \approx 0.0433$), chênh lệch cực đại giữa RGMM và vector riêng chính xác (tính bằng `numpy.linalg.eig`) chỉ là **$0.001196$ ($\approx 1.2 \times 10^{-3}$)**.
+> - Kết quả đối chiếu này được kiểm chứng độc lập và tự động hóa qua script `tools/verify/verify_mcdm.py`. Sai số cực nhỏ này hoàn toàn không làm thay đổi thứ tự ưu tiên của tiêu chí cũng như kết quả xếp hạng TOPSIS.
 
 ### 1.3. Kiểm tra Tính nhất quán (Consistency Check)
 
