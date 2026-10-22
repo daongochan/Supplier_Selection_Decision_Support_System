@@ -1,4 +1,6 @@
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Infrastructure;
 using SupplierSelectionDSS.Data;
@@ -14,6 +16,30 @@ var builder = WebApplication.CreateBuilder(args);
 // =========================================================
 
 QuestPDF.Settings.License = LicenseType.Community;
+
+// Memory cache with size limit for security components (LoginAttemptService, etc.)
+builder.Services.AddMemoryCache(options =>
+{
+    options.SizeLimit = 10_000;
+});
+
+builder.Services.AddSingleton<ILoginAttemptService, LoginAttemptService>();
+
+// Rate limiter for authentication endpoints
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("LoginLimiter", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 15,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+});
 
 // =========================================================
 // MVC
@@ -217,20 +243,22 @@ app.Use(async (context, next) =>
     await next();
 });
 
-// Chặn tuyệt đối mọi truy cập trực tiếp tới file báo cáo qua static webroot
-app.UseStaticFiles(new StaticFileOptions
+// Chặn tuyệt đối mọi truy cập trực tiếp tới file báo cáo qua static webroot TRƯỚC UseStaticFiles
+app.Use(async (context, next) =>
 {
-    OnPrepareResponse = ctx =>
+    if (context.Request.Path.StartsWithSegments("/reports", StringComparison.OrdinalIgnoreCase))
     {
-        if (ctx.Context.Request.Path.StartsWithSegments("/reports"))
-        {
-            ctx.Context.Response.StatusCode = StatusCodes.Status404NotFound;
-            ctx.Context.Response.Body = Stream.Null;
-        }
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
     }
+    await next();
 });
 
+app.UseStaticFiles();
+
 app.UseRouting();
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -246,3 +274,6 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
+// Expose Program for WebApplicationFactory integration testing
+public partial class Program { }
