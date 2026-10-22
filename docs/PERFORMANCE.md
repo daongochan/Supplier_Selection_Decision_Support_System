@@ -81,3 +81,31 @@ Tài liệu này ghi nhận số liệu đo lường hiệu năng thực tế tr
 | 6 | **Kết quả quyết định** | 10 | 12 | 37,6 ms | 33,0 ms | Nhanh hơn 1,1 lần (-12,2%) | 28 kịch bản độ nhạy thực thi mượt mà |
 | 7 | **Lịch sử báo cáo** | 2 | 2 | 12,2 ms | 9,0 ms | Nhanh hơn 1,4 lần (-26,2%) | `.AsSplitQuery()` trong `LoadReportDataAsync` |
 | 8 | **Nhật ký hệ thống** | 7 | 7 | 580,4 ms | 316,4 ms | Nhanh hơn 1,8 lần (-45,5%) | Chờ bổ sung chỉ mục `ActionTime` ở Phase 6 |
+
+---
+
+### 4.2. Kết quả Phase 2 — Tối ưu tài nguyên tĩnh & Phân phối (Static Assets & Delivery)
+
+1. **Cục bộ hóa Font & Icon 100% (Loại bỏ hoàn toàn CDN):**
+   - Đã tải và đóng gói toàn bộ phông chữ **Source Serif 4** (6 biến thể WOFF2 hỗ trợ đầy đủ tiếng Việt, Latin, Latin-ext) vào `wwwroot/fonts/sourceserif4/` và stylesheet `wwwroot/css/fonts.css`.
+   - Đã tải và đóng gói **Bootstrap Icons v1.11.3** (`bootstrap-icons.woff2`, `bootstrap-icons.woff`) vào `wwwroot/fonts/bootstrap-icons/` và `wwwroot/css/bootstrap-icons.css`.
+   - Gỡ bỏ hoàn toàn các liên kết CDN (`fonts.googleapis.com`, `fonts.gstatic.com`, `cdn.jsdelivr.net`) khỏi `Views/Shared/_Layout.cshtml`. Hệ thống hoạt động 100% offline/intranet, xóa bỏ nguy cơ chặn dựng hình (render-blocking).
+
+2. **Xóa bỏ thác nước `@import` (Eliminated Waterfall Requests):**
+   - Đóng gói toàn bộ Design tokens (`tokens.css`), Base (typography, layout, responsive) và 8 Components (`buttons.css`, `cards.css`, `status.css`, `forms.css`, `tables.css`, `pagination.css`, `shared.css`, `background.css`) cùng utilities vào duy nhất một tập tin `wwwroot/css/site.css` (74,2 KB).
+   - Xóa bỏ toàn bộ 26 lệnh `@import url(...)` trong `site.css`. Trình duyệt tải ngay tập tin lõi chỉ trong 1 HTTP request duy nhất thay vì 26 request tuần tự.
+   - Các view nghiệp vụ (`AHP`, `TOPSIS`, `Evaluation`, `EvaluationBatch`, `Report`, ...) nạp CSS riêng của mình thông qua `@section Styles` kèm `asp-append-version="true"`, giải quyết triệt để tình trạng nạp trùng lặp.
+
+3. **Nén phản hồi HTTP (Response Compression) & Cache-Control:**
+   - Kích hoạt middleware `AddResponseCompression` với hai thuật toán nén hiện đại nhất **Brotli** và **Gzip** (`CompressionLevel.Fastest`) cho các loại MIME `text/css`, `application/javascript`, `application/json`, `image/svg+xml`.
+   - Cấu hình header `Cache-Control` thông qua `StaticFileOptions`:
+     - Tài nguyên có gắn chuỗi băm phiên bản (`?v=`): `public, max-age=31536000, immutable` (cache trình duyệt 1 năm không cần kiểm tra lại).
+     - Tài nguyên trực tiếp (hình ảnh, font): `public, max-age=604800` (7 ngày).
+     - Bảo toàn cơ chế bảo mật: Middleware chặn truy cập trái phép `/reports` được giữ nguyên vị trí đứng trước `app.UseStaticFiles()`.
+     - Bổ sung integration test `StaticFiles_WithVersionQueryString_HaveImmutableCacheControlHeader` trong `SecurityIntegrationTests.cs` (143/143 test xanh).
+
+4. **Tối ưu định dạng ảnh WebP:**
+   - `access-denied-duck.png`: từ 77.437 bytes giảm còn **4.166 bytes** (giảm **94,6%** dung lượng).
+   - `login-left.jpg`: từ 40.766 bytes giảm còn **18.798 bytes** (giảm **53,9%** dung lượng).
+   - `sidebar-bg.jpg`: từ 12.646 bytes giảm còn **2.902 bytes** (giảm **77,0%** dung lượng).
+   - Áp dụng thẻ `<picture>` với `<source type="image/webp">` và fallback `<img>`, tương thích hoàn hảo cả trình duyệt cũ lẫn mới.

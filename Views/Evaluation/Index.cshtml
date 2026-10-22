@@ -3,7 +3,6 @@
 @{
     ViewData["Title"] = "Evaluation";
 
-
     // =========================================================
     // WORKFLOW STATUS
     // =========================================================
@@ -41,6 +40,10 @@
         User.IsInRole("Administrator") ||
         User.IsInRole("PurchasingStaff") ||
         User.IsInRole("Expert");
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/evaluation.css" asp-append-version="true" />
 }
 
 

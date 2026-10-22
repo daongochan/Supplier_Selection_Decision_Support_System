@@ -1,6 +1,8 @@
+using System.IO.Compression;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Infrastructure;
 using SupplierSelectionDSS.Data;
@@ -47,6 +49,30 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.Add(new Microsoft.AspNetCore.Mvc.AutoValidateAntiforgeryTokenAttribute());
+});
+
+// Response compression for static and dynamic assets (Brotli + Gzip)
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat([
+        "image/svg+xml",
+        "application/json",
+        "text/css",
+        "application/javascript"
+    ]);
+});
+
+builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest;
+});
+
+builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest;
 });
 
 builder.Services.AddHealthChecks();
@@ -217,6 +243,9 @@ app.Use(async (context, next) =>
     await next();
 });
 
+// Response Compression (Brotli/Gzip)
+app.UseResponseCompression();
+
 // Chặn tuyệt đối mọi truy cập trực tiếp tới file báo cáo qua static webroot TRƯỚC UseStaticFiles
 app.Use(async (context, next) =>
 {
@@ -228,7 +257,22 @@ app.Use(async (context, next) =>
     await next();
 });
 
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        // Static files requested with ?v= (asp-append-version cache buster)
+        if (ctx.Context.Request.Query.ContainsKey("v"))
+        {
+            ctx.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+        }
+        else
+        {
+            // Direct assets (fonts, images, etc.) cache for 7 days
+            ctx.Context.Response.Headers.CacheControl = "public, max-age=604800";
+        }
+    }
+});
 
 app.UseRouting();
 

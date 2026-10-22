@@ -109,4 +109,17 @@ public class SecurityIntegrationTests : IClassFixture<SecurityIntegrationTests.C
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest,
             "AutoValidateAntiforgeryTokenAttribute toàn cục phải từ chối request POST không có token hợp lệ");
     }
+
+    [Fact]
+    public async Task StaticFiles_WithVersionQueryString_HaveImmutableCacheControlHeader()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/css/site.css?v=testversion123");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Headers.CacheControl.Should().NotBeNull();
+        response.Headers.CacheControl!.ToString().Should().Contain("max-age=31536000");
+        response.Headers.CacheControl.ToString().Should().Contain("immutable");
+    }
 }
