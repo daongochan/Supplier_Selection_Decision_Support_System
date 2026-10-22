@@ -1,0 +1,90 @@
+[
+  {
+    "PageName": "Dashboard (T\u1ED5ng quan)",
+    "Url": "/Dashboard",
+    "SqlCommands": 8,
+    "ResponseTimeP50": 151.9,
+    "ResponseTimeP95": 200.7,
+    "HtmlSizeBytes": 52924,
+    "CssRequests": 4,
+    "JsRequests": 3,
+    "ImgRequests": 1
+  },
+  {
+    "PageName": "Danh s\u00E1ch Batch",
+    "Url": "/EvaluationBatch/Index",
+    "SqlCommands": 7,
+    "ResponseTimeP50": 22.9,
+    "ResponseTimeP95": 35.6,
+    "HtmlSizeBytes": 102408,
+    "CssRequests": 4,
+    "JsRequests": 1,
+    "ImgRequests": 1
+  },
+  {
+    "PageName": "Nh\u1EADp \u0111i\u1EC3m \u0111\u00E1nh gi\u00E1 (Batch 1)",
+    "Url": "/Evaluation/Index?batchId=1",
+    "SqlCommands": 4,
+    "ResponseTimeP50": 20,
+    "ResponseTimeP95": 20.1,
+    "HtmlSizeBytes": 178149,
+    "CssRequests": 3,
+    "JsRequests": 1,
+    "ImgRequests": 1
+  },
+  {
+    "PageName": "Ma tr\u1EADn so s\u00E1nh AHP (Batch 1)",
+    "Url": "/EvaluationBatch/1/AHP",
+    "SqlCommands": 4,
+    "ResponseTimeP50": 18.6,
+    "ResponseTimeP95": 32,
+    "HtmlSizeBytes": 94702,
+    "CssRequests": 3,
+    "JsRequests": 1,
+    "ImgRequests": 1
+  },
+  {
+    "PageName": "K\u1EBFt qu\u1EA3 TOPSIS (Batch 1)",
+    "Url": "/EvaluationBatch/1/TOPSIS",
+    "SqlCommands": 8,
+    "ResponseTimeP50": 35.3,
+    "ResponseTimeP95": 51,
+    "HtmlSizeBytes": 243276,
+    "CssRequests": 3,
+    "JsRequests": 1,
+    "ImgRequests": 1
+  },
+  {
+    "PageName": "K\u1EBFt qu\u1EA3 quy\u1EBFt \u0111\u1ECBnh (Batch 1)",
+    "Url": "/EvaluationBatch/1/Result",
+    "SqlCommands": 12,
+    "ResponseTimeP50": 33,
+    "ResponseTimeP95": 50.1,
+    "HtmlSizeBytes": 59776,
+    "CssRequests": 4,
+    "JsRequests": 1,
+    "ImgRequests": 1
+  },
+  {
+    "PageName": "L\u1ECBch s\u1EED b\u00E1o c\u00E1o (Batch 1)",
+    "Url": "/EvaluationBatch/1/Report",
+    "SqlCommands": 2,
+    "ResponseTimeP50": 9,
+    "ResponseTimeP95": 10.1,
+    "HtmlSizeBytes": 36490,
+    "CssRequests": 3,
+    "JsRequests": 1,
+    "ImgRequests": 1
+  },
+  {
+    "PageName": "Nh\u1EADt k\u00FD h\u1EC7 th\u1ED1ng (Audit Log)",
+    "Url": "/AuditLog/Index",
+    "SqlCommands": 7,
+    "ResponseTimeP50": 316.4,
+    "ResponseTimeP95": 316.4,
+    "HtmlSizeBytes": 67752,
+    "CssRequests": 4,
+    "JsRequests": 1,
+    "ImgRequests": 1
+  }
+]

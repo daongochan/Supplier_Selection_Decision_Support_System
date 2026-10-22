@@ -32,6 +32,7 @@ public class EvaluationService
     {
         var batch = await _context.EvaluationBatches
             .AsNoTracking()
+            .AsSplitQuery()
             .Include(x => x.Group)
             .Include(x => x.Suppliers)
             .Include(x => x.Criteria)
@@ -149,6 +150,7 @@ public class EvaluationService
     {
         var batch =
             await _context.EvaluationBatches
+                .AsSplitQuery()
                 .Include(x => x.Suppliers)
                 .Include(x => x.Criteria)
                 .FirstOrDefaultAsync(
@@ -441,6 +443,7 @@ public class EvaluationService
         var batch =
             await _context.EvaluationBatches
                 .AsNoTracking()
+                .AsSplitQuery()
                 .Include(x => x.Suppliers)
                 .Include(x => x.Criteria)
                 .FirstOrDefaultAsync(

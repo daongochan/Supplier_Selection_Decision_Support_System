@@ -65,15 +65,19 @@ Tài liệu này ghi nhận số liệu đo lường hiệu năng thực tế tr
 
 ---
 
-## 4. BẢNG ĐỐI CHIẾU TRƯỚC / SAU (SẼ ĐƯỢC ĐIỀN SAU CÁC PHASE TỐI ƯU)
+## 4. BẢNG ĐỐI CHIẾU TRƯỚC / SAU KHI TỐI ƯU
 
-| STT | Màn hình | Số lệnh SQL (Trước) | Số lệnh SQL (Sau) | p50 Trước (ms) | p50 Sau (ms) | Giảm thời gian | Dung lượng Trước | Dung lượng Sau |
-|:---:|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| 1 | Dashboard | 17 | *(Đang tối ưu)* | 25.649,8 ms | *(Đang tối ưu)* | - | 52.923 B | - |
-| 2 | Danh sách Batch | 7 | *(Đang tối ưu)* | 77,5 ms | *(Đang tối ưu)* | - | 102.408 B | - |
-| 3 | Nhập điểm đánh giá | 2 | *(Đang tối ưu)* | 44,2 ms | *(Đang tối ưu)* | - | 178.149 B | - |
-| 4 | Ma trận AHP | 4 | *(Đang tối ưu)* | 14,3 ms | *(Đang tối ưu)* | - | 94.702 B | - |
-| 5 | Kết quả TOPSIS | 6 | *(Đang tối ưu)* | 47,6 ms | *(Đang tối ưu)* | - | 243.276 B | - |
-| 6 | Kết quả quyết định | 10 | *(Đang tối ưu)* | 37,6 ms | *(Đang tối ưu)* | - | 59.776 B | - |
-| 7 | Lịch sử báo cáo | 2 | *(Đang tối ưu)* | 12,2 ms | *(Đang tối ưu)* | - | 36.490 B | - |
-| 8 | Nhật ký hệ thống | 7 | *(Đang tối ưu)* | 580,4 ms | *(Đang tối ưu)* | - | 67.752 B | - |
+### 4.1. Kết quả Phase 1 — Tối ưu truy vấn dữ liệu (Data Access Optimization)
+
+*Số liệu được đo thực tế vào 22/10/2026 trên CSDL `SupplierSelectionDSS_Perf` (10.000 logs, 40 batches, 200 suppliers) bằng `dotnet test --filter "FullyQualifiedName~PerfBenchmarkRunner"`.*
+
+| STT | Màn hình | Số lệnh SQL (Trước) | Số lệnh SQL (Phase 1) | p50 Trước (ms) | p50 Sau (Phase 1) | Cải thiện thời gian | Ghi chú kỹ thuật Phase 1 |
+|:---:|---|:---:|:---:|:---:|:---:|:---:|---|
+| 1 | **Dashboard** | **17** | **8** | **25.649,8 ms** | **151,9 ms** | **Nhanh hơn 168 lần (-99,4%)** | Giảm 53% số lệnh SQL; xóa bỏ tích Descartes; bộ đệm `IMemoryCache` (30s) cho 6 KPI hệ thống; dropdown `Take(50)`; chỉ chiếu các cột cần thiết từ `AuditLogs` |
+| 2 | **Danh sách Batch** | 7 | 7 | 77,5 ms | 22,9 ms | Nhanh hơn 3,4 lần (-70,5%) | Nhờ bộ đệm hệ thống và phân mảnh I/O giảm |
+| 3 | **Nhập điểm đánh giá** | 2 | 4 | 44,2 ms | 20,0 ms | Nhanh hơn 2,2 lần (-54,8%) | `.AsSplitQuery()` tách truy vấn riêng biệt cho Suppliers & Criteria, loại bỏ tích Descartes |
+| 4 | **Ma trận AHP** | 4 | 4 | 14,3 ms | 18,6 ms | Tương đương (ổn định) | Tải ma trận so sánh cặp |
+| 5 | **Kết quả TOPSIS** | 6 | 8 | 47,6 ms | 35,3 ms | Nhanh hơn 1,3 lần (-25,8%) | `.AsSplitQuery()` tách 2 truy vấn song song cho Suppliers và Criteria, ngăn nhân tích |
+| 6 | **Kết quả quyết định** | 10 | 12 | 37,6 ms | 33,0 ms | Nhanh hơn 1,1 lần (-12,2%) | 28 kịch bản độ nhạy thực thi mượt mà |
+| 7 | **Lịch sử báo cáo** | 2 | 2 | 12,2 ms | 9,0 ms | Nhanh hơn 1,4 lần (-26,2%) | `.AsSplitQuery()` trong `LoadReportDataAsync` |
+| 8 | **Nhật ký hệ thống** | 7 | 7 | 580,4 ms | 316,4 ms | Nhanh hơn 1,8 lần (-45,5%) | Chờ bổ sung chỉ mục `ActionTime` ở Phase 6 |
