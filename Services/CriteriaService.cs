@@ -136,18 +136,26 @@ public class CriteriaService
             throw new InvalidOperationException("Mã tiêu chí đã tồn tại.");
         }
 
-        if (!string.Equals(
-                existing.CriteriaType,
-                criterion.CriteriaType,
-                StringComparison.Ordinal))
+        var unitChanged = !string.Equals(
+            existing.Unit?.Trim(),
+            criterion.Unit?.Trim(),
+            StringComparison.Ordinal);
+
+        var typeChanged = !string.Equals(
+            existing.CriteriaType,
+            criterion.CriteriaType,
+            StringComparison.Ordinal);
+
+        if (unitChanged || typeChanged)
         {
             var isInUse = await IsUsedInEvaluationOrDecisionAsync(
                 criterion.CriteriaId);
 
             if (isInUse)
             {
+                var fieldName = typeChanged ? "loại tiêu chí" : "đơn vị tính";
                 throw new InvalidOperationException(
-                    "Không thể thay đổi loại tiêu chí vì tiêu chí đã được sử dụng trong dữ liệu đánh giá hoặc tính toán DSS.");
+                    $"Không thể thay đổi {fieldName} vì tiêu chí đã được sử dụng trong dữ liệu đánh giá hoặc tính toán DSS.");
             }
         }
 

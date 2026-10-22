@@ -366,6 +366,17 @@ public class EvaluationService
             _context.TopsisIdealSolutions.RemoveRange(staleTopsisIdeals);
         }
 
+        // -------------------------------------------------
+        // Invalidate stale pending/unfinalized Approvals
+        // -------------------------------------------------
+        var staleApprovals = await _context.Approvals
+            .Where(x => x.BatchId == model.BatchId && !x.IsFinal)
+            .ToListAsync();
+        if (staleApprovals.Count > 0)
+        {
+            _context.Approvals.RemoveRange(staleApprovals);
+        }
+
         await _context.SaveChangesAsync();
 
         _logger.LogInformation(

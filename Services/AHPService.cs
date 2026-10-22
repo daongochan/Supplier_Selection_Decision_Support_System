@@ -366,6 +366,15 @@ public class AHPService
                     _context.TopsisIdealSolutions.RemoveRange(staleTopsisIdeals);
                 }
 
+                // Invalidate stale pending/unfinalized Approvals
+                var staleApprovals = await _context.Approvals
+                    .Where(x => x.BatchId == model.BatchId && !x.IsFinal)
+                    .ToListAsync();
+                if (staleApprovals.Count > 0)
+                {
+                    _context.Approvals.RemoveRange(staleApprovals);
+                }
+
                 await _context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
@@ -541,6 +550,15 @@ public class AHPService
                 if (staleTopsisIdeals.Count > 0)
                 {
                     _context.TopsisIdealSolutions.RemoveRange(staleTopsisIdeals);
+                }
+
+                // Invalidate stale pending/unfinalized Approvals
+                var staleApprovals = await _context.Approvals
+                    .Where(x => x.BatchId == batchId && !x.IsFinal)
+                    .ToListAsync();
+                if (staleApprovals.Count > 0)
+                {
+                    _context.Approvals.RemoveRange(staleApprovals);
                 }
 
                 var calculatedAt =

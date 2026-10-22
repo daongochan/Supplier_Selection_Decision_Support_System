@@ -663,6 +663,12 @@ public class DecisionResultService
                 throw new BusinessRuleException(
                     "Kết quả TOPSIS của nhà cung cấp không hợp lệ.");
             }
+
+            if (topsisResult.RankNo != 1 && string.IsNullOrWhiteSpace(notes))
+            {
+                throw new BusinessRuleException(
+                    $"Nhà cung cấp được chọn xếp hạng #{topsisResult.RankNo} (không phải Hạng 1). Bắt buộc phải nhập lý do giải trình phê duyệt.");
+            }
         }
 
 
