@@ -16,11 +16,17 @@ public class ReportService
 
     private readonly AuditLogService _auditLogService;
 
+    private readonly IConfiguration _configuration;
+
+    private readonly ILogger<ReportService> _logger;
+
 
     public ReportService(
         ApplicationDbContext context,
         IWebHostEnvironment environment,
-        AuditLogService auditLogService)
+        AuditLogService auditLogService,
+        IConfiguration configuration,
+        ILogger<ReportService> logger)
     {
         _context =
             context;
@@ -30,6 +36,12 @@ public class ReportService
 
         _auditLogService =
             auditLogService;
+
+        _configuration =
+            configuration;
+
+        _logger =
+            logger;
     }
 
 
@@ -462,25 +474,56 @@ public class ReportService
         }
 
 
-        var relativePath =
-            report.FilePath
-                .Replace(
-                    '/',
-                    Path.DirectorySeparatorChar);
+        var reportsDir = GetReportsDirectory();
+        var rawPath = report.FilePath.Replace('/', Path.DirectorySeparatorChar);
 
-
-        var filePath =
-            Path.Combine(
-                _environment.WebRootPath,
-                relativePath);
-
-
-        if (!File.Exists(
-                filePath))
+        string candidatePath;
+        if (Path.IsPathRooted(rawPath))
         {
+            candidatePath = rawPath;
+        }
+        else if (rawPath.StartsWith("App_Data" + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+        {
+            candidatePath = Path.Combine(_environment.ContentRootPath, rawPath);
+        }
+        else if (rawPath.StartsWith("reports" + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+        {
+            var fileName = Path.GetFileName(rawPath);
+            var inNewStorage = Path.Combine(reportsDir, fileName);
+            if (File.Exists(inNewStorage))
+            {
+                candidatePath = inNewStorage;
+            }
+            else
+            {
+                candidatePath = Path.Combine(_environment.WebRootPath, rawPath);
+            }
+        }
+        else
+        {
+            candidatePath = Path.Combine(reportsDir, Path.GetFileName(rawPath));
+        }
+
+        var canonicalPath = Path.GetFullPath(candidatePath);
+
+        // Security check: Đường dẫn kết quả bắt buộc phải nằm trong thư mục lưu trữ báo cáo hợp lệ
+        var baseReportsDir = Path.GetFullPath(reportsDir);
+        var baseLegacyDir = Path.GetFullPath(Path.Combine(_environment.WebRootPath, "reports"));
+
+        var isInsideAllowedDir = canonicalPath.StartsWith(baseReportsDir + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+                                 || canonicalPath.StartsWith(baseLegacyDir + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+
+        if (!isInsideAllowedDir)
+        {
+            _logger.LogWarning("Phát hiện nguy cơ Path Traversal đối với ReportID {ReportId}: {FilePath}", reportId, report.FilePath);
             return null;
         }
 
+        if (!File.Exists(canonicalPath))
+        {
+            _logger.LogWarning("File báo cáo không tồn tại trên ổ đĩa: {CanonicalPath} (ReportID: {ReportId})", canonicalPath, reportId);
+            return null;
+        }
 
         var contentType =
             string.Equals(
@@ -490,11 +533,9 @@ public class ReportService
                 ? "application/pdf"
                 : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-
         var downloadName =
             Path.GetFileName(
-                filePath);
-
+                canonicalPath);
 
         return new ReportDownloadResult
         {
@@ -502,7 +543,7 @@ public class ReportService
                 report.ReportType,
 
             FilePath =
-                filePath,
+                canonicalPath,
 
             ContentType =
                 contentType,
@@ -762,9 +803,24 @@ public class ReportService
 
     private string GetReportsDirectory()
     {
-        return Path.Combine(
-            _environment.WebRootPath,
-            "reports");
+        var configuredPath = _configuration["Reports:Directory"];
+        string dirPath;
+
+        if (string.IsNullOrWhiteSpace(configuredPath))
+        {
+            dirPath = Path.Combine(_environment.ContentRootPath, "App_Data", "reports");
+        }
+        else if (!Path.IsPathRooted(configuredPath))
+        {
+            dirPath = Path.Combine(_environment.ContentRootPath, configuredPath);
+        }
+        else
+        {
+            dirPath = configuredPath;
+        }
+
+        Directory.CreateDirectory(dirPath);
+        return Path.GetFullPath(dirPath);
     }
 
 
@@ -791,6 +847,7 @@ public class ReportService
     {
         return
             Path.Combine(
+                "App_Data",
                 "reports",
                 fileName)
                 .Replace(

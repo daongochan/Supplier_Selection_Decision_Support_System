@@ -18,6 +18,8 @@ public static class AuditActions
     public const string GenerateExcel = "Generate Excel";
     public const string DownloadPdf = "Download PDF";
     public const string DownloadExcel = "Download Excel";
+    public const string LoginSuccess = "Login Success";
+    public const string LoginFailed = "Login Failed";
 
     public static readonly string[] All =
     {
@@ -36,6 +38,8 @@ public static class AuditActions
         GeneratePdf,
         GenerateExcel,
         DownloadPdf,
-        DownloadExcel
+        DownloadExcel,
+        LoginSuccess,
+        LoginFailed
     };
 }

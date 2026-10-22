@@ -19,7 +19,12 @@ QuestPDF.Settings.License = LicenseType.Community;
 // MVC
 // =========================================================
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add(new Microsoft.AspNetCore.Mvc.AutoValidateAntiforgeryTokenAttribute());
+});
+
+builder.Services.AddHealthChecks();
 
 builder.Services.AddAuthorization(options =>
 {
@@ -201,7 +206,28 @@ else
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+
+// Security Headers Middleware
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-Frame-Options", "SAMEORIGIN");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    await next();
+});
+
+// Chặn tuyệt đối mọi truy cập trực tiếp tới file báo cáo qua static webroot
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        if (ctx.Context.Request.Path.StartsWithSegments("/reports"))
+        {
+            ctx.Context.Response.StatusCode = StatusCodes.Status404NotFound;
+            ctx.Context.Response.Body = Stream.Null;
+        }
+    }
+});
 
 app.UseRouting();
 
@@ -209,8 +235,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // =========================================================
-// ROUTING
+// ROUTING & ENDPOINTS
 // =========================================================
+
+app.MapHealthChecks("/health");
 
 app.MapControllerRoute(
     name: "default",
