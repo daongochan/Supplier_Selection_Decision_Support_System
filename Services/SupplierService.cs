@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SupplierSelectionDSS.Constants;
 using SupplierSelectionDSS.Data;
 using SupplierSelectionDSS.Data.Entities;
@@ -48,12 +48,42 @@ public class SupplierService
 
 
     // =========================================================
+    // KPI METRICS SUMMARY
+    // =========================================================
+
+    public async Task<(int Total, int Active, int Inactive, int TotalGroups)> GetKpiSummaryAsync()
+    {
+        var total = await _context.Suppliers.CountAsync();
+        var active = await _context.Suppliers.CountAsync(s => s.Status == EntityStatus.Active);
+        var inactive = await _context.Suppliers.CountAsync(s => s.Status == EntityStatus.Inactive);
+        var totalGroups = await _context.ProductGroups.CountAsync(g => g.Status == EntityStatus.Active);
+
+        return (total, active, inactive, totalGroups);
+    }
+
+
+    // =========================================================
+    // ACTIVE PRODUCT GROUPS FOR FILTER DROPDOWN
+    // =========================================================
+
+    public async Task<List<ProductGroup>> GetActiveGroupsAsync()
+    {
+        return await _context.ProductGroups
+            .AsNoTracking()
+            .Where(x => x.Status == EntityStatus.Active)
+            .OrderBy(x => x.GroupName)
+            .ToListAsync();
+    }
+
+
+    // =========================================================
     // SEARCH + PAGINATION
     // =========================================================
 
     public async Task<PagedResult<Supplier>> SearchAsync(
         string? keyword,
         string? status,
+        int? groupId = null,
         int pageNumber = 1,
         int pageSize = 10)
     {
@@ -81,6 +111,7 @@ public class SupplierService
         var query =
             _context.Suppliers
                 .AsNoTracking()
+                .Include(x => x.Groups)
                 .AsQueryable();
 
 
@@ -112,6 +143,33 @@ public class SupplierService
                             &&
                             x.ContactPerson.Contains(
                                 keyword)
+                        )
+
+                        ||
+
+                        (
+                            x.Phone != null
+                            &&
+                            x.Phone.Contains(
+                                keyword)
+                        )
+
+                        ||
+
+                        (
+                            x.Email != null
+                            &&
+                            x.Email.Contains(
+                                keyword)
+                        )
+
+                        ||
+
+                        (
+                            x.BusinessField != null
+                            &&
+                            x.BusinessField.Contains(
+                                keyword)
                         ));
         }
 
@@ -130,6 +188,21 @@ public class SupplierService
                     x =>
                         x.Status ==
                         status);
+        }
+
+
+        // =====================================================
+        // GROUP
+        // =====================================================
+
+        if (groupId.HasValue && groupId.Value > 0)
+        {
+            query =
+                query.Where(
+                    x =>
+                        x.Groups.Any(
+                            g =>
+                                g.GroupId == groupId.Value));
         }
 
 

@@ -1,0 +1,144 @@
+/* =========================================================
+   BACKGROUND VISUAL SYSTEM (MODERN ENTERPRISE SAAS)
+   Multi-layered ambient atmospheric canvas
+   ========================================================= */
+
+/* Container fixed to workspace area */
+.app-background-visual {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: var(--sidebar-width);
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+    background: var(--bg-app-base);
+    background-image: var(--bg-app-gradient);
+    transition: left 0.22s ease;
+}
+
+/* Atmospheric Ambient Radial Glows */
+.bg-visual-glow-top-right {
+    position: absolute;
+    top: -100px;
+    right: -60px;
+    width: 680px;
+    height: 520px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(191, 219, 254, 0.38) 0%, rgba(219, 234, 254, 0.16) 55%, transparent 75%);
+    filter: blur(40px);
+    will-change: transform;
+}
+
+.bg-visual-glow-bottom-left {
+    position: absolute;
+    bottom: -80px;
+    left: -60px;
+    width: 480px;
+    height: 440px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(219, 234, 254, 0.32) 0%, rgba(239, 246, 255, 0.14) 55%, transparent 80%);
+    filter: blur(45px);
+    will-change: transform;
+}
+
+/* Layer 3: Top-Right Geometric Mountain Ridges */
+.bg-visual-svg-ridges {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 64%;
+    max-width: 960px;
+    min-height: 220px;
+    max-height: 380px;
+    opacity: 0.90;
+    transform-origin: top right;
+    transition: opacity 0.3s ease, width 0.3s ease;
+}
+
+/* Layer 3 & 4: Bottom-Right Precision Contour Line & Dot Matrix */
+.bg-visual-svg-matrix {
+    position: absolute;
+    bottom: 16px;
+    right: 28px;
+    width: 320px;
+    height: 320px;
+    opacity: 0.82;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Layer 3: Bottom-Left Translucent Geometric Facet */
+.bg-visual-svg-facet {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 250px;
+    height: 330px;
+    opacity: 0.75;
+    transition: opacity 0.3s ease;
+}
+
+/* =========================================================
+   RESPONSIVE SCALING & ADAPTABILITY
+   ========================================================= */
+
+@media (max-width: 1200px) {
+    .bg-visual-svg-ridges {
+        width: 75%;
+        opacity: 0.75;
+    }
+
+    .bg-visual-svg-matrix {
+        width: 260px;
+        height: 260px;
+        bottom: 10px;
+        right: 16px;
+        opacity: 0.70;
+    }
+
+    .bg-visual-svg-facet {
+        width: 200px;
+        height: 270px;
+        opacity: 0.60;
+    }
+}
+
+@media (max-width: 900px) {
+    /* When sidebar is hidden or drawer mode on mobile/tablet */
+    .app-background-visual {
+        left: 0;
+    }
+
+    .bg-visual-svg-ridges {
+        width: 88%;
+        opacity: 0.55;
+    }
+
+    /* Hide complex dense dot matrix on smaller viewports */
+    .bg-visual-svg-matrix {
+        display: none;
+    }
+
+    .bg-visual-svg-facet {
+        opacity: 0.45;
+        width: 160px;
+        height: 220px;
+    }
+}
+
+@media (max-width: 640px) {
+    .bg-visual-svg-ridges {
+        width: 100%;
+        opacity: 0.40;
+        min-height: 160px;
+    }
+
+    .bg-visual-svg-facet {
+        display: none;
+    }
+
+    .bg-visual-glow-bottom-left {
+        display: none;
+    }
+}

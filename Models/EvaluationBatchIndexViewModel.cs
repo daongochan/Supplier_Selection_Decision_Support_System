@@ -1,3 +1,5 @@
+using SupplierSelectionDSS.Data.Entities;
+
 namespace SupplierSelectionDSS.Models;
 
 public class EvaluationBatchIndexViewModel : IPagedResult
@@ -5,6 +7,18 @@ public class EvaluationBatchIndexViewModel : IPagedResult
     public string? Keyword { get; set; }
 
     public string Status { get; set; } = "All";
+
+    public int? GroupId { get; set; }
+
+    public List<ProductGroup> Groups { get; set; } = new();
+
+    public int TotalBatches { get; set; }
+
+    public int EvaluatingBatches { get; set; }
+
+    public int CompletedBatches { get; set; }
+
+    public int DraftBatches { get; set; }
 
     public List<EvaluationBatchListItemViewModel> Batches { get; set; }
         = new();

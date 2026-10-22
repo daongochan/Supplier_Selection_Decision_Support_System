@@ -9,6 +9,8 @@
 
 <aside class="app-sidebar" aria-label="Main Navigation">
 
+
+
     <!-- =====================================================
          BRAND
          ===================================================== -->
@@ -52,7 +54,7 @@
                asp-action="Index"
                class="sidebar-link @(currentController == "Supplier" ? "active" : "")">
                 <i class="bi bi-building"></i>
-                <span>Suppliers</span>
+                <span>Nhà cung cấp</span>
             </a>
         }
 
@@ -64,7 +66,7 @@
                asp-action="Index"
                class="sidebar-link @(currentController == "ProductGroup" ? "active" : "")">
                 <i class="bi bi-box-seam"></i>
-                <span>Product Groups</span>
+                <span>Nhóm hàng</span>
             </a>
         }
 
@@ -76,7 +78,7 @@
                asp-action="Index"
                class="sidebar-link @(currentController == "Criteria" ? "active" : "")">
                 <i class="bi bi-sliders"></i>
-                <span>Criteria</span>
+                <span>Tiêu chí đánh giá</span>
             </a>
         }
 
@@ -96,7 +98,7 @@
                                      currentController == "Report"
                                      ? "active" : "")">
                 <i class="bi bi-collection"></i>
-                <span>Batches</span>
+                <span>Đợt đánh giá</span>
             </a>
         }
 
@@ -107,7 +109,7 @@
                asp-action="Index"
                class="sidebar-link @(currentController == "User" ? "active" : "")">
                 <i class="bi bi-people"></i>
-                <span>Users</span>
+                <span>Người dùng</span>
             </a>
         }
 
@@ -118,7 +120,7 @@
                asp-action="Index"
                class="sidebar-link @(currentController == "AuditLog" ? "active" : "")">
                 <i class="bi bi-clock-history"></i>
-                <span>Audit logs</span>
+                <span>Nhật ký hệ thống</span>
             </a>
         }
 
@@ -163,9 +165,9 @@
                 @Html.AntiForgeryToken()
                 <button type="submit"
                         class="btn-logout sidebar-btn-logout"
-                        title="Sign out">
+                        title="Đăng xuất">
                     <i class="bi bi-box-arrow-right"></i>
-                    <span>Sign out</span>
+                    <span>Đăng xuất</span>
                 </button>
             </form>
 

@@ -43,6 +43,11 @@ public class AuditLogController : Controller
                     page,
                     pageSize);
 
+        var (total, today, users, critical) = await _auditLogService.GetKpiSummaryAsync();
+        model.TotalLogs = total;
+        model.TodayLogs = today;
+        model.ActiveUsersCount = users;
+        model.CriticalActionsCount = critical;
 
         return View(model);
     }

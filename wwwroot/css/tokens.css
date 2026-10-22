@@ -11,7 +11,7 @@
        BASE COLORS (Executive Modern ERP & DSS Slate Atmosphere)
        ========================================================= */
 
-    --canvas: #f1f5f9;
+    --canvas: #f4f8fc;
     --canvas-soft: #f8fafc;
     --surface: #ffffff;
     --surface-soft: #f8fafc;
@@ -24,6 +24,32 @@
     --border: #e2e8f0;
     --border-soft: #f1f5f9;
     --border-strong: #cbd5e1;
+
+    /* =========================================================
+       BACKGROUND VISUAL SYSTEM TOKENS (Modern Enterprise SaaS)
+       ========================================================= */
+
+    --bg-app-base: #f4f8fc;
+    --bg-app-gradient: linear-gradient(145deg, #f8fbfe 0%, #f1f6fc 45%, #ecf3fb 100%);
+    --bg-surface: #ffffff;
+    --bg-surface-elevated: #ffffff;
+    --bg-surface-subtle: #f8fafc;
+
+    /* Atmospheric Decoration Shapes */
+    --bg-deco-ridge-1: rgba(186, 214, 247, 0.32);
+    --bg-deco-ridge-2: rgba(165, 202, 245, 0.28);
+    --bg-deco-ridge-3: rgba(205, 227, 252, 0.38);
+    --bg-deco-contour: rgba(147, 197, 253, 0.42);
+    --bg-deco-dots: rgba(125, 175, 235, 0.45);
+    --bg-deco-poly-left: rgba(195, 220, 248, 0.25);
+
+    /* Sidebar Dark Anchor Tokens (Visual Anchor) */
+    --sidebar-bg-dark: #0d1726;
+    --sidebar-bg-hover: rgba(255, 255, 255, 0.06);
+    --sidebar-bg-active: rgba(29, 78, 216, 0.20);
+    --sidebar-border-dark: rgba(255, 255, 255, 0.08);
+    --sidebar-text-dark: #f8fafc;
+    --sidebar-text-muted: #94a3b8;
 
     /* =========================================================
        SEMANTIC ACCENTS & BORDERS (Precision Decision Intelligence)

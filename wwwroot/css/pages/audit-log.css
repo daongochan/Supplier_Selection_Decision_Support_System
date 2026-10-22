@@ -1,316 +1,475 @@
-﻿/* =========================================================
-   AUDIT LOG HEADER
+/* =========================================================
+   AUDIT LOG WORKSPACE (MODERN ENTERPRISE SAAS)
+   Design System tokens & Layout for Audit Logs
    ========================================================= */
 
-.audit-log-page-header {
+/* =========================================================
+   1. KPI SUMMARY GRID (4 METRIC CARDS)
+   ========================================================= */
+
+.audit-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
     margin-bottom: 24px;
 }
 
-
-/* =========================================================
-   FILTER
-   ========================================================= */
-
-.filter-card .audit-log-filter {
-    width: 100%;
-    display: grid !important;
-    grid-template-columns: minmax(0, 2fr) minmax(190px, 1fr) minmax(210px, 1fr) auto !important;
-    align-items: end;
-    column-gap: 16px;
-    margin: 0;
+.audit-kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 22px;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), 
+                box-shadow 0.18s cubic-bezier(0.16, 1, 0.3, 1), 
+                border-color 0.18s ease;
 }
 
-
-    .filter-card .audit-log-filter .filter-field {
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 7px;
-    }
-
-
-        .filter-card .audit-log-filter
-        .filter-field label {
-            margin: 0;
-            color: var(--muted);
-            font-family: var(--font-serif);
-            font-size: 12px;
-            font-weight: 600;
-            letter-spacing: .7px;
-            line-height: 1.2;
-            text-transform: uppercase;
-        }
-
-
-    .filter-card .audit-log-filter
-    .form-control {
-        width: 100%;
-        box-sizing: border-box;
-    }
-
-
-    .filter-card .audit-log-filter
-    .filter-actions {
-        height: 42px;
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: center;
-        gap: 8px;
-    }
-
-
-        .filter-card .audit-log-filter
-        .filter-actions .btn-primary,
-        .filter-card .audit-log-filter
-        .filter-actions .btn-outline {
-            width: 88px !important;
-            min-width: 88px !important;
-            max-width: 88px !important;
-            height: 42px !important;
-            min-height: 42px !important;
-            flex: 0 0 88px !important;
-            padding: 0 !important;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            box-sizing: border-box;
-        }
-
-
-/* =========================================================
-   SUMMARY
-   ========================================================= */
-
-.audit-log-summary {
-    display: grid;
-    grid-template-columns: minmax(180px, 230px);
-    margin: 20px 0;
+.audit-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-elevated);
+    border-color: var(--border-strong);
 }
 
-
-.audit-log-summary-card {
-    min-height: 110px;
+.audit-kpi-content {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    padding: 20px 22px;
-    box-sizing: border-box;
+    gap: 4px;
+    min-width: 0;
 }
 
+.audit-kpi-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-family: var(--font-sans);
+}
 
-    .audit-log-summary-card strong {
-        color: var(--sky-dark);
-        font-family: var(--font-serif);
-        font-size: 30px;
-        font-weight: 500;
-    }
+.audit-kpi-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.2;
+    font-family: var(--font-sans);
+    letter-spacing: -0.5px;
+}
 
+.audit-kpi-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+}
 
-    .audit-log-summary-card span:last-child {
-        color: var(--muted);
-        font-size: 11px;
-    }
+.kpi-meta-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.kpi-meta-pill.pill-blue {
+    background: rgba(37, 99, 235, 0.08);
+    color: #2563eb;
+}
+
+.kpi-meta-pill.pill-green {
+    background: var(--sage-soft);
+    color: var(--sage-dark);
+}
+
+.kpi-meta-pill.pill-indigo {
+    background: rgba(124, 58, 237, 0.08);
+    color: #7c3aed;
+}
+
+.kpi-meta-pill.pill-amber {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+}
+
+.audit-kpi-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.audit-kpi-icon.icon-blue {
+    background: rgba(37, 99, 235, 0.1);
+    color: #2563eb;
+}
+
+.audit-kpi-icon.icon-green {
+    background: rgba(34, 197, 94, 0.12);
+    color: #16a34a;
+}
+
+.audit-kpi-icon.icon-indigo {
+    background: rgba(124, 58, 237, 0.1);
+    color: #7c3aed;
+}
+
+.audit-kpi-icon.icon-amber {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+}
 
 
 /* =========================================================
-   TABLE
+   2. FILTER & SEARCH BAR
    ========================================================= */
 
-.audit-log-table-card {
-    overflow: hidden;
+.audit-filter {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(160px, 1fr) minmax(160px, 1fr) auto;
+    align-items: end;
+    gap: 16px;
+    width: 100%;
 }
 
-
-.audit-log-table {
-    min-width: 1100px;
+.audit-filter .filter-field {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
+.audit-filter .filter-field label {
+    color: var(--muted);
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+}
 
-    .audit-log-table td {
-        vertical-align: top;
-    }
+.audit-filter .form-control {
+    height: 42px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    padding: 0 12px;
+    font-size: 14px;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
 
+.audit-filter .form-control:focus {
+    border-color: var(--terracotta);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(184, 80, 66, 0.12);
+}
 
-.audit-log-time {
+.audit-filter .filter-actions {
+    height: 42px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.audit-filter .btn-primary,
+.audit-filter .btn-outline {
+    height: 42px;
+    min-height: 42px;
+    padding: 0 16px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13.5px;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+    border-radius: var(--radius-md);
     white-space: nowrap;
 }
 
 
-    .audit-log-time strong {
-        display: block;
-    }
+/* =========================================================
+   3. FILTER BANNER
+   ========================================================= */
 
-
-    .audit-log-time .table-muted {
-        display: block;
-        margin-top: 2px;
-    }
-
-
-.audit-description {
-    display: block;
-    max-width: 320px;
+.audit-filter-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    margin-bottom: 20px;
+    background: var(--canvas-soft);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--terracotta);
+    border-radius: var(--radius-md);
+    font-size: 13px;
     color: var(--body);
+}
+
+.audit-filter-banner-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.audit-filter-banner-text i {
+    color: var(--terracotta);
+    font-size: 14px;
+}
+
+.audit-filter-banner-reset {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--muted);
     font-size: 12px;
-    line-height: 1.5;
+    font-weight: 600;
+    text-decoration: none !important;
+    transition: color 0.15s ease;
+}
+
+.audit-filter-banner-reset:hover {
+    color: var(--danger);
 }
 
 
 /* =========================================================
-   ACTION PILL
+   4. DATA TABLE & COMPONENTS
    ========================================================= */
 
-.audit-action-pill {
+.audit-table td {
+    vertical-align: top;
+}
+
+.audit-time-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.audit-time-cell strong {
+    font-size: 13px;
+    color: var(--ink);
+    font-weight: 600;
+}
+
+.audit-time-sub {
+    font-family: var(--font-mono, monospace);
+    font-size: 11.5px;
+    color: var(--muted);
+}
+
+.audit-user-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.audit-user-name {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.audit-username-tag {
+    font-size: 11px;
+    padding: 1px 6px;
+    width: fit-content;
+}
+
+/* Action Badges */
+.audit-action-badge {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    padding: 6px 9px;
-    border-radius: var(--radius-pill);
-    background: var(--canvas-soft);
-    color: var(--ink);
-    font-family: var(--font-serif);
-    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11.5px;
     font-weight: 600;
     white-space: nowrap;
 }
 
-
-.audit-action-create-user,
-.audit-action-create-batch {
+.audit-action-badge.action-create {
     background: var(--sage-soft);
     color: var(--sage-dark);
+    border: 1px solid rgba(46, 125, 84, 0.2);
 }
 
-
-.audit-action-update-user,
-.audit-action-save-evaluation,
-.audit-action-save-ahp {
-    background: var(--sky-soft);
-    color: var(--sky-dark);
+.audit-action-badge.action-update {
+    background: rgba(37, 99, 235, 0.08);
+    color: #2563eb;
+    border: 1px solid rgba(37, 99, 235, 0.18);
 }
 
-
-.audit-action-start-batch,
-.audit-action-calculate-ahp,
-.audit-action-calculate-topsis {
-    background: var(--lavender-soft);
-    color: var(--lavender-dark);
+.audit-action-badge.action-approve {
+    background: rgba(34, 197, 94, 0.12);
+    color: #16a34a;
+    border: 1px solid rgba(34, 197, 94, 0.25);
 }
 
-
-.audit-action-approve {
-    background: var(--sage-soft);
-    color: var(--sage-dark);
+.audit-action-badge.action-danger {
+    background: rgba(239, 68, 68, 0.08);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.18);
 }
 
+.audit-action-badge.action-calc {
+    background: rgba(124, 58, 237, 0.08);
+    color: #7c3aed;
+    border: 1px solid rgba(124, 58, 237, 0.18);
+}
 
-.audit-action-reject {
-    background: var(--terracotta-soft);
+.audit-action-badge.action-default {
+    background: var(--surface-muted);
+    color: var(--muted);
+    border: 1px solid var(--border);
+}
+
+/* Target Column */
+.audit-target-cell {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+}
+
+.audit-target-table {
+    font-weight: 600;
+    font-size: 12.5px;
+    color: var(--ink);
+}
+
+.audit-target-id {
+    font-family: var(--font-mono, monospace);
+    font-size: 11.5px;
+    color: var(--muted);
+    background: var(--surface-muted);
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+}
+
+.audit-desc-text {
+    font-size: 13px;
+    color: var(--body);
+    line-height: 1.45;
+}
+
+/* Change details (Collapsible) */
+.audit-change-details {
+    max-width: 320px;
+}
+
+.audit-change-summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     color: var(--terracotta);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--canvas-soft);
+    border: 1px solid var(--border);
+    transition: background 0.15s ease, border-color 0.15s ease;
 }
 
+.audit-change-summary:hover {
+    background: var(--surface-muted);
+    border-color: var(--border-strong);
+}
 
-.audit-action-re-evaluate {
-    background: var(--amber-soft);
-    color: var(--amber-dark);
+.audit-change-body {
+    margin-top: 8px;
+    padding: 10px;
+    border-radius: var(--radius-md);
+    background: var(--canvas-soft);
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.audit-change-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.audit-change-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.audit-change-label.label-old {
+    color: #dc2626;
+}
+
+.audit-change-label.label-new {
+    color: #16a34a;
+}
+
+.audit-change-pre {
+    margin: 0;
+    padding: 6px 8px;
+    border-radius: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-family: var(--font-mono, monospace);
+    font-size: 11px;
+    color: var(--ink);
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 160px;
+    overflow-y: auto;
+    line-height: 1.35;
 }
 
 
 /* =========================================================
-   CHANGE DETAILS
+   5. RESPONSIVE
    ========================================================= */
 
-.audit-change {
-    max-width: 260px;
+@media (max-width: 1100px) {
+    .audit-kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .audit-filter {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
-
-    .audit-change summary {
-        color: var(--terracotta);
-        cursor: pointer;
-        font-family: var(--font-serif);
-        font-size: 11px;
-        font-weight: 600;
-    }
-
-
-    .audit-change > div {
-        margin-top: 8px;
-        padding: 8px;
-        border-radius: var(--radius-md);
-        background: var(--canvas-soft);
-    }
-
-
-        .audit-change > div > span {
-            display: block;
-            margin-bottom: 4px;
-            color: var(--muted);
-            font-size: 9px;
-            font-weight: 600;
-            letter-spacing: .5px;
-            text-transform: uppercase;
-        }
-
-
-    .audit-change pre {
-        max-width: 100%;
-        margin: 0;
-        overflow-x: auto;
-        white-space: pre-wrap;
-        word-break: break-word;
-        color: var(--body);
-        font-family: var(--font-mono);
-        font-size: 10px;
-        line-height: 1.45;
-    }
-
-
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
-
-@media (max-width: 1000px) {
-
-    .filter-card .audit-log-filter {
-        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-        row-gap: 14px;
-    }
-
-
-        .filter-card .audit-log-filter
-        .filter-actions {
-            grid-column: 1 / -1;
-            justify-content: flex-start;
-        }
-}
-
-
-@media (max-width: 600px) {
-
-    .filter-card .audit-log-filter {
-        grid-template-columns: 1fr !important;
-    }
-
-
-        .filter-card .audit-log-filter
-        .filter-actions {
-            width: 100%;
-        }
-
-
-            .filter-card .audit-log-filter
-            .filter-actions .btn-primary,
-            .filter-card .audit-log-filter
-            .filter-actions .btn-outline {
-                flex: 1 1 0 !important;
-                width: auto !important;
-                min-width: 0 !important;
-                max-width: none !important;
-            }
-
-
-    .audit-log-summary {
+@media (max-width: 768px) {
+    .audit-kpi-grid {
         grid-template-columns: 1fr;
+    }
+    .audit-filter {
+        grid-template-columns: 1fr;
+    }
+    .audit-filter .filter-actions {
+        width: 100%;
+    }
+    .audit-filter .filter-actions .btn-primary,
+    .audit-filter .filter-actions .btn-outline {
+        flex: 1;
     }
 }

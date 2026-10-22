@@ -51,36 +51,84 @@ public class UserController : Controller
             page,
             pageSize);
 
+        var (total, active, locked, inactive) = await _userService.GetKpiSummaryAsync();
+
         var model =
             new UserIndexViewModel
             {
-                Keyword =
-                    keyword,
-
-                Role =
-                    role,
-
-                Status =
-                    status,
-
-                Users =
-                    paged.Items.ToList(),
-
-                PageNumber =
-                    paged.PageNumber,
-
-                PageSize =
-                    paged.PageSize,
-
-                TotalCount =
-                    paged.TotalCount,
-
-                TotalPages =
-                    paged.TotalPages
+                Keyword = keyword,
+                Role = role,
+                Status = status,
+                TotalUsers = total,
+                ActiveUsers = active,
+                LockedUsers = locked,
+                InactiveUsers = inactive,
+                Users = paged.Items.ToList(),
+                PageNumber = paged.PageNumber,
+                PageSize = paged.PageSize,
+                TotalCount = paged.TotalCount,
+                TotalPages = paged.TotalPages
             };
 
-
         return View(model);
+    }
+
+
+    // =========================================================
+    // TOGGLE STATUS - POST
+    // =========================================================
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleStatus(int id)
+    {
+        var currentUserId = User.GetUserId();
+        if (!currentUserId.HasValue)
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var user = await _userService.GetByIdAsync(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var oldStatus = user.Status;
+            var updatedUser = await _userService.ToggleStatusAsync(id, currentUserId.Value);
+
+            var actionName = updatedUser.Status == EntityStatus.Active ? "Kích hoạt" : "Ngừng hoạt động";
+
+            try
+            {
+                await _auditLogService.LogAsync(
+                    currentUserId.Value,
+                    AuditActions.UpdateUser,
+                    "Users",
+                    updatedUser.UserId,
+                    JsonSerializer.Serialize(new { Status = oldStatus }),
+                    JsonSerializer.Serialize(new { Status = updatedUser.Status }),
+                    $"{actionName} tài khoản người dùng '{updatedUser.Username}'.");
+            }
+            catch
+            {
+                // Audit log không làm hỏng workflow
+            }
+
+            TempData["SuccessMessage"] = $"Đã {actionName.ToLowerInvariant()} tài khoản '{updatedUser.Username}' thành công.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+        catch (Exception)
+        {
+            TempData["ErrorMessage"] = "Không thể thay đổi trạng thái tài khoản.";
+        }
+
+        return RedirectToAction(nameof(Index));
     }
 
 

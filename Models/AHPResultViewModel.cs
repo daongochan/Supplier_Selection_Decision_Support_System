@@ -23,4 +23,4 @@ public class AHPResultViewModel
 
     public List<AHPWeightViewModel> Weights { get; set; }
         = new();
-}
+}

@@ -1,7 +1,7 @@
-﻿@model SupplierSelectionDSS.Models.CriteriaFormViewModel
+@model SupplierSelectionDSS.Models.CriteriaFormViewModel
 
 @{
-    ViewData["Title"] = "Edit Criteria";
+    ViewData["Title"] = "Chỉnh sửa tiêu chí";
 }
 
 <div class="page-header">
@@ -9,15 +9,15 @@
     <div>
 
         <div class="page-eyebrow">
-            CRITERIA
+            TIÊU CHÍ
         </div>
 
         <h1 class="page-title">
-            Edit criteria.
+            Chỉnh sửa tiêu chí
         </h1>
 
         <p class="page-description">
-            Cập nhật tiêu chí đánh giá.
+            Cập nhật thông tin tiêu chí đánh giá trong hệ thống.
         </p>
 
     </div>
@@ -35,7 +35,6 @@
         <input type="hidden"
                asp-for="CriteriaId" />
 
-
         <div asp-validation-summary="ModelOnly"
              class="validation-summary">
         </div>
@@ -43,89 +42,73 @@
 
         <div class="form-grid">
 
+            <!-- 1. Criteria Identity -->
+            <div class="form-section">
+                <div class="form-section-title">Thông tin tiêu chí</div>
+                <div class="form-section-desc">Mã định danh và tên tiêu chí sử dụng trong đánh giá</div>
+            </div>
+
             <div class="form-group">
-
-                <label asp-for="CriteriaCode">
-                    Criteria code
+                <label asp-for="CriteriaCode" class="required-field">
+                    Mã tiêu chí
                 </label>
-
                 <input asp-for="CriteriaCode"
                        class="form-control"
                        maxlength="20" />
-
-                <span asp-validation-for="CriteriaCode"
-                      class="text-danger">
-                </span>
-
+                <span asp-validation-for="CriteriaCode" class="text-danger"></span>
             </div>
 
-
             <div class="form-group">
-
-                <label asp-for="CriteriaName">
-                    Criteria name
+                <label asp-for="CriteriaName" class="required-field">
+                    Tên tiêu chí
                 </label>
-
                 <input asp-for="CriteriaName"
                        class="form-control"
                        maxlength="150" />
-
-                <span asp-validation-for="CriteriaName"
-                      class="text-danger">
-                </span>
-
+                <span asp-validation-for="CriteriaName" class="text-danger"></span>
             </div>
 
+            <!-- 2. Evaluation Attributes -->
+            <div class="form-section">
+                <div class="form-section-title">Thuộc tính & Đơn vị tính</div>
+                <div class="form-section-desc">Phân loại hướng tác động (Lợi ích / Chi phí) và đơn vị đo lường</div>
+            </div>
 
             <div class="form-group">
-
-                <label asp-for="CriteriaType">
-                    Criteria type
+                <label asp-for="CriteriaType" class="required-field">
+                    Loại tiêu chí
                 </label>
-
-                <select asp-for="CriteriaType"
-                        class="form-control">
-
-                    <option value="Benefit">
-                        Benefit
-                    </option>
-
-                    <option value="Cost">
-                        Cost
-                    </option>
-
+                <select asp-for="CriteriaType" class="form-control">
+                    <option value="Benefit">Benefit (Càng cao càng tốt - Lợi ích)</option>
+                    <option value="Cost">Cost (Càng thấp càng tốt - Chi phí / Rủi ro)</option>
                 </select>
-
-                <span asp-validation-for="CriteriaType"
-                      class="text-danger">
-                </span>
-
+                <span asp-validation-for="CriteriaType" class="text-danger"></span>
             </div>
 
-
             <div class="form-group">
-
                 <label asp-for="Unit">
-                    Unit
+                    Đơn vị tính
                 </label>
-
                 <input asp-for="Unit"
                        class="form-control"
                        maxlength="30" />
-
+                <span asp-validation-for="Unit" class="text-danger"></span>
             </div>
 
+            <!-- 3. Description & Notes -->
+            <div class="form-section">
+                <div class="form-section-title">Mô tả & Hướng dẫn đánh giá</div>
+                <div class="form-section-desc">Hướng dẫn chi tiết phương pháp chấm điểm và quy tắc đo lường</div>
+            </div>
 
             <div class="form-group form-group-full">
-
                 <label asp-for="Description">
-                    Description
+                    Mô tả chi tiết
                 </label>
-
                 <textarea asp-for="Description"
                           class="form-control"
                           maxlength="500"></textarea>
-
+                <span asp-validation-for="Description" class="text-danger"></span>
             </div>
 
         </div>
@@ -135,17 +118,12 @@
 
             <a asp-action="Index"
                class="btn-outline">
-
-                Cancel
-
+                Hủy bỏ
             </a>
-
 
             <button type="submit"
                     class="btn-primary">
-
-                Save changes
-
+                Lưu thay đổi
             </button>
 
         </div>

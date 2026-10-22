@@ -23,6 +23,7 @@ public class ProductGroupService
     {
         var query = _context.ProductGroups
             .AsNoTracking()
+            .Include(x => x.Suppliers)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(keyword))
@@ -31,7 +32,8 @@ public class ProductGroupService
 
             query = query.Where(x =>
                 x.GroupCode.Contains(keyword) ||
-                x.GroupName.Contains(keyword));
+                x.GroupName.Contains(keyword) ||
+                (x.Description != null && x.Description.Contains(keyword)));
         }
 
         if (!string.IsNullOrWhiteSpace(status) &&
@@ -43,6 +45,16 @@ public class ProductGroupService
         query = query.OrderBy(x => x.GroupCode);
 
         return await PagedResult<ProductGroup>.CreateAsync(query, pageNumber, pageSize);
+    }
+
+    public async Task<(int Total, int Active, int Inactive, int TotalLinkedSuppliers)> GetKpiSummaryAsync()
+    {
+        var total = await _context.ProductGroups.CountAsync();
+        var active = await _context.ProductGroups.CountAsync(x => x.Status == EntityStatus.Active);
+        var inactive = await _context.ProductGroups.CountAsync(x => x.Status == EntityStatus.Inactive);
+        var totalLinkedSuppliers = await _context.Suppliers.CountAsync(x => x.Groups.Any());
+
+        return (total, active, inactive, totalLinkedSuppliers);
     }
 
     public async Task<ProductGroup?> GetByIdAsync(int id)

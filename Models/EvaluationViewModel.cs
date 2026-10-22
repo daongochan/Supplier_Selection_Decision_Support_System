@@ -21,4 +21,4 @@ public class EvaluationViewModel
 
     public List<EvaluationSupplierRowViewModel> Suppliers { get; set; }
         = new();
-}
+}

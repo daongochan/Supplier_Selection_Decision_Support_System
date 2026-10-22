@@ -1,4 +1,4 @@
-﻿namespace SupplierSelectionDSS.Models;
+namespace SupplierSelectionDSS.Models;
 
 public class EvaluationScoreInputViewModel
 {

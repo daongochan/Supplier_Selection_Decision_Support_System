@@ -11,10 +11,11 @@
 
     var controllerNames = new Dictionary<string, (string Name, string Action, string Controller)>
     {
-        { "Dashboard", ("Bàn làm việc", "Index", "Dashboard") },
+        { "Dashboard", ("Dashboard", "Index", "Dashboard") },
+        { "Account", ("Tài khoản", "Index", "Dashboard") },
         { "Supplier", ("Nhà cung cấp", "Index", "Supplier") },
         { "ProductGroup", ("Nhóm hàng", "Index", "ProductGroup") },
-        { "Criteria", ("Tiêu chí", "Index", "Criteria") },
+        { "Criteria", ("Tiêu chí đánh giá", "Index", "Criteria") },
         { "EvaluationBatch", ("Đợt đánh giá", "Index", "EvaluationBatch") },
         { "Evaluation", ("Chấm điểm", "Index", "EvaluationBatch") },
         { "AHP", ("Trọng số AHP", "Index", "EvaluationBatch") },

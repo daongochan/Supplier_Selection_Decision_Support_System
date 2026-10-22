@@ -336,6 +336,32 @@ public class AuditLogService
 
 
     // =========================================================
+    // KPI SUMMARY
+    // =========================================================
+
+    public async Task<(int TotalLogs, int TodayLogs, int ActiveUsers, int CriticalActions)> GetKpiSummaryAsync()
+    {
+        var todayUtc = DateTime.UtcNow.Date;
+        var total = await _context.AuditLogs.CountAsync();
+        var today = await _context.AuditLogs.CountAsync(x => x.ActionTime >= todayUtc);
+        var activeUsers = await _context.AuditLogs
+            .Where(x => x.UserId.HasValue)
+            .Select(x => x.UserId)
+            .Distinct()
+            .CountAsync();
+
+        var criticalActions = await _context.AuditLogs.CountAsync(x =>
+            x.ActionType == AuditActions.Approve ||
+            x.ActionType == AuditActions.Reject ||
+            x.ActionType == AuditActions.CancelBatch ||
+            x.ActionType == AuditActions.CalculateTOPSIS ||
+            x.ActionType == AuditActions.CalculateAHP);
+
+        return (total, today, activeUsers, criticalActions);
+    }
+
+
+    // =========================================================
     // SUPPORT
     // =========================================================
 

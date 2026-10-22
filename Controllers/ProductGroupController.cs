@@ -28,6 +28,7 @@ public class ProductGroupController : Controller
         pageSize = Math.Max(pageSize, 1);
 
         var paged = await _groupService.SearchAsync(keyword, status, page, pageSize);
+        var kpis = await _groupService.GetKpiSummaryAsync();
 
         var model = new ProductGroupIndexViewModel
         {
@@ -37,7 +38,11 @@ public class ProductGroupController : Controller
             PageNumber = paged.PageNumber,
             PageSize = paged.PageSize,
             TotalCount = paged.TotalCount,
-            TotalPages = paged.TotalPages
+            TotalPages = paged.TotalPages,
+            TotalGroups = kpis.Total,
+            ActiveGroups = kpis.Active,
+            InactiveGroups = kpis.Inactive,
+            TotalLinkedSuppliers = kpis.TotalLinkedSuppliers
         };
 
         return View(model);

@@ -6,4 +6,4 @@ public class AHPComparisonInputViewModel
 
     public List<AHPComparisonInputItemViewModel> Comparisons { get; set; }
         = new();
-}
+}

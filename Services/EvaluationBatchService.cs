@@ -25,52 +25,15 @@ public class EvaluationBatchService
     public async Task<PagedResult<EvaluationBatchListItemViewModel>> SearchAsync(
         string? keyword,
         string? status,
+        int? groupId = null,
         int pageNumber = 1,
         int pageSize = 10)
     {
         keyword = keyword?.Trim();
 
-
-        var query =
-            _context.EvaluationBatches
-                .AsNoTracking()
-                .Select(batch =>
-                    new EvaluationBatchListItemViewModel
-                    {
-                        BatchId =
-                            batch.BatchId,
-
-                        BatchCode =
-                            batch.BatchCode,
-
-                        BatchName =
-                            batch.BatchName,
-
-                        GroupCode =
-                            batch.Group.GroupCode,
-
-                        GroupName =
-                            batch.Group.GroupName,
-
-                        Status =
-                            batch.Status,
-
-                        CreatedAt =
-                            batch.CreatedAt,
-
-                        StartDate =
-                            batch.StartDate,
-
-                        EndDate =
-                            batch.EndDate,
-
-                        SupplierCount =
-                            batch.Suppliers.Count,
-
-                        CriteriaCount =
-                            batch.Criteria.Count
-                    });
-
+        var query = _context.EvaluationBatches
+            .AsNoTracking()
+            .AsQueryable();
 
         // =========================================================
         // SEARCH
@@ -78,34 +41,60 @@ public class EvaluationBatchService
 
         if (!string.IsNullOrWhiteSpace(keyword))
         {
-            query =
-                query.Where(x =>
-                    x.BatchCode.Contains(keyword) ||
-                    x.BatchName.Contains(keyword));
+            query = query.Where(x =>
+                x.BatchCode.Contains(keyword) ||
+                x.BatchName.Contains(keyword));
         }
-
 
         // =========================================================
         // STATUS
         // =========================================================
 
-        if (!string.IsNullOrWhiteSpace(status) &&
-            status != "All")
+        if (!string.IsNullOrWhiteSpace(status) && status != "All")
         {
-            query =
-                query.Where(
-                    x => x.Status == status);
+            query = query.Where(x => x.Status == status);
         }
 
+        // =========================================================
+        // PRODUCT GROUP
+        // =========================================================
+
+        if (groupId.HasValue && groupId.Value > 0)
+        {
+            query = query.Where(x => x.GroupId == groupId.Value);
+        }
 
         // =========================================================
         // RESULT WITH PAGINATION
         // =========================================================
 
-        var orderedQuery = query.OrderByDescending(x => x.CreatedAt);
+        var projectedQuery = query.OrderByDescending(x => x.CreatedAt)
+            .Select(batch => new EvaluationBatchListItemViewModel
+            {
+                BatchId = batch.BatchId,
+                BatchCode = batch.BatchCode,
+                BatchName = batch.BatchName,
+                GroupCode = batch.Group.GroupCode,
+                GroupName = batch.Group.GroupName,
+                Status = batch.Status,
+                CreatedAt = batch.CreatedAt,
+                StartDate = batch.StartDate,
+                EndDate = batch.EndDate,
+                SupplierCount = batch.Suppliers.Count,
+                CriteriaCount = batch.Criteria.Count
+            });
 
         return await PagedResult<EvaluationBatchListItemViewModel>
-            .CreateAsync(orderedQuery, pageNumber, pageSize);
+            .CreateAsync(projectedQuery, pageNumber, pageSize);
+    }
+
+    public async Task<(int Total, int Evaluating, int Completed, int Draft)> GetKpiSummaryAsync()
+    {
+        var total = await _context.EvaluationBatches.CountAsync();
+        var evaluating = await _context.EvaluationBatches.CountAsync(x => x.Status == BatchStatus.Evaluating);
+        var completed = await _context.EvaluationBatches.CountAsync(x => x.Status == BatchStatus.Completed);
+        var draft = await _context.EvaluationBatches.CountAsync(x => x.Status == BatchStatus.Draft);
+        return (total, evaluating, completed, draft);
     }
 
 

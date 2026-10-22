@@ -8,6 +8,14 @@ public class UserIndexViewModel : IPagedResult
 
     public string Status { get; set; } = "All";
 
+    public int TotalUsers { get; set; }
+
+    public int ActiveUsers { get; set; }
+
+    public int LockedUsers { get; set; }
+
+    public int InactiveUsers { get; set; }
+
     public List<UserListItemViewModel> Users { get; set; } = new();
 
     public int PageNumber { get; set; } = 1;

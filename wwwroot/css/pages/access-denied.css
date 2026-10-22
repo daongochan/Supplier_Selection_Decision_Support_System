@@ -1,0 +1,157 @@
+/* =========================================================
+   ACCESS DENIED / 403 PAGE
+   Friendly Duck & Shield Illustration Style
+   ========================================================= */
+
+/* Hide breadcrumb on this standalone illustration page */
+.dss-breadcrumb {
+    display: none !important;
+}
+
+.access-denied-scene {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 140px);
+    padding: 30px 20px 60px 20px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.access-denied-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    max-width: 580px;
+    width: 100%;
+    margin: 0 auto;
+    animation: fadeInIllustration 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInIllustration {
+    from {
+        opacity: 0;
+        transform: translateY(14px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Illustration */
+.access-denied-illustration-wrap {
+    position: relative;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.access-denied-duck-img {
+    width: 320px;
+    max-width: 100%;
+    height: auto;
+    display: block;
+    user-select: none;
+    pointer-events: none;
+    mask-image: radial-gradient(ellipse 90% 86% at 50% 50%, black 72%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 86% at 50% 50%, black 72%, transparent 100%);
+    filter: drop-shadow(0 10px 25px rgba(37, 99, 235, 0.08));
+    animation: floatDuck 4s ease-in-out infinite alternate;
+}
+
+@keyframes floatDuck {
+    0% {
+        transform: translateY(0px);
+    }
+    100% {
+        transform: translateY(-6px);
+    }
+}
+
+/* Typography */
+.access-denied-heading {
+    font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+    font-size: 32px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.6px;
+    line-height: 1.25;
+    margin: 0 0 14px 0;
+}
+
+.access-denied-message {
+    font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+    font-size: 15px;
+    font-weight: 400;
+    color: #475569;
+    line-height: 1.65;
+    margin: 0 0 28px 0;
+    max-width: 480px;
+}
+
+/* Action Button */
+.btn-access-home {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 46px;
+    padding: 0 30px;
+    background: #1d4ed8;
+    color: #ffffff !important;
+    font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1;
+    border-radius: 9999px;
+    text-decoration: none !important;
+    box-shadow: 0 4px 14px rgba(29, 78, 216, 0.28);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    border: none;
+}
+
+.btn-access-home:hover {
+    background: #1e40af;
+    color: #ffffff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(29, 78, 216, 0.38);
+}
+
+.btn-access-home:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(29, 78, 216, 0.2);
+}
+
+.btn-access-home i {
+    font-size: 16px;
+    transition: transform 0.18s ease;
+}
+
+.btn-access-home:hover i {
+    transform: translateX(-3px);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .access-denied-duck-img {
+        width: 250px;
+    }
+
+    .access-denied-heading {
+        font-size: 26px;
+    }
+
+    .access-denied-message {
+        font-size: 14px;
+        padding: 0 10px;
+    }
+
+    .btn-access-home {
+        width: 100%;
+        max-width: 280px;
+    }
+}

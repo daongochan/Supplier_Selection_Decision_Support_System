@@ -1,7 +1,7 @@
-﻿@model SupplierSelectionDSS.Models.ProductGroupFormViewModel
+@model SupplierSelectionDSS.Models.ProductGroupFormViewModel
 
 @{
-    ViewData["Title"] = "Edit Product Group";
+    ViewData["Title"] = "Chỉnh sửa nhóm hàng";
 }
 
 <div class="page-header">
@@ -9,15 +9,15 @@
     <div>
 
         <div class="page-eyebrow">
-            PRODUCT GROUPS
+            NHÓM HÀNG
         </div>
 
         <h1 class="page-title">
-            Edit group
+            Chỉnh sửa nhóm hàng
         </h1>
 
         <p class="page-description">
-            Cập nhật thông tin nhóm hàng hóa hoặc dịch vụ.
+            Cập nhật thông tin nhóm hàng hóa hoặc dịch vụ trong hệ thống.
         </p>
 
     </div>
@@ -35,7 +35,6 @@
         <input type="hidden"
                asp-for="GroupId" />
 
-
         <div asp-validation-summary="ModelOnly"
              class="validation-summary">
         </div>
@@ -43,50 +42,46 @@
 
         <div class="form-grid">
 
+            <!-- 1. Group Identity -->
+            <div class="form-section">
+                <div class="form-section-title">Thông tin nhóm hàng</div>
+                <div class="form-section-desc">Mã định danh và tên nhóm hàng hóa hoặc dịch vụ</div>
+            </div>
+
             <div class="form-group">
-
-                <label asp-for="GroupCode">
-                    Group code
+                <label asp-for="GroupCode" class="required-field">
+                    Mã nhóm hàng
                 </label>
-
                 <input asp-for="GroupCode"
                        class="form-control"
                        maxlength="20" />
-
-                <span asp-validation-for="GroupCode"
-                      class="text-danger">
-                </span>
-
+                <span asp-validation-for="GroupCode" class="text-danger"></span>
             </div>
 
-
             <div class="form-group">
-
-                <label asp-for="GroupName">
-                    Group name
+                <label asp-for="GroupName" class="required-field">
+                    Tên nhóm hàng
                 </label>
-
                 <input asp-for="GroupName"
                        class="form-control"
                        maxlength="150" />
-
-                <span asp-validation-for="GroupName"
-                      class="text-danger">
-                </span>
-
+                <span asp-validation-for="GroupName" class="text-danger"></span>
             </div>
 
+            <!-- 2. Detailed Description -->
+            <div class="form-section">
+                <div class="form-section-title">Mô tả & Ghi chú</div>
+                <div class="form-section-desc">Thông tin chi tiết về phạm vi và đặc tính nhóm hàng</div>
+            </div>
 
             <div class="form-group form-group-full">
-
                 <label asp-for="Description">
-                    Description
+                    Mô tả
                 </label>
-
                 <textarea asp-for="Description"
                           class="form-control"
                           maxlength="500"></textarea>
-
+                <span asp-validation-for="Description" class="text-danger"></span>
             </div>
 
         </div>
@@ -96,12 +91,12 @@
 
             <a asp-action="Index"
                class="btn-outline">
-                Cancel
+                Hủy bỏ
             </a>
 
             <button type="submit"
                     class="btn-primary">
-                Save changes
+                Lưu thay đổi
             </button>
 
         </div>

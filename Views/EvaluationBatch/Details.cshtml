@@ -591,7 +591,10 @@
 
                     <button type="submit"
                             class="btn-primary"
-                            onclick="return confirm('Bắt đầu đợt đánh giá này?');">
+                            data-dss-confirm="Bạn có chắc chắn muốn bắt đầu tiến trình đánh giá cho đợt '@Model.BatchName'?"
+                            data-dss-title="Bắt đầu đánh giá"
+                            data-dss-btn-text="Bắt đầu"
+                            data-dss-type="primary">
 
                         Start Evaluation
 
@@ -756,7 +759,10 @@
 
                     <button type="submit"
                             class="btn-outline text-danger border-danger"
-                            onclick="return confirm('Bạn có chắc chắn muốn hủy đợt đánh giá này không? Thao tác này không thể hoàn tác.');">
+                            data-dss-confirm="Bạn có chắc chắn muốn hủy đợt đánh giá '@Model.BatchName'? Thao tác này không thể hoàn tác."
+                            data-dss-title="Xác nhận hủy đợt đánh giá"
+                            data-dss-btn-text="Hủy đợt"
+                            data-dss-type="danger">
 
                         <i class="bi bi-x-circle me-1"></i> Cancel Batch
 

@@ -1,13 +1,33 @@
-﻿@{
+@{
     ViewData["Title"] = "Không có quyền truy cập";
 }
 
-<h1>Không có quyền truy cập</h1>
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/access-denied.css" asp-append-version="true" />
+}
 
-<p>
-    Bạn không có quyền thực hiện chức năng này.
-</p>
+<div class="access-denied-scene">
+    <div class="access-denied-content">
+        <!-- Duck with Shield & Lock Illustration -->
+        <div class="access-denied-illustration-wrap">
+            <img src="~/images/access-denied-duck.png" 
+                 alt="Không có quyền truy cập" 
+                 class="access-denied-duck-img" />
+        </div>
 
-<a asp-controller="Dashboard" asp-action="Index">
-    Quay lại Dashboard
-</a>
+        <!-- Headline -->
+        <h1 class="access-denied-heading">Không có quyền truy cập</h1>
+
+        <!-- Friendly Subtitle -->
+        <p class="access-denied-message">
+            Bạn không có quyền truy cập vào trang này. Vui lòng liên hệ<br />
+            quản trị viên hệ thống để được cấp quyền phù hợp.
+        </p>
+
+        <!-- Primary Pill Action Button -->
+        <a asp-controller="Dashboard" asp-action="Index" class="btn-access-home">
+            <i class="bi bi-arrow-left"></i>
+            <span>Quay về trang chủ</span>
+        </a>
+    </div>
+</div>
