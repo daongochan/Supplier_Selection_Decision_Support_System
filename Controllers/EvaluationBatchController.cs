@@ -39,6 +39,7 @@ public class EvaluationBatchController : Controller
     public async Task<IActionResult> Index(
         string? keyword,
         string status = "All",
+        int? groupId = null,
         int page = 1,
         int pageSize = 10)
     {
@@ -48,34 +49,29 @@ public class EvaluationBatchController : Controller
         var paged = await _batchService.SearchAsync(
             keyword,
             status,
+            groupId,
             page,
             pageSize);
 
-        var model =
-            new EvaluationBatchIndexViewModel
-            {
-                Keyword =
-                    keyword,
+        var (total, evaluating, completed, draft) = await _batchService.GetKpiSummaryAsync();
+        var activeGroups = await _batchService.GetActiveProductGroupsAsync();
 
-                Status =
-                    status,
-
-                Batches =
-                    paged.Items
-                        .ToList(),
-
-                PageNumber =
-                    paged.PageNumber,
-
-                PageSize =
-                    paged.PageSize,
-
-                TotalCount =
-                    paged.TotalCount,
-
-                TotalPages =
-                    paged.TotalPages
-            };
+        var model = new EvaluationBatchIndexViewModel
+        {
+            Keyword = keyword,
+            Status = status,
+            GroupId = groupId,
+            Groups = activeGroups,
+            TotalBatches = total,
+            EvaluatingBatches = evaluating,
+            CompletedBatches = completed,
+            DraftBatches = draft,
+            Batches = paged.Items.ToList(),
+            PageNumber = paged.PageNumber,
+            PageSize = paged.PageSize,
+            TotalCount = paged.TotalCount,
+            TotalPages = paged.TotalPages
+        };
 
         return View(model);
     }

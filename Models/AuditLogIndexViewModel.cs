@@ -8,6 +8,14 @@ public class AuditLogIndexViewModel : IPagedResult
 
     public int? UserId { get; set; }
 
+    public int TotalLogs { get; set; }
+
+    public int TodayLogs { get; set; }
+
+    public int ActiveUsersCount { get; set; }
+
+    public int CriticalActionsCount { get; set; }
+
     public List<AuditLogListItemViewModel> Logs { get; set; } = new();
 
     public List<AuditLogUserOptionViewModel> Users { get; set; } = new();

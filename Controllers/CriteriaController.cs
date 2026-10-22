@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SupplierSelectionDSS.Data.Entities;
 using SupplierSelectionDSS.Models;
@@ -21,14 +21,30 @@ public class CriteriaController : Controller
     public async Task<IActionResult> Index(
         string? keyword,
         string type = "All",
-        string status = "All")
+        string status = "All",
+        int page = 1,
+        int pageSize = 10)
     {
+        page = Math.Max(page, 1);
+        pageSize = Math.Max(pageSize, 1);
+
+        var paged = await _criteriaService.SearchAsync(keyword, type, status, page, pageSize);
+        var kpis = await _criteriaService.GetKpiSummaryAsync();
+
         var model = new CriteriaIndexViewModel
         {
             Keyword = keyword,
             Type = type,
             Status = status,
-            Criteria = await _criteriaService.SearchAsync(keyword, type, status)
+            Criteria = paged.Items.ToList(),
+            PageNumber = paged.PageNumber,
+            PageSize = paged.PageSize,
+            TotalCount = paged.TotalCount,
+            TotalPages = paged.TotalPages,
+            TotalCriteria = kpis.Total,
+            BenefitCriteria = kpis.Benefit,
+            CostCriteria = kpis.Cost,
+            ActiveCriteria = kpis.Active
         };
 
         return View(model);

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SupplierSelectionDSS.Constants;
 using SupplierSelectionDSS.Data.Entities;
@@ -41,6 +41,7 @@ public class SupplierController : Controller
     public async Task<IActionResult> Index(
         string? keyword,
         string status = "All",
+        int? groupId = null,
         int page = 1,
         int pageSize = 10)
     {
@@ -62,8 +63,17 @@ public class SupplierController : Controller
                 .SearchAsync(
                     keyword,
                     status,
+                    groupId,
                     page,
                     pageSize);
+
+        var (total, active, inactive, totalGroups) =
+            await _supplierService
+                .GetKpiSummaryAsync();
+
+        var activeGroups =
+            await _supplierService
+                .GetActiveGroupsAsync();
 
 
         var model =
@@ -74,6 +84,24 @@ public class SupplierController : Controller
 
                 Status =
                     status,
+
+                GroupId =
+                    groupId,
+
+                Groups =
+                    activeGroups,
+
+                TotalSuppliers =
+                    total,
+
+                ActiveSuppliers =
+                    active,
+
+                InactiveSuppliers =
+                    inactive,
+
+                TotalGroups =
+                    totalGroups,
 
                 Suppliers =
                     result.Items

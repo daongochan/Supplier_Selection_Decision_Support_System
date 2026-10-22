@@ -9,8 +9,25 @@ public class SupplierIndexViewModel : IPagedResult
     public string Status { get; set; } =
         "All";
 
+    public int? GroupId { get; set; }
+
     public List<Supplier> Suppliers { get; set; } =
         new();
+
+    public List<ProductGroup> Groups { get; set; } =
+        new();
+
+    // =========================================================
+    // KPI METRICS
+    // =========================================================
+
+    public int TotalSuppliers { get; set; }
+
+    public int ActiveSuppliers { get; set; }
+
+    public int InactiveSuppliers { get; set; }
+
+    public int TotalGroups { get; set; }
 
     // =========================================================
     // PAGINATION

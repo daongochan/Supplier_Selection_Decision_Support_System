@@ -1,4 +1,4 @@
-﻿using SupplierSelectionDSS.Data.Entities;
+using SupplierSelectionDSS.Data.Entities;
 
 namespace SupplierSelectionDSS.Models;
 

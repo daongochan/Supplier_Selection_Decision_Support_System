@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SupplierSelectionDSS.Services;
-using SupplierSelectionDSS.Constants;
 
 namespace SupplierSelectionDSS.Controllers;
 
@@ -10,18 +10,15 @@ public class DashboardController : Controller
 {
     private readonly DashboardService _dashboardService;
 
-    public DashboardController(
-        DashboardService dashboardService)
+    public DashboardController(DashboardService dashboardService)
     {
         _dashboardService = dashboardService;
     }
 
-    public async Task<IActionResult> Index()
+    [HttpGet]
+    public async Task<IActionResult> Index(int? batchId = null)
     {
-        var model =
-            await _dashboardService
-                .GetDashboardAsync();
-
+        var model = await _dashboardService.GetDashboardAsync(batchId);
         return View(model);
     }
 }

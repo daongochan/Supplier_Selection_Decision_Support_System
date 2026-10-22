@@ -10,6 +10,20 @@ public class ProductGroupIndexViewModel : IPagedResult
 
     public List<ProductGroup> ProductGroups { get; set; } = new();
 
+    // =========================================================
+    // KPI METRICS (100% GENUINE DATABASE DATA)
+    // =========================================================
+    public int TotalGroups { get; set; }
+
+    public int ActiveGroups { get; set; }
+
+    public int InactiveGroups { get; set; }
+
+    public int TotalLinkedSuppliers { get; set; }
+
+    // =========================================================
+    // PAGINATION
+    // =========================================================
     public int PageNumber { get; set; } = 1;
 
     public int PageSize { get; set; } = 10;

@@ -1,4 +1,4 @@
-﻿namespace SupplierSelectionDSS.Constants;
+namespace SupplierSelectionDSS.Constants;
 
 public static class ApprovalStatus
 {

@@ -1,7 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SupplierSelectionDSS.Data;
 using SupplierSelectionDSS.Data.Entities;
 using SupplierSelectionDSS.Constants;
+using SupplierSelectionDSS.Models;
+
 namespace SupplierSelectionDSS.Services;
 
 public class CriteriaService
@@ -13,10 +15,12 @@ public class CriteriaService
         _context = context;
     }
 
-    public async Task<List<Criterion>> SearchAsync(
+    public async Task<PagedResult<Criterion>> SearchAsync(
         string? keyword,
         string? type,
-        string? status)
+        string? status,
+        int pageNumber = 1,
+        int pageSize = 10)
     {
         var query = _context.Criteria
             .AsNoTracking()
@@ -28,7 +32,8 @@ public class CriteriaService
 
             query = query.Where(x =>
                 x.CriteriaCode.Contains(keyword) ||
-                x.CriteriaName.Contains(keyword));
+                x.CriteriaName.Contains(keyword) ||
+                (x.Description != null && x.Description.Contains(keyword)));
         }
 
         if (!string.IsNullOrWhiteSpace(type) &&
@@ -45,9 +50,19 @@ public class CriteriaService
             query = query.Where(x => x.Status == status);
         }
 
-        return await query
-            .OrderBy(x => x.CriteriaCode)
-            .ToListAsync();
+        query = query.OrderBy(x => x.CriteriaCode);
+
+        return await PagedResult<Criterion>.CreateAsync(query, pageNumber, pageSize);
+    }
+
+    public async Task<(int Total, int Benefit, int Cost, int Active)> GetKpiSummaryAsync()
+    {
+        var total = await _context.Criteria.CountAsync();
+        var benefit = await _context.Criteria.CountAsync(x => x.CriteriaType == CriteriaType.Benefit);
+        var cost = await _context.Criteria.CountAsync(x => x.CriteriaType == CriteriaType.Cost);
+        var active = await _context.Criteria.CountAsync(x => x.Status == EntityStatus.Active);
+
+        return (total, benefit, cost, active);
     }
 
     public async Task<Criterion?> GetByIdAsync(int id)
