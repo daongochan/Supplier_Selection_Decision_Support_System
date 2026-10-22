@@ -96,23 +96,34 @@ Cơ sở dữ liệu mẫu đi kèm 4 tài khoản đã băm BCrypt an toàn:
 
 ## 6. Hướng dẫn chạy kiểm thử (Automated Tests & Math Verification)
 
-### 6.1. Chạy bộ kiểm thử .NET (123 Tests)
-Toàn bộ thuật toán AHP, TOPSIS, Phân tích độ nhạy, Bảo mật tệp báo cáo, Khóa tài khoản và Logic quản trị viên đều được kiểm thử tự động:
+### 6.1. Chạy bộ kiểm thử .NET (141 Tests)
+Toàn bộ thuật toán AHP, TOPSIS, Phân tích độ nhạy, Bảo mật tệp báo cáo, Chống brute-force, Kiểm soát đồng thời (RowVersion), và Logic quản trị viên đều được kiểm thử tự động:
 ```bash
-# Chạy toàn bộ 123 unit/integration tests
-dotnet test
+# Chạy toàn bộ 141 unit/integration tests
+dotnet test SupplierSelectionDSS.slnx
 
 # Chạy kèm thu thập độ bao phủ mã (Code Coverage)
-dotnet test --collect:"XPlat Code Coverage"
+dotnet test SupplierSelectionDSS.slnx --collect:"XPlat Code Coverage"
 ```
 
-### 6.2. Kiểm chứng toán học độc lập bằng Python (NumPy)
+### 6.2. Độ bao phủ mã nguồn thực tế (Measured Code Coverage)
+Được đo lường thực tế qua định dạng chuẩn Cobertura XML:
+| Service / Thành phần | Dòng lệnh bao phủ (Line Coverage) | Nhánh điều kiện (Branch Coverage) |
+| :--- | :---: | :---: |
+| **`TOPSISCalculationService`** | **94.95%** (301/317 dòng) | **89.02%** |
+| **`SensitivityAnalysisService`** | **95.20%** (119/125 dòng) | **90.62%** |
+| **`AHPCalculationService`** | **85.48%** (159/186 dòng) | **80.88%** |
+
+### 6.3. Kiểm chứng toán học độc lập bằng Python (NumPy)
 Hệ thống cung cấp một script kiểm chứng độc lập nằm tại `tools/verify/verify_mcdm.py`. Script này sử dụng hàm tính vector riêng chính xác (`numpy.linalg.eig`) và công thức vector TOPSIS viết độc lập để đối chiếu chéo với kết quả của C#:
 ```bash
-# Chạy với uv (hoặc python thông thường)
-uv run tools/verify/verify_mcdm.py
+# Chạy với uv (tự động nạp numpy)
+uv run --with numpy python tools/verify/verify_mcdm.py
+
+# Kiểm tra tính đồng bộ cơ sở dữ liệu và an toàn schema
+python tools/verify/verify_schema_sync.py
 ```
-Kết quả cho thấy sai số giữa C# và NumPy nhỏ hơn $10^{-6}$ (chính xác tuyệt đối).
+Kết quả cho thấy sai số giữa C# RGMM và NumPy Eigenvector trên ma trận chuẩn của Saaty là **$0.001196$ ($\approx 1.2 \times 10^{-3}$)**, bảo toàn tuyệt đối thứ tự ưu tiên và kết quả xếp hạng.
 
 ---
 
@@ -120,22 +131,23 @@ Kết quả cho thấy sai số giữa C# và NumPy nhỏ hơn $10^{-6}$ (chính
 
 ```text
 SupplierSelectionDSS/
-├── .github/workflows/          # CI Pipeline tự động (.NET 10 Build & Test)
-├── Constants/                  # Các hằng số chuẩn hóa (UserRole, BatchStatus, CriteriaType...)
-├── Controllers/                # Controllers điều hướng và kiểm soát quyền hạn
-├── Data/                       # ApplicationDbContext và các thực thể Scaffold
+├── .github/workflows/          # CI Pipeline tự động (.NET 10 Build, Test & Schema Verify)
+├── Constants/                  # Các hằng số chuẩn hóa (UserRole, BatchStatus, ReportTypes...)
+├── Controllers/                # Controllers điều hướng, xử lý ngoại lệ và phân quyền
+├── Data/                       # ApplicationDbContext, Entities và cấu hình RowVersion
 ├── Infrastructure/             # Xuất báo cáo ngoài luồng (QuestPDF, ClosedXML)
 ├── Models/                     # ViewModels cho Razor Views và API
 ├── Services/                   # Nghiệp vụ lõi và thuật toán AHP, TOPSIS, Sensitivity
-├── Views/                      # Giao diện người dùng Razor Views (Navy + Gold)
-├── database/                   # Script khởi tạo cơ sở dữ liệu (01_schema.sql, 02_seed.sql)
+├── Views/                      # Giao diện người dùng Razor Views (Navy + Gold, local assets)
+├── database/                   # Script khởi tạo cơ sở dữ liệu, chốt an toàn và patches
 ├── docs/                       # Tài liệu học thuật phục vụ bảo vệ đồ án
 │   ├── ALGORITHMS.md           # Cơ sở toán học AHP, TOPSIS & Phân tích độ nhạy
 │   ├── ARCHITECTURE.md         # Kiến trúc hệ thống, vòng đời Batch, bảo mật & RBAC
-│   └── AUDIT.md                # Báo cáo đánh giá độc lập toàn diện và trạng thái xử lý
-├── tools/verify/               # Công cụ Python đối chiếu kết quả toán học với NumPy
-├── wwwroot/                    # Tệp tĩnh (CSS, JS, Fonts, Icons)
-├── SupplierSelectionDSS.Tests/ # Dự án kiểm thử nội bộ xUnit (123 tests)
+│   ├── AUDIT.md                # Báo cáo đánh giá độc lập toàn diện và trạng thái xử lý
+│   └── HISTORY_CLEANUP.md      # Quy trình dọn dẹp lịch sử Git an toàn bằng git-filter-repo
+├── tools/verify/               # Công cụ Python đối chiếu kết quả toán học và đồng bộ CSDL
+├── wwwroot/                    # Tệp tĩnh cục bộ (CSS, JS, local fonts Inter/Outfit, Icons)
+├── SupplierSelectionDSS.Tests/ # Dự án kiểm thử nội bộ xUnit (141 tests)
 └── App_Data/reports/           # Thư mục lưu trữ báo cáo cách ly ngoài webroot
 ```
 ---

@@ -4,6 +4,32 @@ Toàn bộ các thay đổi quan trọng về kiến trúc, thuật toán, bảo
 
 ---
 
+## [1.2.0] - 2026-10-22
+
+### Củng Cố Toàn Diện & Tự Động Hóa CI (Round 2 Hardening)
+- **Khắc phục lỗi biên dịch & CI Xanh 100%:** Sửa lỗi kiểu trả về P0 của `PagedResult<T>.CreateAsync`, cục bộ hóa assets CSS/font và dọn dẹp cảnh báo EOL.
+- **An toàn Cơ sở Dữ liệu & Đồng bộ Schema:**
+  - Bổ sung chốt an toàn `SET NOEXEC ON` và `@ConfirmRecreate = 'YES'` cho các script tạo/xóa database.
+  - Bổ sung công cụ `tools/verify/verify_schema_sync.py` đối chiếu tự động 17 bảng, 7 triggers, 2 views, 16 indexes.
+  - Thay thế toàn bộ liên kết tuyệt đối `file:///` bằng relative links.
+- **Bảo mật & Tách biệt Trách nhiệm (Security & Hardening):**
+  - Tách `ILoginAttemptService` & `LoginAttemptService` sử dụng `IMemoryCache` có giới hạn (`SizeLimit = 10,000`, 15 phút, khóa theo `IP + Username`) kết hợp ASP.NET Core IP `RateLimiter` (`"LoginLimiter"`).
+  - Thay hash mật khẩu demo bằng BCrypt chuẩn `$2a$11$...`.
+  - Triển khai middleware chặn truy cập tĩnh `/reports/*` trước `UseStaticFiles()` trả về HTTP 404 Not Found.
+  - Thêm 11 test bảo mật tích hợp (`LoginAttemptServiceTests`, `SecurityIntegrationTests`).
+- **Nâng cao Chất lượng & Xử lý Ngoại lệ:**
+  - Loại bỏ chuỗi ma thuật `"PDF"`/`"Excel"`, inject `ILogger<T>` cho toàn bộ service và controller.
+  - Dọn dẹp policy thừa, tạo lớp `BusinessRuleException` chuẩn hóa thông báo lỗi thân thiện.
+- **Kiểm soát Đồng thời Lạc quan (Optimistic Concurrency Control):**
+  - Bổ sung cột `RowVersion ROWVERSION NOT NULL` trên bảng `EvaluationBatches`.
+  - Cấu hình EF Core `[Timestamp]` / `IsRowVersion()` và xử lý `DbUpdateConcurrencyException`.
+  - Bổ sung script vá `database/patches/20261022_add_rowversion.sql` và unit test kiểm chứng concurrency.
+- **Kiểm chứng Thuật toán & Đo lường Coverage:**
+  - Thu thập Cobertura coverage thực tế: **141 tests** (141 passed).
+  - Độ bao phủ: `TOPSISCalculationService` 94.95% dòng (89.02% nhánh), `SensitivityAnalysisService` 95.20% dòng (90.62% nhánh), `AHPCalculationService` 85.48% dòng (80.88% nhánh).
+  - Độc lập kiểm chứng sai số RGMM vs Eigenvector qua `tools/verify/verify_mcdm.py` ($\approx 1.2 \times 10^{-3}$).
+  - Soạn thảo tài liệu dọn dẹp lịch sử Git an toàn `docs/HISTORY_CLEANUP.md`.
+
 ## [1.1.0] - 2026-10-22
 
 ### Phase 1: Vệ sinh Kho mã nguồn (Repository Hygiene)
