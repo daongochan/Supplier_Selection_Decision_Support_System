@@ -1,0 +1,170 @@
+@*
+    =============================================================
+    APP BACKGROUND VISUAL SYSTEM (Modern Enterprise SaaS)
+    Multi-layer ambient atmospheric vector canvas
+    Safe: pointer-events: none, aria-hidden="true", role="presentation"
+    =============================================================
+*@
+
+<div class="app-background-visual" aria-hidden="true" role="presentation">
+
+    <!-- LAYER 2: Ambient Atmospheric Radial Glows -->
+    <div class="bg-visual-glow-top-right"></div>
+    <div class="bg-visual-glow-bottom-left"></div>
+
+    <!-- LAYER 3: Low-Poly / Mountain Ridges (Top-Right Horizon) -->
+    <svg class="bg-visual-svg-ridges" 
+         viewBox="0 0 1000 420" 
+         fill="none" 
+         xmlns="http://www.w3.org/2000/svg" 
+         preserveAspectRatio="none">
+        <defs>
+            <linearGradient id="ridgeGrad1" x1="1000" y1="0" x2="400" y2="350" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#bfdbfe" stop-opacity="0.45" />
+                <stop offset="60%" stop-color="#dbeafe" stop-opacity="0.18" />
+                <stop offset="100%" stop-color="#eff6ff" stop-opacity="0" />
+            </linearGradient>
+
+            <linearGradient id="ridgeGrad2" x1="1000" y1="0" x2="550" y2="300" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#93c5fd" stop-opacity="0.35" />
+                <stop offset="50%" stop-color="#bfdbfe" stop-opacity="0.15" />
+                <stop offset="100%" stop-color="#eff6ff" stop-opacity="0" />
+            </linearGradient>
+
+            <linearGradient id="ridgeGrad3" x1="1000" y1="0" x2="680" y2="240" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#bfdbfe" stop-opacity="0.40" />
+                <stop offset="70%" stop-color="#dbeafe" stop-opacity="0.12" />
+                <stop offset="100%" stop-color="#f0f9ff" stop-opacity="0" />
+            </linearGradient>
+        </defs>
+
+        <!-- Peak Layer 1 (Furthest ridge) -->
+        <path d="M1000,0 L320,0 L480,110 L640,80 L800,210 L920,150 L1000,260 Z" 
+              fill="url(#ridgeGrad1)" />
+
+        <!-- Peak Layer 2 (Middle overlapping facet) -->
+        <path d="M1000,0 L460,0 L590,95 L720,60 L870,180 L1000,140 Z" 
+              fill="url(#ridgeGrad2)" />
+
+        <!-- Peak Layer 3 (Foreground soft ridge) -->
+        <path d="M1000,0 L560,0 L690,85 L840,145 L1000,105 Z" 
+              fill="url(#ridgeGrad3)" />
+    </svg>
+
+    <!-- LAYER 3 & 4: Abstract Geometric Contour & Dot Matrix (Bottom-Right) -->
+    <svg class="bg-visual-svg-matrix" 
+         viewBox="0 0 340 340" 
+         fill="none" 
+         xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <linearGradient id="contourGrad" x1="0" y1="0" x2="340" y2="340" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#93c5fd" stop-opacity="0.55" />
+                <stop offset="50%" stop-color="#bfdbfe" stop-opacity="0.30" />
+                <stop offset="100%" stop-color="#60a5fa" stop-opacity="0.10" />
+            </linearGradient>
+
+            <linearGradient id="facetFillGrad" x1="0" y1="0" x2="340" y2="340" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#dbeafe" stop-opacity="0.25" />
+                <stop offset="100%" stop-color="#eff6ff" stop-opacity="0.05" />
+            </linearGradient>
+        </defs>
+
+        <!-- Soft rounded polygon background fill -->
+        <path d="M 170,20 
+                 C 195,20 310,85 320,102 
+                 C 330,120 330,220 320,238 
+                 C 310,255 195,320 170,320 
+                 C 145,320 30,255 20,238 
+                 C 10,220 10,120 20,102 
+                 C 30,85 145,20 170,20 Z"
+              fill="url(#facetFillGrad)" />
+
+        <!-- Precision Geometric Contour Line -->
+        <path d="M 170,24 
+                 C 193,24 305,88 314,104 
+                 C 324,120 324,220 314,236 
+                 C 305,252 193,316 170,316 
+                 C 147,316 35,252 26,236 
+                 C 16,220 16,120 26,104 
+                 C 35,88 147,24 170,24 Z"
+              stroke="url(#contourGrad)" 
+              stroke-width="1.75" 
+              stroke-linecap="round" 
+              stroke-linejoin="round" />
+
+        <!-- Inner Contour Accent -->
+        <path d="M 170,55 
+                 C 188,55 280,108 288,122 
+                 C 296,135 296,205 288,218 
+                 C 280,232 188,285 170,285 
+                 C 152,285 60,232 52,218 
+                 C 44,205 44,135 52,122 
+                 C 60,108 152,55 170,55 Z"
+              stroke="url(#contourGrad)" 
+              stroke-width="1" 
+              stroke-opacity="0.4" 
+              stroke-dasharray="4 4" />
+
+        <!-- 6x5 Precision DSS Data Dot Matrix -->
+        <g fill="#93c5fd" fill-opacity="0.55">
+            <!-- Row 1 -->
+            <circle cx="215" cy="140" r="2" />
+            <circle cx="233" cy="140" r="2" />
+            <circle cx="251" cy="140" r="2" />
+            <circle cx="269" cy="140" r="2" />
+            <circle cx="287" cy="140" r="2" />
+
+            <!-- Row 2 -->
+            <circle cx="215" cy="158" r="2" />
+            <circle cx="233" cy="158" r="2" />
+            <circle cx="251" cy="158" r="2" />
+            <circle cx="269" cy="158" r="2" />
+            <circle cx="287" cy="158" r="2" />
+
+            <!-- Row 3 -->
+            <circle cx="215" cy="176" r="2" />
+            <circle cx="233" cy="176" r="2" />
+            <circle cx="251" cy="176" r="2" />
+            <circle cx="269" cy="176" r="2" />
+            <circle cx="287" cy="176" r="2" />
+
+            <!-- Row 4 -->
+            <circle cx="215" cy="194" r="2" />
+            <circle cx="233" cy="194" r="2" />
+            <circle cx="251" cy="194" r="2" />
+            <circle cx="269" cy="194" r="2" />
+            <circle cx="287" cy="194" r="2" />
+
+            <!-- Row 5 -->
+            <circle cx="215" cy="212" r="2" />
+            <circle cx="233" cy="212" r="2" />
+            <circle cx="251" cy="212" r="2" />
+            <circle cx="269" cy="212" r="2" />
+            <circle cx="287" cy="212" r="2" />
+
+            <!-- Row 6 -->
+            <circle cx="215" cy="230" r="2" />
+            <circle cx="233" cy="230" r="2" />
+            <circle cx="251" cy="230" r="2" />
+            <circle cx="269" cy="230" r="2" />
+            <circle cx="287" cy="230" r="2" />
+        </g>
+    </svg>
+
+    <!-- LAYER 3: Abstract Geometric Facet (Bottom-Left) -->
+    <svg class="bg-visual-svg-facet" 
+         viewBox="0 0 280 360" 
+         fill="none" 
+         xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <linearGradient id="facetGradLeft" x1="0" y1="360" x2="260" y2="100" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#bfdbfe" stop-opacity="0.32" />
+                <stop offset="60%" stop-color="#dbeafe" stop-opacity="0.14" />
+                <stop offset="100%" stop-color="#eff6ff" stop-opacity="0" />
+            </linearGradient>
+        </defs>
+        <path d="M 0,360 L 0,80 L 120,40 C 145,32 180,60 190,85 L 250,220 C 260,245 240,285 210,310 L 160,360 Z" 
+              fill="url(#facetGradLeft)" />
+    </svg>
+
+</div>

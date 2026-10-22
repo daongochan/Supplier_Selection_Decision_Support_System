@@ -6,10 +6,12 @@
     "use strict";
 
     // =========================================================
-    // GLOBAL DSS UTILITIES & MODAL
+    // GLOBAL DSS UTILITIES & CONFIRMATION MODAL
     // =========================================================
     window.DSS = {
         _confirmCallback: null,
+        _previousActiveElement: null,
+        _isProcessing: false,
 
         showConfirmModal: function (options) {
             const modal = document.getElementById("dssConfirmModal");
@@ -22,24 +24,71 @@
                 return;
             }
 
+            this._previousActiveElement = document.activeElement;
+            this._isProcessing = false;
+
             const titleEl = document.getElementById("dssConfirmTitle");
             const messageEl = document.getElementById("dssConfirmMessage");
+            const iconBadge = document.getElementById("dssConfirmIconBadge");
             const iconEl = document.getElementById("dssConfirmIcon");
             const submitBtn = document.getElementById("dssConfirmSubmitBtn");
+            const submitTextEl = document.getElementById("dssConfirmSubmitText");
+            const submitSpinnerEl = document.getElementById("dssConfirmSubmitSpinner");
+            const cancelBtn = document.getElementById("dssConfirmCancelBtn");
+            const closeBtn = document.getElementById("dssConfirmCloseBtn");
+            const consequenceBox = document.getElementById("dssConfirmConsequence");
+            const consequenceText = document.getElementById("dssConfirmConsequenceText");
             const inputGroup = document.getElementById("dssConfirmInputGroup");
             const inputLabel = document.getElementById("dssConfirmInputLabel");
             const inputEl = document.getElementById("dssConfirmInput");
 
+            // Reset loading and disabled states
+            if (submitSpinnerEl) submitSpinnerEl.style.display = "none";
+            if (submitBtn) submitBtn.disabled = false;
+            if (cancelBtn) cancelBtn.disabled = false;
+            if (closeBtn) closeBtn.disabled = false;
+
+            // Content bindings
             if (titleEl) titleEl.textContent = options.title || "Xác nhận thao tác";
             if (messageEl) messageEl.textContent = options.message || "Bạn có chắc chắn muốn tiếp tục?";
-            if (iconEl) {
-                iconEl.className = options.iconClass || "bi bi-question-circle-fill text-warning";
-            }
-            if (submitBtn) {
-                submitBtn.textContent = options.confirmText || "Xác nhận";
-                submitBtn.className = options.confirmBtnClass || "btn-primary";
+            if (submitTextEl) {
+                submitTextEl.textContent = options.confirmText || "Xác nhận";
             }
 
+            // Consequence callout - only show when non-empty text exists
+            if (options.consequence && options.consequence.trim() && consequenceBox && consequenceText) {
+                consequenceText.textContent = options.consequence.trim();
+                consequenceBox.classList.add("is-visible");
+            } else if (consequenceBox) {
+                consequenceBox.classList.remove("is-visible");
+                if (consequenceText) consequenceText.textContent = "";
+            }
+
+            // Semantic action type & styles
+            let actionType = options.actionType || "primary";
+            let btnClass = "btn-primary";
+            let iconClass = "bi bi-question-circle-fill";
+
+            if (options.confirmBtnClass) {
+                btnClass = options.confirmBtnClass;
+            } else if (actionType === "danger") {
+                btnClass = "btn-danger";
+                iconClass = "bi bi-exclamation-triangle-fill";
+            } else if (actionType === "warning") {
+                btnClass = "btn-warning";
+                iconClass = "bi bi-arrow-counterclockwise";
+            } else if (actionType === "success") {
+                btnClass = "btn-success";
+                iconClass = "bi bi-check-circle-fill";
+            }
+
+            if (iconBadge) {
+                iconBadge.className = "dss-modal-icon-badge badge-" + actionType;
+            }
+            if (iconEl) iconEl.className = iconClass;
+            if (submitBtn) submitBtn.className = "dss-modal-btn dss-modal-btn-confirm " + btnClass;
+
+            // Optional text input (reasons / notes)
             if (options.requireInput) {
                 if (inputGroup) inputGroup.style.display = "block";
                 if (inputLabel) inputLabel.textContent = options.inputLabel || "Ghi chú / Lý do:";
@@ -54,46 +103,53 @@
             this._confirmCallback = options.onConfirm || null;
             modal.style.display = "flex";
             modal.setAttribute("aria-hidden", "false");
+
+            // Focus management
             if (options.requireInput && inputEl) {
                 setTimeout(function () { inputEl.focus(); }, 100);
+            } else if (submitBtn) {
+                setTimeout(function () { submitBtn.focus(); }, 100);
             }
         },
 
         closeConfirmModal: function () {
+            if (this._isProcessing) return; // Prevent closing while processing
+
             const modal = document.getElementById("dssConfirmModal");
             if (modal) {
                 modal.style.display = "none";
                 modal.setAttribute("aria-hidden", "true");
             }
             this._confirmCallback = null;
+            this._isProcessing = false;
+
+            // Restore focus
+            if (this._previousActiveElement && typeof this._previousActiveElement.focus === "function") {
+                try {
+                    this._previousActiveElement.focus();
+                } catch (e) {
+                    // Ignore if element is no longer focusable
+                }
+            }
+        },
+
+        handleBackdropClick: function () {
+            if (this._isProcessing) return;
+            this.closeConfirmModal();
         }
     };
 
     document.addEventListener("DOMContentLoaded", function () {
 
         // =====================================================
-        // SIDEBAR TOGGLE & RESPONSIVE
+        // SIDEBAR STATE CLEANUP (REVERT TO STATIC SIDEBAR)
         // =====================================================
-        const sidebar = document.querySelector(".app-sidebar");
-        const sidebarToggle = document.querySelector("#sidebarToggle");
+        try {
+            localStorage.removeItem("dss_sidebar_collapsed");
+        } catch (e) { }
+        document.documentElement.classList.remove("sidebar-collapsed");
+        document.body.classList.remove("sidebar-collapsed", "sidebar-mobile-open");
 
-        if (sidebar && sidebarToggle) {
-            sidebarToggle.addEventListener("click", function () {
-                sidebar.classList.toggle("open");
-                const isOpen = sidebar.classList.contains("open");
-                sidebarToggle.setAttribute("aria-expanded", isOpen.toString());
-            });
-
-            const sidebarLinks = sidebar.querySelectorAll(".sidebar-link");
-            sidebarLinks.forEach(function (link) {
-                link.addEventListener("click", function () {
-                    if (window.innerWidth <= 900) {
-                        sidebar.classList.remove("open");
-                        sidebarToggle.setAttribute("aria-expanded", "false");
-                    }
-                });
-            });
-        }
 
         // =====================================================
         // AUTO-DISMISS TOASTS
@@ -112,25 +168,54 @@
         });
 
         // =====================================================
-        // CONFIRMATION MODAL SUBMIT BUTTON
+        // CONFIRMATION MODAL SUBMIT BUTTON & INTERACTIONS
         // =====================================================
         const confirmSubmitBtn = document.getElementById("dssConfirmSubmitBtn");
         if (confirmSubmitBtn) {
             confirmSubmitBtn.addEventListener("click", function () {
+                if (DSS._isProcessing) return; // Prevent double submit
+                DSS._isProcessing = true;
+
+                // Enter loading state
+                const submitTextEl = document.getElementById("dssConfirmSubmitText");
+                const submitSpinnerEl = document.getElementById("dssConfirmSubmitSpinner");
+                const cancelBtn = document.getElementById("dssConfirmCancelBtn");
+                const closeBtn = document.getElementById("dssConfirmCloseBtn");
+
+                if (submitSpinnerEl) submitSpinnerEl.style.display = "inline-block";
+                if (submitTextEl) {
+                    submitTextEl.textContent = "Đang xử lý...";
+                }
+                confirmSubmitBtn.disabled = true;
+                if (cancelBtn) cancelBtn.disabled = true;
+                if (closeBtn) closeBtn.disabled = true;
+
                 const inputEl = document.getElementById("dssConfirmInput");
                 const inputValue = inputEl ? inputEl.value.trim() : "";
                 const callback = DSS._confirmCallback;
-                DSS.closeConfirmModal();
+
                 if (typeof callback === "function") {
-                    callback(inputValue);
+                    try {
+                        callback(inputValue);
+                    } catch (err) {
+                        console.error("Confirmation callback error:", err);
+                        DSS._isProcessing = false;
+                        confirmSubmitBtn.disabled = false;
+                        if (cancelBtn) cancelBtn.disabled = false;
+                        if (closeBtn) closeBtn.disabled = false;
+                        if (submitSpinnerEl) submitSpinnerEl.style.display = "none";
+                        if (submitTextEl) submitTextEl.textContent = "Xác nhận";
+                    }
                 }
             });
         }
 
-        // Close modal on Escape
+        // Close modal on Escape (only when idle)
         document.addEventListener("keydown", function (e) {
             if (e.key === "Escape") {
-                DSS.closeConfirmModal();
+                if (!DSS._isProcessing) {
+                    DSS.closeConfirmModal();
+                }
             }
         });
 
@@ -145,15 +230,38 @@
             const message = trigger.getAttribute("data-dss-confirm");
             const title = trigger.getAttribute("data-dss-title") || "Xác nhận";
             const confirmText = trigger.getAttribute("data-dss-btn-text") || "Đồng ý";
-            const isDanger = trigger.classList.contains("btn-danger") || trigger.classList.contains("text-danger") || trigger.classList.contains("btn-outline-danger");
+            const consequence = trigger.getAttribute("data-dss-consequence");
+
+            let actionType = trigger.getAttribute("data-dss-type");
+            if (!actionType) {
+                if (trigger.classList.contains("btn-danger") ||
+                    trigger.classList.contains("text-danger") ||
+                    trigger.classList.contains("border-danger") ||
+                    trigger.classList.contains("btn-outline-danger")) {
+                    actionType = "danger";
+                } else if (trigger.classList.contains("btn-warning") ||
+                           trigger.classList.contains("text-warning") ||
+                           trigger.classList.contains("border-warning") ||
+                           trigger.classList.contains("btn-outline-warning")) {
+                    actionType = "warning";
+                } else if (trigger.classList.contains("btn-success") ||
+                           trigger.classList.contains("text-success") ||
+                           trigger.classList.contains("border-success") ||
+                           trigger.classList.contains("btn-outline-success")) {
+                    actionType = "success";
+                } else {
+                    actionType = "primary";
+                }
+            }
+
             const form = trigger.closest("form") || trigger.form || (trigger.getAttribute("form") ? document.getElementById(trigger.getAttribute("form")) : null);
 
             DSS.showConfirmModal({
                 title: title,
                 message: message,
+                consequence: consequence,
                 confirmText: confirmText,
-                confirmBtnClass: isDanger ? "btn-primary btn-danger" : "btn-primary",
-                iconClass: isDanger ? "bi bi-exclamation-triangle-fill text-danger" : "bi bi-question-circle-fill text-warning",
+                actionType: actionType,
                 onConfirm: function () {
                     if (form) {
                         // Submit the form

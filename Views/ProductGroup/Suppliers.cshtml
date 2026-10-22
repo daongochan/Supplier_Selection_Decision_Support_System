@@ -1,7 +1,7 @@
 @model SupplierSelectionDSS.Models.ProductGroupSuppliersViewModel
 
 @{
-    ViewData["Title"] = "Group Suppliers";
+    ViewData["Title"] = "Gán nhà cung cấp - " + Model.GroupName;
 }
 
 <div class="page-header">
@@ -9,16 +9,15 @@
     <div>
 
         <div class="page-eyebrow">
-            PRODUCT GROUP
+            NHÓM HÀNG
         </div>
 
         <h1 class="page-title">
-            @Model.GroupName
+            Gán nhà cung cấp: @Model.GroupName
         </h1>
 
         <p class="page-description">
-            Chọn các nhà cung cấp có khả năng cung cấp nhóm hàng
-            này.
+            Chọn các nhà cung cấp có khả năng cung ứng cho nhóm hàng này trong hệ thống.
         </p>
 
     </div>
@@ -26,7 +25,8 @@
 
     <a asp-action="Index"
        class="btn-outline">
-        Back
+        <i class="bi bi-arrow-left"></i>
+        <span>Quay lại</span>
     </a>
 
 </div>
@@ -49,11 +49,11 @@
             <div>
 
                 <span class="card-label">
-                    @Model.GroupCode
+                    Mã nhóm: @Model.GroupCode
                 </span>
 
                 <h2 class="card-title">
-                    Available suppliers
+                    Danh sách nhà cung cấp khả dụng
                 </h2>
 
             </div>
@@ -95,12 +95,11 @@
             <div class="empty-state">
 
                 <h3>
-                    No active suppliers.
+                    Không có nhà cung cấp nào đang hoạt động.
                 </h3>
 
                 <p>
-                    Hãy tạo hoặc kích hoạt nhà cung cấp trước
-                    khi thực hiện gán.
+                    Hãy tạo hoặc kích hoạt nhà cung cấp trước khi thực hiện gán.
                 </p>
 
             </div>
@@ -111,12 +110,12 @@
 
             <a asp-action="Index"
                class="btn-outline">
-                Cancel
+                Hủy bỏ
             </a>
 
             <button type="submit"
                     class="btn-primary">
-                Save suppliers
+                Lưu phân bổ
             </button>
 
         </div>

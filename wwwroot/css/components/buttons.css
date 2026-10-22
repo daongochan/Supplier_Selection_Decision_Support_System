@@ -164,16 +164,26 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    height: 42px;
+    flex-shrink: 0;
 }
 
     .filter-actions .btn-primary,
     .filter-actions .btn-outline {
-        width: 88px;
         height: 42px;
         min-height: 42px;
-        flex: 0 0 88px;
-        padding: 0;
+        padding: 0 16px;
         box-sizing: border-box;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13.5px;
+        font-weight: 500;
+        letter-spacing: 0.1px;
+        border-radius: var(--radius-md);
+        white-space: nowrap;
+        text-decoration: none;
+        cursor: pointer;
     }
 
 

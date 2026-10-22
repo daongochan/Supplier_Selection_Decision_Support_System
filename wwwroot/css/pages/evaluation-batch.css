@@ -1,4 +1,407 @@
 /* =========================================================
+   EVALUATION BATCH MANAGEMENT (ENTERPRISE SAAS STANDARDS)
+   ========================================================= */
+
+/* 1. KPI SUMMARY GRID (4 METRIC CARDS) */
+.batch-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.batch-kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 22px;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), 
+                box-shadow 0.18s cubic-bezier(0.16, 1, 0.3, 1), 
+                border-color 0.18s ease;
+}
+
+.batch-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-elevated);
+    border-color: var(--border-strong);
+}
+
+.batch-kpi-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.batch-kpi-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-family: var(--font-sans);
+}
+
+.batch-kpi-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.2;
+    font-family: var(--font-sans);
+    letter-spacing: -0.5px;
+}
+
+.batch-kpi-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.batch-kpi-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.batch-kpi-icon.icon-blue {
+    background: rgba(37, 99, 235, 0.1);
+    color: #2563eb;
+}
+
+.batch-kpi-icon.icon-green {
+    background: rgba(34, 197, 94, 0.12);
+    color: #16a34a;
+}
+
+.batch-kpi-icon.icon-slate {
+    background: rgba(100, 116, 139, 0.12);
+    color: #64748b;
+}
+
+.batch-kpi-icon.icon-indigo {
+    background: rgba(124, 58, 237, 0.1);
+    color: #7c3aed;
+}
+
+/* 2. FILTER & SEARCH BAR */
+.batch-filter {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(160px, 1fr) minmax(160px, 1fr) auto;
+    align-items: end;
+    gap: 16px;
+    width: 100%;
+}
+
+.batch-filter .filter-field {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.batch-filter .filter-field label {
+    color: var(--muted);
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+}
+
+.batch-filter .form-control {
+    height: 42px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    padding: 0 12px;
+    font-size: 14px;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.batch-filter .form-control:focus {
+    border-color: var(--terracotta);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(184, 80, 66, 0.12);
+}
+
+.batch-filter .filter-actions {
+    height: 42px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.batch-filter .btn-primary,
+.batch-filter .btn-outline {
+    height: 42px;
+    min-height: 42px;
+    padding: 0 16px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13.5px;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+    border-radius: var(--radius-md);
+    white-space: nowrap;
+}
+
+/* 3. TABLE COMPONENTS */
+.batch-code-badge {
+    font-family: var(--font-mono, monospace);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink);
+    background: var(--surface-muted);
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    display: inline-block;
+}
+
+.batch-name-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.batch-name-link {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.batch-name-link:hover {
+    color: var(--terracotta);
+}
+
+.batch-period-tag {
+    font-size: 11.5px;
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.batch-group-cell {
+    display: flex;
+    align-items: center;
+}
+
+.batch-group-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 6px;
+    background: rgba(37, 99, 235, 0.08);
+    color: #2563eb;
+    border: 1px solid rgba(37, 99, 235, 0.18);
+    white-space: nowrap;
+}
+
+.batch-scope-cell {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.batch-scope-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    font-size: 11.5px;
+    font-weight: 500;
+    border-radius: 6px;
+    background: var(--surface-muted);
+    color: var(--ink-soft, var(--body));
+    border: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.batch-date-cell {
+    font-size: 13px;
+    color: var(--muted);
+}
+
+/* Status pills */
+.status-pill.status-draft {
+    background: var(--surface-muted);
+    color: var(--muted);
+}
+.status-pill.status-draft::before {
+    background: var(--muted);
+}
+
+.status-pill.status-evaluating {
+    background: rgba(124, 58, 237, 0.08);
+    color: #7c3aed;
+}
+.status-pill.status-evaluating::before {
+    background: #7c3aed;
+}
+
+.status-pill.status-completed {
+    background: var(--sage-soft);
+    color: var(--sage-dark);
+}
+.status-pill.status-completed::before {
+    background: var(--sage-dark);
+}
+
+.status-pill.status-cancelled {
+    background: rgba(239, 68, 68, 0.08);
+    color: #dc2626;
+}
+.status-pill.status-cancelled::before {
+    background: #dc2626;
+}
+
+/* 4. ACTIONS DROPDOWN */
+.batch-actions-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.batch-actions-dropdown .btn-action-dots {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.batch-actions-dropdown .btn-action-dots:hover,
+.batch-actions-dropdown.is-open .btn-action-dots {
+    background: var(--canvas-soft);
+    color: var(--ink);
+    border-color: var(--border-strong);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.batch-actions-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-elevated);
+    min-width: 190px;
+    padding: 6px;
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    animation: dropdownFadeIn 0.15s ease-out;
+}
+
+.batch-actions-dropdown.is-open .batch-actions-menu {
+    display: flex;
+}
+
+.batch-action-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: background 0.12s ease, color 0.12s ease;
+}
+
+.batch-action-item:hover {
+    background: var(--canvas-soft);
+    color: var(--terracotta);
+}
+
+.batch-action-item.text-primary:hover {
+    color: #2563eb;
+    background: rgba(37, 99, 235, 0.06);
+}
+
+.batch-action-item.text-danger:hover {
+    color: var(--danger);
+    background: var(--danger-soft, rgba(184, 80, 66, 0.08));
+}
+
+.batch-action-item i {
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.batch-action-divider {
+    height: 1px;
+    background: var(--border-soft, var(--border));
+    margin: 4px 0;
+}
+
+@media (max-width: 1100px) {
+    .batch-kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .batch-filter {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .batch-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+    .batch-filter {
+        grid-template-columns: 1fr;
+    }
+    .batch-filter .filter-actions {
+        width: 100%;
+    }
+    .batch-filter .filter-actions .btn-primary,
+    .batch-filter .filter-actions .btn-outline {
+        flex: 1;
+    }
+}
+
+/* =========================================================
    EVALUATION BATCH HEADER
    ========================================================= */
 
@@ -1014,74 +1417,19 @@
 
 
 /* =========================================================
-   BATCH FILTER
+   DASHBOARD SECTION (DETAILS SCREEN)
    ========================================================= */
 
-.filter-card .batch-filter {
-    width: 100%;
-    display: grid !important;
-    grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr) auto !important;
-    align-items: end;
-    column-gap: 16px;
-    row-gap: 0;
-    margin: 0;
+.dashboard-section {
+    margin-bottom: 28px;
 }
 
-
-    .filter-card .batch-filter .filter-field {
-        min-width: 0;
-        width: auto !important;
-        display: flex;
-        flex-direction: column;
-        gap: 7px;
-    }
-
-
-        .filter-card .batch-filter .filter-field label {
-            margin: 0;
-            color: var(--muted);
-            font-family: var(--font-serif);
-            font-size: 12px;
-            font-weight: 600;
-            letter-spacing: 0.7px;
-            line-height: 1.2;
-            text-transform: uppercase;
-        }
-
-
-    .filter-card .batch-filter .form-control {
-        width: 100%;
-        box-sizing: border-box;
-    }
-
-
-    .filter-card .batch-filter .filter-actions {
-        width: auto !important;
-        height: 42px;
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 8px;
-        margin: 0;
-        padding: 0;
-    }
-
-
-        .filter-card .batch-filter .filter-actions .btn-primary,
-        .filter-card .batch-filter .filter-actions .btn-outline {
-            width: 88px !important;
-            height: 42px !important;
-            min-width: 88px !important;
-            max-width: 88px !important;
-            min-height: 42px !important;
-            flex: 0 0 88px !important;
-            padding: 0 !important;
-            box-sizing: border-box;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
+.dashboard-section .section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
 
 
 /* =========================================================
@@ -1179,16 +1527,16 @@
 
 @media (max-width: 760px) {
 
-    .filter-card .batch-filter {
-        grid-template-columns: 1fr !important;
+    .batch-filter {
+        grid-template-columns: 1fr;
         row-gap: 16px;
     }
 
-
-        .filter-card .batch-filter .filter-actions {
-            height: auto;
-            margin-top: 0;
-        }
+    .batch-filter .filter-actions {
+        height: auto;
+        margin-top: 0;
+        width: 100%;
+    }
 
 
     .evaluation-create-stepper {

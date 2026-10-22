@@ -1,104 +1,139 @@
-﻿@model SupplierSelectionDSS.Models.LoginViewModel
+@model SupplierSelectionDSS.Models.LoginViewModel
 
 @{
-    ViewData["Title"] = "Sign in";
+    ViewData["Title"] = "Đăng nhập";
 }
 
 <div class="login-page">
 
-    <div class="login-orb login-orb-one"></div>
-    <div class="login-orb login-orb-two"></div>
-    <div class="login-orb login-orb-three"></div>
-
-
     <div class="login-card">
 
-        <div class="login-header">
-
-            <div class="page-eyebrow">
-                SUPPLIER SELECTION DSS
-            </div>
-
-            <h1>
-                Welcome back
-            </h1>
-
-            <p>
-                Đăng nhập để tiếp tục làm việc với hệ thống
-                hỗ trợ ra quyết định lựa chọn nhà cung cấp.
-            </p>
-
+        <!-- ================================================
+             LEFT — Photo Panel
+             ================================================ -->
+        <div class="login-visual">
+            <img src="/images/login-left.jpg"
+                 alt=""
+                 class="login-visual-img"
+                 aria-hidden="true" />
         </div>
 
 
-        <form asp-action="Login"
-              method="post">
 
-            @Html.AntiForgeryToken()
+        <!-- ================================================
+             RIGHT — Login Form Panel
+             ================================================ -->
 
+        <div class="login-form-panel">
+            <div class="login-form-inner">
 
-            <div asp-validation-summary="ModelOnly"
-                 class="validation-summary">
+                <!-- Header -->
+                <div class="login-form-header">
+                    <h1 class="login-form-title">Đăng nhập</h1>
+                    <p class="login-form-subtitle">
+                        Nhập thông tin đăng nhập để truy cập hệ thống.
+                    </p>
+                </div>
+
+                <!-- Server validation error alert -->
+                @{
+                    var modelErrors = ViewData.ModelState
+                        .SelectMany(x => x.Value?.Errors ?? Enumerable.Empty<Microsoft.AspNetCore.Mvc.ModelBinding.ModelError>())
+                        .Select(e => e.ErrorMessage)
+                        .Where(m => !string.IsNullOrWhiteSpace(m))
+                        .ToList();
+                }
+
+                @if (modelErrors.Any())
+                {
+                    <div class="login-alert" role="alert">
+                        <i class="bi bi-exclamation-circle-fill"></i>
+                        <ul>
+                            @foreach (var err in modelErrors)
+                            {
+                                <li>@err</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                <!-- Form -->
+                <form asp-action="Login"
+                      method="post"
+                      id="loginForm"
+                      autocomplete="on"
+                      novalidate>
+
+                    @Html.AntiForgeryToken()
+
+                    <!-- Username -->
+                    <div class="login-field">
+                        <label class="login-label"
+                               for="Username">
+                            Tên đăng nhập
+                        </label>
+                        <div class="login-input-wrap">
+                            <i class="bi bi-person login-input-icon"></i>
+                            <input asp-for="Username"
+                                   id="Username"
+                                   class="login-input @(ViewData.ModelState["Username"]?.Errors.Count > 0 ? "is-invalid" : "")"
+                                   type="text"
+                                   placeholder="Nhập tên đăng nhập"
+                                   autocomplete="username"
+                                   spellcheck="false" />
+                        </div>
+                        <span asp-validation-for="Username"
+                              class="login-field-error"></span>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="login-field">
+                        <label class="login-label"
+                               for="Password">
+                            Mật khẩu
+                        </label>
+                        <div class="login-input-wrap">
+                            <i class="bi bi-lock login-input-icon"></i>
+                            <input asp-for="Password"
+                                   id="Password"
+                                   class="login-input @(ViewData.ModelState["Password"]?.Errors.Count > 0 ? "is-invalid" : "")"
+                                   type="password"
+                                   placeholder="Nhập mật khẩu"
+                                   autocomplete="current-password" />
+                            <button type="button"
+                                    class="login-pw-toggle"
+                                    id="pwToggle"
+                                    aria-label="Hiện/ẩn mật khẩu"
+                                    aria-pressed="false"
+                                    title="Hiện/ẩn mật khẩu">
+                                <i class="bi bi-eye" id="pwToggleIcon"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="Password"
+                              class="login-field-error"></span>
+                    </div>
+
+                    <!-- Remember me -->
+                    <div class="login-options">
+                        <label class="login-remember-label" for="RememberMe">
+                            <input asp-for="RememberMe"
+                                   id="RememberMe"
+                                   type="checkbox" />
+                            Ghi nhớ đăng nhập
+                        </label>
+                    </div>
+
+                    <!-- Submit -->
+                    <button type="submit"
+                            class="login-submit"
+                            id="loginBtn">
+                        <span id="loginBtnText">Đăng nhập</span>
+                    </button>
+
+                </form>
+
             </div>
-
-
-            <div class="form-group">
-
-                <label asp-for="Username">
-                    Username
-                </label>
-
-                <input asp-for="Username"
-                       class="form-control"
-                       autocomplete="username" />
-
-                <span asp-validation-for="Username"
-                      class="text-danger">
-                </span>
-
-            </div>
-
-
-            <div class="form-group">
-
-                <label asp-for="Password">
-                    Password
-                </label>
-
-                <input asp-for="Password"
-                       class="form-control"
-                       autocomplete="current-password" />
-
-                <span asp-validation-for="Password"
-                      class="text-danger">
-                </span>
-
-            </div>
-
-
-            <div class="login-remember">
-
-                <label>
-
-                    <input asp-for="RememberMe" />
-
-                    <span>
-                        Remember me
-                    </span>
-
-                </label>
-
-            </div>
-
-
-            <button type="submit"
-                    class="btn-primary login-button">
-
-                Sign in
-
-            </button>
-
-        </form>
+        </div>
 
     </div>
 
@@ -106,5 +141,42 @@
 
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (function () {
+
+            // ── Show / Hide Password ──────────────────────────
+            var pwInput  = document.getElementById('Password');
+            var pwToggle = document.getElementById('pwToggle');
+            var pwIcon   = document.getElementById('pwToggleIcon');
+
+            if (pwToggle && pwInput) {
+                pwToggle.addEventListener('click', function () {
+                    var isPassword = pwInput.type === 'password';
+                    pwInput.type   = isPassword ? 'text' : 'password';
+                    pwIcon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+                    pwToggle.setAttribute('aria-pressed', isPassword ? 'true' : 'false');
+                    pwInput.focus();
+                });
+            }
+
+            // ── Loading State on Submit ───────────────────────
+            var form    = document.getElementById('loginForm');
+            var loginBtn = document.getElementById('loginBtn');
+            var btnText  = document.getElementById('loginBtnText');
+
+            if (form && loginBtn) {
+                form.addEventListener('submit', function () {
+                    // Brief delay so native validation runs first
+                    setTimeout(function () {
+                        loginBtn.disabled = true;
+                        loginBtn.innerHTML =
+                            '<span class="login-spinner" aria-hidden="true"></span>' +
+                            '<span>Đang đăng nhập...</span>';
+                    }, 10);
+                });
+            }
+
+        })();
+    </script>
 }

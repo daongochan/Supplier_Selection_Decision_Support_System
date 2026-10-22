@@ -1,25 +1,19 @@
-﻿@model SupplierSelectionDSS.Models.UserFormViewModel
+@model SupplierSelectionDSS.Models.UserFormViewModel
 
 @{
-    ViewData["Title"] = "New User";
+    ViewData["Title"] = "Thêm người dùng";
 }
 
-
-<div class="page-header user-page-header">
+<div class="page-header">
 
     <div>
 
-        <div class="page-eyebrow">
-            SYSTEM · USERS
-        </div>
-
         <h1 class="page-title">
-            New user
+            Thêm người dùng
         </h1>
 
         <p class="page-description">
-            Tạo tài khoản người dùng và phân quyền truy cập
-            cho hệ thống.
+            Tạo tài khoản người dùng và phân quyền truy cập cho hệ thống.
         </p>
 
     </div>
@@ -27,250 +21,136 @@
 </div>
 
 
-<div class="user-form-shell">
+<div class="form-card">
 
-    <div class="form-card">
+    <form asp-action="Create"
+          method="post">
 
-        <form asp-action="Create"
-              method="post">
+        @Html.AntiForgeryToken()
 
-            @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly"
+             class="validation-summary">
+        </div>
 
+        <div class="form-grid">
 
-            <div asp-validation-summary="ModelOnly"
-                 class="validation-summary">
+            <!-- 1. Account Information -->
+            <div class="form-section">
+                <div class="form-section-title">Thông tin tài khoản</div>
+                <div class="form-section-desc">Tên đăng nhập, họ tên và phân quyền truy cập hệ thống</div>
             </div>
 
-
-            <div class="user-form-section">
-
-                <div class="user-form-heading">
-
-                    <div class="page-eyebrow">
-                        ACCOUNT
-                    </div>
-
-                    <h2>
-                        Account information
-                    </h2>
-
-                    <p>
-                        Username được sử dụng để đăng nhập
-                        vào hệ thống.
-                    </p>
-
-                </div>
-
-
-                <div class="form-grid">
-
-
-                    <div class="form-group">
-
-                        <label asp-for="Username">
-                            Username
-                        </label>
-
-                        <input asp-for="Username"
-                               class="form-control"
-                               maxlength="50"
-                               autocomplete="off" />
-
-                        <span asp-validation-for="Username"
-                              class="text-danger">
-                        </span>
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label asp-for="FullName">
-                            Full name
-                        </label>
-
-                        <input asp-for="FullName"
-                               class="form-control"
-                               maxlength="100" />
-
-                        <span asp-validation-for="FullName"
-                              class="text-danger">
-                        </span>
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label asp-for="Email">
-                            Email
-                        </label>
-
-                        <input asp-for="Email"
-                               class="form-control"
-                               type="email"
-                               maxlength="100" />
-
-                        <span asp-validation-for="Email"
-                              class="text-danger">
-                        </span>
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label asp-for="Phone">
-                            Phone
-                        </label>
-
-                        <input asp-for="Phone"
-                               class="form-control"
-                               maxlength="20" />
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label asp-for="Role">
-                            Role
-                        </label>
-
-                        <select asp-for="Role"
-                                class="form-control">
-
-                            <option value="Administrator">
-                                Administrator
-                            </option>
-
-                            <option value="PurchasingStaff">
-                                Purchasing Staff
-                            </option>
-
-                            <option value="Expert">
-                                Expert
-                            </option>
-
-                            <option value="Manager">
-                                Manager
-                            </option>
-
-                        </select>
-
-                        <span asp-validation-for="Role"
-                              class="text-danger">
-                        </span>
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label asp-for="Status">
-                            Status
-                        </label>
-
-                        <select asp-for="Status"
-                                class="form-control">
-
-                            <option value="Active">
-                                Active
-                            </option>
-
-                            <option value="Locked">
-                                Locked
-                            </option>
-
-                            <option value="Inactive">
-                                Inactive
-                            </option>
-
-                        </select>
-
-                        <span asp-validation-for="Status"
-                              class="text-danger">
-                        </span>
-
-                    </div>
-
-                </div>
-
+            <div class="form-group">
+                <label asp-for="Username" class="required-field">
+                    Tên đăng nhập
+                </label>
+                <input asp-for="Username"
+                       class="form-control"
+                       maxlength="50"
+                       placeholder="VD: nguyenvanan"
+                       autocomplete="off" />
+                <span asp-validation-for="Username" class="text-danger"></span>
             </div>
 
-
-            <div class="user-form-section">
-
-                <div class="user-form-heading">
-
-                    <div class="page-eyebrow">
-                        SECURITY
-                    </div>
-
-                    <h2>
-                        Initial password
-                    </h2>
-
-                    <p>
-                        Mật khẩu phải có ít nhất 8 ký tự.
-                    </p>
-
-                </div>
-
-
-                <div class="form-grid">
-
-                    <div class="form-group">
-
-                        <label asp-for="Password">
-                            Password
-                        </label>
-
-                        <input asp-for="Password"
-                               class="form-control"
-                               type="password"
-                               minlength="8"
-                               autocomplete="new-password" />
-
-                        <span asp-validation-for="Password"
-                              class="text-danger">
-                        </span>
-
-                    </div>
-
-                </div>
-
+            <div class="form-group">
+                <label asp-for="FullName" class="required-field">
+                    Họ và tên
+                </label>
+                <input asp-for="FullName"
+                       class="form-control"
+                       maxlength="100"
+                       placeholder="Họ và tên đầy đủ của người dùng" />
+                <span asp-validation-for="FullName" class="text-danger"></span>
             </div>
 
-
-            <div class="form-actions">
-
-                <a asp-action="Index"
-                   class="btn-outline">
-
-                    Cancel
-
-                </a>
-
-
-                <button type="submit"
-                        class="btn-primary">
-
-                    Create user
-
-                </button>
-
+            <div class="form-group">
+                <label asp-for="Role" class="required-field">
+                    Vai trò người dùng
+                </label>
+                <select asp-for="Role" class="form-control">
+                    <option value="Administrator">Administrator (Quản trị viên hệ thống)</option>
+                    <option value="PurchasingStaff">Purchasing Staff (Nhân viên mua sắm)</option>
+                    <option value="Expert">Expert (Chuyên gia đánh giá)</option>
+                    <option value="Manager">Manager (Quản lý / Người phê duyệt)</option>
+                </select>
+                <span asp-validation-for="Role" class="text-danger"></span>
             </div>
 
-        </form>
+            <div class="form-group">
+                <label asp-for="Status" class="required-field">
+                    Trạng thái hoạt động
+                </label>
+                <select asp-for="Status" class="form-control">
+                    <option value="Active">Active (Đang hoạt động)</option>
+                    <option value="Locked">Locked (Tạm khóa)</option>
+                    <option value="Inactive">Inactive (Ngừng hoạt động)</option>
+                </select>
+                <span asp-validation-for="Status" class="text-danger"></span>
+            </div>
 
-    </div>
+            <!-- 2. Contact Information -->
+            <div class="form-section">
+                <div class="form-section-title">Thông tin liên hệ</div>
+                <div class="form-section-desc">Địa chỉ email và số điện thoại dùng để nhận thông báo</div>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Email">
+                    Địa chỉ email
+                </label>
+                <input asp-for="Email"
+                       class="form-control"
+                       type="email"
+                       maxlength="100"
+                       placeholder="email@domain.com" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Phone">
+                    Số điện thoại
+                </label>
+                <input asp-for="Phone"
+                       class="form-control"
+                       maxlength="20"
+                       placeholder="Số điện thoại liên hệ" />
+                <span asp-validation-for="Phone" class="text-danger"></span>
+            </div>
+
+            <!-- 3. Security Credentials -->
+            <div class="form-section">
+                <div class="form-section-title">Bảo mật & Mật khẩu khởi tạo</div>
+                <div class="form-section-desc">Mật khẩu ban đầu dùng để đăng nhập vào hệ thống (tối thiểu 8 ký tự)</div>
+            </div>
+
+            <div class="form-group form-group-full">
+                <label asp-for="Password" class="required-field">
+                    Mật khẩu khởi tạo
+                </label>
+                <input asp-for="Password"
+                       class="form-control"
+                       type="password"
+                       minlength="8"
+                       placeholder="Nhập mật khẩu (tối thiểu 8 ký tự)"
+                       autocomplete="new-password" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+
+        </div>
+
+        <div class="form-actions">
+            <a asp-action="Index" class="btn-outline">
+                Hủy bỏ
+            </a>
+            <button type="submit" class="btn-primary">
+                Tạo người dùng
+            </button>
+        </div>
+
+    </form>
 
 </div>
 
-
 @section Scripts {
-
     <partial name="_ValidationScriptsPartial" />
-
 }

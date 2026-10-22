@@ -1,210 +1,284 @@
 @model SupplierSelectionDSS.Models.ProductGroupIndexViewModel
 
 @{
-    ViewData["Title"] = "Product Groups";
+    ViewData["Title"] = "Nhóm hàng";
+
+    var activePercent = Model.TotalGroups > 0 
+        ? (Model.ActiveGroups * 100.0 / Model.TotalGroups).ToString("0.#") 
+        : "0";
+    var inactivePercent = Model.TotalGroups > 0 
+        ? (Model.InactiveGroups * 100.0 / Model.TotalGroups).ToString("0.#") 
+        : "0";
 }
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/product-group.css" asp-append-version="true" />
+}
+
+<!-- =========================================================
+     PAGE HEADER
+     ========================================================= -->
 <div class="page-header">
-
     <div>
-
-        <h1 class="page-title">
-            Product groups
-        </h1>
-
+        <h1 class="page-title">Nhóm hàng</h1>
         <p class="page-description">
-            Quản lý các nhóm hàng hóa và dịch vụ được sử dụng
-            trong quá trình lựa chọn nhà cung cấp.
+            Quản lý các nhóm hàng hóa, dịch vụ và cấu hình phân bổ nhà cung cấp trong hệ thống đánh giá.
         </p>
-
     </div>
 
-    <a asp-action="Create"
-       class="btn-primary">
-        Add group
+    <a asp-action="Create" class="btn-primary">
+        <i class="bi bi-plus-lg"></i>
+        <span>Thêm nhóm hàng</span>
     </a>
-
 </div>
 
+<!-- =========================================================
+     KPI SUMMARY GRID (100% GENUINE DATABASE METRICS)
+     ========================================================= -->
+<div class="group-kpi-grid">
+    <!-- Card 1: Tổng nhóm hàng -->
+    <div class="group-kpi-card">
+        <div class="group-kpi-content">
+            <span class="group-kpi-label">Tổng nhóm hàng</span>
+            <span class="group-kpi-value">@Model.TotalGroups.ToString("N0")</span>
+            <div class="group-kpi-meta">
+                <span class="kpi-meta-pill pill-blue">
+                    <i class="bi bi-boxes"></i> Phân loại hệ thống
+                </span>
+            </div>
+        </div>
+        <div class="group-kpi-icon icon-blue" aria-hidden="true">
+            <i class="bi bi-boxes"></i>
+        </div>
+    </div>
 
+    <!-- Card 2: Đang hoạt động -->
+    <div class="group-kpi-card">
+        <div class="group-kpi-content">
+            <span class="group-kpi-label">Đang hoạt động</span>
+            <span class="group-kpi-value">@Model.ActiveGroups.ToString("N0")</span>
+            <div class="group-kpi-meta">
+                <span class="kpi-meta-pill pill-green">
+                    <i class="bi bi-check2"></i> @activePercent% tổng số
+                </span>
+            </div>
+        </div>
+        <div class="group-kpi-icon icon-green" aria-hidden="true">
+            <i class="bi bi-check-circle"></i>
+        </div>
+    </div>
 
+    <!-- Card 3: Ngừng hoạt động -->
+    <div class="group-kpi-card">
+        <div class="group-kpi-content">
+            <span class="group-kpi-label">Ngừng hoạt động</span>
+            <span class="group-kpi-value">@Model.InactiveGroups.ToString("N0")</span>
+            <div class="group-kpi-meta">
+                <span class="kpi-meta-pill pill-muted">
+                    <i class="bi bi-pause"></i> @inactivePercent% tổng số
+                </span>
+            </div>
+        </div>
+        <div class="group-kpi-icon icon-slate" aria-hidden="true">
+            <i class="bi bi-slash-circle"></i>
+        </div>
+    </div>
 
+    <!-- Card 4: Nhà cung cấp liên kết -->
+    <div class="group-kpi-card">
+        <div class="group-kpi-content">
+            <span class="group-kpi-label">Nhà cung cấp liên kết</span>
+            <span class="group-kpi-value">@Model.TotalLinkedSuppliers.ToString("N0")</span>
+            <div class="group-kpi-meta">
+                <span class="kpi-meta-pill pill-indigo">
+                    <i class="bi bi-building-check"></i> Đã gán nhóm hàng
+                </span>
+            </div>
+        </div>
+        <div class="group-kpi-icon icon-indigo" aria-hidden="true">
+            <i class="bi bi-building-check"></i>
+        </div>
+    </div>
+</div>
+
+<!-- =========================================================
+     SEARCH & FILTER CARD
+     ========================================================= -->
 <div class="filter-card">
+    <form asp-action="Index" method="get" class="group-filter">
+        <input type="hidden" name="page" value="1" />
 
-    <form asp-action="Index"
-          method="get"
-          class="supplier-filter">
-
+        <!-- 1. Keyword Search -->
         <div class="filter-field">
-
-            <label for="keyword">
-                Search
-            </label>
-
+            <label for="keyword">Tìm kiếm</label>
             <input id="keyword"
                    name="keyword"
                    value="@Model.Keyword"
                    class="form-control"
-                   placeholder="Group code or group name..." />
-
+                   placeholder="Mã nhóm, tên nhóm, mô tả..." />
         </div>
 
-
+        <!-- 2. Status Dropdown -->
         <div class="filter-field">
-
-            <label for="status">
-                Status
-            </label>
-
-            <select id="status"
-                    name="status"
-                    class="form-control">
-
-                <option value="All"
-                        selected="@(Model.Status == "All")">
-                    All
+            <label for="status">Trạng thái</label>
+            <select id="status" name="status" class="form-control">
+                <option value="All" selected="@(string.IsNullOrEmpty(Model.Status) || Model.Status == "All")">
+                    Tất cả trạng thái
                 </option>
-
-                <option value="Active"
-                        selected="@(Model.Status == "Active")">
-                    Active
+                <option value="Active" selected="@(Model.Status == "Active")">
+                    Đang hoạt động
                 </option>
-
-                <option value="Inactive"
-                        selected="@(Model.Status == "Inactive")">
-                    Inactive
+                <option value="Inactive" selected="@(Model.Status == "Inactive")">
+                    Ngừng hoạt động
                 </option>
-
             </select>
-
         </div>
 
-
+        <!-- 3. Filter Action Buttons (Same height 42px) -->
         <div class="filter-actions">
-
-            <button type="submit"
-                    class="btn-primary">
-                Search
+            <button type="submit" class="btn-primary" title="Tìm kiếm">
+                Tìm kiếm
             </button>
 
-            <a asp-action="Index"
-               class="btn-outline">
-                Reset
+            <a asp-action="Index" class="btn-outline" title="Đặt lại bộ lọc">
+                Đặt lại
             </a>
-
         </div>
-
     </form>
-
 </div>
 
-
+<!-- =========================================================
+     CENTRAL DATA TABLE CARD
+     ========================================================= -->
 <div class="table-card">
-
     @if (Model.ProductGroups.Any())
     {
         <div class="data-table-wrapper">
-
             <table class="data-table">
-
                 <thead>
                     <tr>
-                        <th>Code</th>
-                        <th>Group</th>
-                        <th>Description</th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                        <th style="width: 140px;">Mã nhóm</th>
+                        <th style="min-width: 220px;">Tên nhóm hàng</th>
+                        <th style="min-width: 260px;">Mô tả</th>
+                        <th style="width: 160px;">Nhà cung cấp</th>
+                        <th style="width: 150px;">Trạng thái</th>
+                        <th style="width: 70px; text-align: center;">Thao tác</th>
                     </tr>
                 </thead>
 
                 <tbody>
-
                     @foreach (var group in Model.ProductGroups)
                     {
+                        var supplierCount = group.Suppliers?.Count ?? 0;
                         <tr>
-
+                            <!-- Mã nhóm -->
                             <td>
-                                <strong>
-                                    @group.GroupCode
-                                </strong>
+                                <span class="group-code-badge">@group.GroupCode</span>
                             </td>
 
+                            <!-- Tên nhóm hàng -->
                             <td>
-                                <strong>
-                                    @group.GroupName
-                                </strong>
+                                <div class="group-name-cell">
+                                    <a asp-action="Edit" asp-route-id="@group.GroupId" class="group-name-link">
+                                        @group.GroupName
+                                    </a>
+                                </div>
                             </td>
 
+                            <!-- Mô tả -->
                             <td>
-                                @(string.IsNullOrWhiteSpace(group.Description)
-                                    ? "—"
-                                    : group.Description)
-                            </td>
-
-                            <td>
-
-                                @if (group.Status == "Active")
+                                @if (!string.IsNullOrWhiteSpace(group.Description))
                                 {
-                                    <span class="status-pill status-active">
-                                        Active
+                                    <span class="group-description-cell" title="@group.Description">
+                                        @group.Description
                                     </span>
                                 }
                                 else
                                 {
-                                    <span class="status-pill status-inactive">
-                                        Inactive
-                                    </span>
+                                    <span class="text-muted">—</span>
                                 }
-
                             </td>
 
+                            <!-- Nhà cung cấp liên kết -->
                             <td>
-
-                                <div class="table-actions">
-
-                                    <a asp-action="Suppliers"
-                                       asp-route-id="@group.GroupId"
-                                       class="action-link">
-                                        Suppliers
-                                    </a>
-
-                                    <a asp-action="Edit"
-                                       asp-route-id="@group.GroupId"
-                                       class="action-link">
-                                        Edit
-                                    </a>
-
-                                    <form asp-action="ToggleStatus"
-                                          method="post">
-
-                                        @Html.AntiForgeryToken()
-
-                                        <input type="hidden"
-                                               name="id"
-                                               value="@group.GroupId" />
-
-                                        <button type="submit"
-                                                class="action-link">
-
-                                            @(group.Status == "Active"
-                                                ? "Deactivate"
-                                                : "Activate")
-
-                                        </button>
-
-                                    </form>
-
-                                </div>
-
+                                <a asp-action="Suppliers" asp-route-id="@group.GroupId" 
+                                   class="group-suppliers-pill @(supplierCount == 0 ? "is-empty" : "")"
+                                   title="Xem và quản lý nhà cung cấp thuộc nhóm này">
+                                    <i class="bi bi-building"></i>
+                                    <span>@supplierCount NCC</span>
+                                </a>
                             </td>
 
+                            <!-- Trạng thái -->
+                            <td>
+                                @if (group.Status == "Active")
+                                {
+                                    <span class="status-pill status-active">Hoạt động</span>
+                                }
+                                else
+                                {
+                                    <span class="status-pill status-inactive">Ngừng hoạt động</span>
+                                }
+                            </td>
+
+                            <!-- Thao tác dropdown [ ⋯ ] -->
+                            <td style="text-align: center;">
+                                <div class="group-actions-dropdown">
+                                    <button type="button"
+                                            class="btn-action-dots"
+                                            aria-label="Thao tác cho @group.GroupName"
+                                            title="Thao tác">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+
+                                    <div class="group-actions-menu">
+                                        <a asp-action="Edit"
+                                           asp-route-id="@group.GroupId"
+                                           class="group-action-item">
+                                            <i class="bi bi-pencil"></i>
+                                            <span>Chỉnh sửa</span>
+                                        </a>
+
+                                        <a asp-action="Suppliers"
+                                           asp-route-id="@group.GroupId"
+                                           class="group-action-item">
+                                            <i class="bi bi-building-check"></i>
+                                            <span>Gán nhà cung cấp</span>
+                                        </a>
+
+                                        <div class="group-action-divider"></div>
+
+                                        <form asp-action="ToggleStatus"
+                                              method="post"
+                                              class="m-0 p-0">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden"
+                                                   name="id"
+                                                   value="@group.GroupId" />
+                                            <button type="submit"
+                                                    class="group-action-item @(group.Status == "Active" ? "text-danger" : "text-success")"
+                                                    data-dss-confirm="@(group.Status == "Active" ? $"Bạn có chắc chắn muốn ngừng hoạt động nhóm hàng \"{group.GroupName}\"?" : $"Bạn có chắc chắn muốn kích hoạt lại nhóm hàng \"{group.GroupName}\"?")"
+                                                    data-dss-title="@(group.Status == "Active" ? "Xác nhận ngừng hoạt động" : "Xác nhận kích hoạt")"
+                                                    data-dss-btn-text="@(group.Status == "Active" ? "Ngừng hoạt động" : "Kích hoạt")">
+                                                @if (group.Status == "Active")
+                                                {
+                                                    <i class="bi bi-slash-circle"></i>
+                                                    <span>Ngừng hoạt động</span>
+                                                }
+                                                else
+                                                {
+                                                    <i class="bi bi-check-circle"></i>
+                                                    <span>Kích hoạt</span>
+                                                }
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </td>
                         </tr>
                     }
-
                 </tbody>
-
             </table>
-
         </div>
 
         <partial name="_Pagination" model="Model" />
@@ -212,21 +286,59 @@
     else
     {
         <div class="empty-state">
-
-            <h3>
-                No product groups found.
-            </h3>
-
+            <div style="font-size: 40px; color: var(--muted); margin-bottom: 12px;">
+                <i class="bi bi-search"></i>
+            </div>
+            <h3>Không tìm thấy nhóm hàng nào</h3>
             <p>
-                Chưa có nhóm hàng phù hợp với điều kiện tìm kiếm.
+                Không có nhóm hàng nào phù hợp với điều kiện tìm kiếm hiện tại.
+                Vui lòng thử lại với từ khóa hoặc bộ lọc khác.
             </p>
-
-            <a asp-action="Create"
-               class="btn-primary">
-                Add group
-            </a>
-
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 16px;">
+                <a asp-action="Index" class="btn-outline">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                    <span>Xóa bộ lọc</span>
+                </a>
+                <a asp-action="Create" class="btn-primary">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>Thêm nhóm hàng mới</span>
+                </a>
+            </div>
         </div>
     }
-
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Dropdown menu toggle
+            document.addEventListener("click", function (e) {
+                const trigger = e.target.closest(".btn-action-dots");
+                const openDropdown = document.querySelector(".group-actions-dropdown.is-open");
+
+                if (trigger) {
+                    e.stopPropagation();
+                    const parent = trigger.closest(".group-actions-dropdown");
+                    if (openDropdown && openDropdown !== parent) {
+                        openDropdown.classList.remove("is-open");
+                    }
+                    if (parent) {
+                        parent.classList.toggle("is-open");
+                    }
+                } else if (openDropdown && !e.target.closest(".group-actions-menu")) {
+                    openDropdown.classList.remove("is-open");
+                }
+            });
+
+            // Close on Escape key
+            document.addEventListener("keydown", function (e) {
+                if (e.key === "Escape") {
+                    const openDropdown = document.querySelector(".group-actions-dropdown.is-open");
+                    if (openDropdown) {
+                        openDropdown.classList.remove("is-open");
+                    }
+                }
+            });
+        });
+    </script>
+}

@@ -1,419 +1,310 @@
 @model SupplierSelectionDSS.Models.AuditLogIndexViewModel
-@using SupplierSelectionDSS.Constants;
+@using SupplierSelectionDSS.Constants
 
 @{
-    ViewData["Title"] = "Audit Logs";
+    ViewData["Title"] = "Nhật ký hệ thống";
+    var isFiltered = !string.IsNullOrWhiteSpace(Model.Keyword) ||
+                     (!string.IsNullOrWhiteSpace(Model.ActionType) && Model.ActionType != "All") ||
+                     Model.UserId.HasValue;
 }
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/audit-log.css" asp-append-version="true" />
+}
 
 <!-- =========================================================
      PAGE HEADER
      ========================================================= -->
-
-<div class="page-header audit-log-page-header">
-
+<div class="page-header">
     <div>
-
-        <div class="page-eyebrow">
-            SYSTEM
-        </div>
-
-        <h1 class="page-title">
-            Audit logs
-        </h1>
-
+        <h1 class="page-title">Nhật ký hệ thống</h1>
         <p class="page-description">
-            Theo dõi lịch sử thao tác của người dùng
-            và các quyết định trong hệ thống.
+            Theo dõi và kiểm toán lịch sử thao tác của người dùng, thay đổi dữ liệu và các quyết định trong hệ thống DSS.
         </p>
-
     </div>
-
 </div>
 
+<!-- =========================================================
+     KPI SUMMARY GRID (100% GENUINE DATABASE METRICS)
+     ========================================================= -->
+<div class="audit-kpi-grid">
+    <!-- Card 1: Tổng bản ghi -->
+    <div class="audit-kpi-card">
+        <div class="audit-kpi-content">
+            <span class="audit-kpi-label">Tổng bản ghi</span>
+            <span class="audit-kpi-value">@Model.TotalLogs.ToString("N0")</span>
+            <div class="audit-kpi-meta">
+                <span class="kpi-meta-pill pill-blue">
+                    <i class="bi bi-journal-text"></i> Toàn bộ hệ thống
+                </span>
+            </div>
+        </div>
+        <div class="audit-kpi-icon icon-blue" aria-hidden="true">
+            <i class="bi bi-journal-text"></i>
+        </div>
+    </div>
+
+    <!-- Card 2: Hoạt động hôm nay -->
+    <div class="audit-kpi-card">
+        <div class="audit-kpi-content">
+            <span class="audit-kpi-label">Hôm nay</span>
+            <span class="audit-kpi-value">@Model.TodayLogs.ToString("N0")</span>
+            <div class="audit-kpi-meta">
+                <span class="kpi-meta-pill pill-green">
+                    <i class="bi bi-calendar-check"></i> Phát sinh trong ngày
+                </span>
+            </div>
+        </div>
+        <div class="audit-kpi-icon icon-green" aria-hidden="true">
+            <i class="bi bi-calendar-check"></i>
+        </div>
+    </div>
+
+    <!-- Card 3: Người thao tác -->
+    <div class="audit-kpi-card">
+        <div class="audit-kpi-content">
+            <span class="audit-kpi-label">Người thao tác</span>
+            <span class="audit-kpi-value">@Model.ActiveUsersCount.ToString("N0")</span>
+            <div class="audit-kpi-meta">
+                <span class="kpi-meta-pill pill-indigo">
+                    <i class="bi bi-people"></i> Tài khoản ghi nhận
+                </span>
+            </div>
+        </div>
+        <div class="audit-kpi-icon icon-indigo" aria-hidden="true">
+            <i class="bi bi-people"></i>
+        </div>
+    </div>
+
+    <!-- Card 4: Thao tác trọng yếu -->
+    <div class="audit-kpi-card">
+        <div class="audit-kpi-content">
+            <span class="audit-kpi-label">Thao tác trọng yếu</span>
+            <span class="audit-kpi-value">@Model.CriticalActionsCount.ToString("N0")</span>
+            <div class="audit-kpi-meta">
+                <span class="kpi-meta-pill pill-amber">
+                    <i class="bi bi-shield-check"></i> Đánh giá & Phê duyệt
+                </span>
+            </div>
+        </div>
+        <div class="audit-kpi-icon icon-amber" aria-hidden="true">
+            <i class="bi bi-shield-check"></i>
+        </div>
+    </div>
+</div>
 
 <!-- =========================================================
-     FILTER
+     SEARCH & FILTER CARD
      ========================================================= -->
-
 <div class="filter-card">
+    <form asp-action="Index" method="get" class="audit-filter">
+        <input type="hidden" name="page" value="1" />
 
-    <form asp-action="Index"
-          method="get"
-          class="audit-log-filter">
-
+        <!-- 1. Keyword Search -->
         <div class="filter-field">
-
-            <label for="keyword">
-                Search
-            </label>
-
+            <label for="keyword">Tìm kiếm</label>
             <input id="keyword"
                    name="keyword"
                    value="@Model.Keyword"
                    class="form-control"
-                   placeholder="User, action, target..." />
-
+                   placeholder="Người dùng, thao tác, đối tượng, mô tả..." />
         </div>
 
-
+        <!-- 2. Action Type Dropdown -->
         <div class="filter-field">
-
-            <label for="actionType">
-                Action
-            </label>
-
-            <select id="actionType"
-                    name="actionType"
-                    class="form-control">
-
-                <option value="All">
-                    All actions
+            <label for="actionType">Hành động</label>
+            <select id="actionType" name="actionType" class="form-control">
+                <option value="All" selected="@(string.IsNullOrEmpty(Model.ActionType) || Model.ActionType == "All")">
+                    Tất cả hành động
                 </option>
-
-                @foreach (
-                    var action
-                    in AuditActions.All)
+                @foreach (var action in AuditActions.All)
                 {
-                    if (Model.ActionType == action)
-                    {
-                        <option value="@action"
-                                selected>
-                            @action
-                        </option>
-                    }
-                    else
-                    {
-                        <option value="@action">
-                            @action
-                        </option>
-                    }
+                    <option value="@action" selected="@(Model.ActionType == action)">
+                        @action
+                    </option>
                 }
-
             </select>
-
         </div>
 
-
+        <!-- 3. User Dropdown -->
         <div class="filter-field">
-
-            <label for="userId">
-                User
-            </label>
-
-            <select id="userId"
-                    name="userId"
-                    class="form-control">
-
-                @if (!Model.UserId.HasValue)
+            <label for="userId">Người thực hiện</label>
+            <select id="userId" name="userId" class="form-control">
+                <option value="" selected="@(!Model.UserId.HasValue)">
+                    Tất cả người dùng
+                </option>
+                @foreach (var u in Model.Users)
                 {
-                    <option value=""
-                            selected>
-                        All users
+                    <option value="@u.UserId" selected="@(Model.UserId == u.UserId)">
+                        @u.FullName · @u.Username
                     </option>
                 }
-                else
-                {
-                    <option value="">
-                        All users
-                    </option>
-                }
-
-
-                @foreach (
-                    var user
-                    in Model.Users)
-                {
-                    if (Model.UserId == user.UserId)
-                    {
-                        <option value="@user.UserId"
-                                selected>
-                            @user.FullName
-                            ·
-                            @user.Username
-                        </option>
-                    }
-                    else
-                    {
-                        <option value="@user.UserId">
-                            @user.FullName
-                            ·
-                            @user.Username
-                        </option>
-                    }
-                }
-
             </select>
-
         </div>
 
-
+        <!-- 4. Filter Action Buttons (Same height 42px) -->
         <div class="filter-actions">
-
-            <button type="submit"
-                    class="btn-primary">
-
-                Search
-
+            <button type="submit" class="btn-primary" title="Tìm kiếm">
+                Tìm kiếm
             </button>
 
-
-            <a asp-action="Index"
-               class="btn-outline">
-
-                Reset
-
+            <a asp-action="Index" class="btn-outline" title="Đặt lại bộ lọc">
+                Đặt lại
             </a>
+        </div>
+    </form>
+</div>
 
+@if (isFiltered)
+{
+    <div class="audit-filter-banner">
+        <div class="audit-filter-banner-text">
+            <i class="bi bi-funnel-fill"></i>
+            <span>
+                Tìm thấy <strong>@Model.TotalCount.ToString("N0")</strong> bản ghi phù hợp với bộ lọc hiện tại.
+            </span>
         </div>
 
-    </form>
-
-</div>
-
-
-<!-- =========================================================
-     SUMMARY
-     ========================================================= -->
-
-<div class="audit-log-summary">
-
-    <div class="surface-card audit-log-summary-card">
-
-        <span class="card-label">
-            LOG ENTRIES
-        </span>
-
-        <strong>
-            @Model.Logs.Count.ToString("N0")
-        </strong>
-
-        <span>
-            Matching records
-        </span>
-
+        <a asp-action="Index" class="audit-filter-banner-reset">
+            <i class="bi bi-x-circle"></i> Đặt lại bộ lọc
+        </a>
     </div>
-
-</div>
-
+}
 
 <!-- =========================================================
-     TABLE
+     CENTRAL DATA TABLE CARD
      ========================================================= -->
-
-<div class="table-card audit-log-table-card">
-
+<div class="table-card">
     @if (Model.Logs.Any())
     {
         <div class="data-table-wrapper">
-
-            <table class="data-table audit-log-table">
-
+            <table class="data-table audit-table">
                 <thead>
-
                     <tr>
-
-                        <th>
-                            Time
-                        </th>
-
-                        <th>
-                            User
-                        </th>
-
-                        <th>
-                            Action
-                        </th>
-
-                        <th>
-                            Target
-                        </th>
-
-                        <th>
-                            Description
-                        </th>
-
-                        <th>
-                            Change
-                        </th>
-
+                        <th style="width: 130px;">Thời gian</th>
+                        <th style="min-width: 180px;">Người thực hiện</th>
+                        <th style="width: 170px;">Hành động</th>
+                        <th style="width: 160px;">Đối tượng</th>
+                        <th style="min-width: 250px;">Nội dung mô tả</th>
+                        <th style="min-width: 180px;">Thay đổi dữ liệu</th>
                     </tr>
-
                 </thead>
 
-
                 <tbody>
-
-                    @foreach (
-                        var log
-                        in Model.Logs)
+                    @foreach (var log in Model.Logs)
                     {
+                        var actionClass = "action-default";
+                        if (log.ActionType.Contains("Create") || log.ActionType.Contains("Start"))
+                        {
+                            actionClass = "action-create";
+                        }
+                        else if (log.ActionType.Contains("Update") || log.ActionType.Contains("Save"))
+                        {
+                            actionClass = "action-update";
+                        }
+                        else if (log.ActionType.Contains("Approve"))
+                        {
+                            actionClass = "action-approve";
+                        }
+                        else if (log.ActionType.Contains("Reject") || log.ActionType.Contains("Cancel"))
+                        {
+                            actionClass = "action-danger";
+                        }
+                        else if (log.ActionType.Contains("Calculate") || log.ActionType.Contains("AHP") || log.ActionType.Contains("TOPSIS"))
+                        {
+                            actionClass = "action-calc";
+                        }
+
                         <tr>
-
-                            <!-- Time -->
-
-                            <td class="audit-log-time">
-
-                                <strong>
-                                    @log.ActionTime.ToString("dd/MM/yyyy")
-                                </strong>
-
-                                <span class="table-muted">
-                                    @log.ActionTime.ToString("HH:mm:ss")
-                                </span>
-
+                            <!-- Thời gian -->
+                            <td>
+                                <div class="audit-time-cell">
+                                    <strong>@log.ActionTime.ToLocalTime().ToString("dd/MM/yyyy")</strong>
+                                    <span class="audit-time-sub">@log.ActionTime.ToLocalTime().ToString("HH:mm:ss")</span>
+                                </div>
                             </td>
 
-
-                            <!-- User -->
-
+                            <!-- Người thực hiện -->
                             <td>
-
-                                <strong>
-                                    @log.FullName
-                                </strong>
-
-                                <span class="table-muted">
-                                    @log.Username
-                                </span>
-
+                                <div class="audit-user-cell">
+                                    <span class="audit-user-name">@log.FullName</span>
+                                    <span class="user-code-badge audit-username-tag">@log.Username</span>
+                                </div>
                             </td>
 
-
-                            <!-- Action -->
-
+                            <!-- Hành động -->
                             <td>
-
-                                <span class="
-                                    audit-action-pill
-                                    audit-action-@log.ActionType
-                                    .ToLowerInvariant()
-                                    .Replace(" ", " -")">
-
+                                <span class="audit-action-badge @actionClass">
                                     @log.ActionType
-
                                 </span>
-
                             </td>
 
-
-                            <!-- Target -->
-
+                            <!-- Đối tượng -->
                             <td>
-
-                                @if (
-                                    !string.IsNullOrWhiteSpace(
-                                        log.TargetTable))
+                                @if (!string.IsNullOrWhiteSpace(log.TargetTable))
                                 {
-                                    <strong>
-                                        @log.TargetTable
-                                    </strong>
-
-                                    @if (log.TargetId.HasValue)
-                                    {
-                                        <span class="table-muted">
-                                            #@log.TargetId.Value
-                                        </span>
-                                    }
+                                    <div class="audit-target-cell">
+                                        <span class="audit-target-table">@log.TargetTable</span>
+                                        @if (log.TargetId.HasValue)
+                                        {
+                                            <span class="audit-target-id">#@log.TargetId.Value</span>
+                                        }
+                                    </div>
                                 }
                                 else
                                 {
-                                    <span class="table-muted">
-                                        —
-                                    </span>
+                                    <span class="text-muted">—</span>
                                 }
-
                             </td>
 
-
-                            <!-- Description -->
-
+                            <!-- Nội dung mô tả -->
                             <td>
-
-                                @if (
-                                    !string.IsNullOrWhiteSpace(
-                                        log.Description))
+                                @if (!string.IsNullOrWhiteSpace(log.Description))
                                 {
-                                    <span class="audit-description">
-                                        @log.Description
-                                    </span>
+                                    <span class="audit-desc-text">@log.Description</span>
                                 }
                                 else
                                 {
-                                    <span class="table-muted">
-                                        —
-                                    </span>
+                                    <span class="text-muted">—</span>
                                 }
-
                             </td>
 
-
-                            <!-- Change -->
-
+                            <!-- Thay đổi dữ liệu -->
                             <td>
-
-                                @if (
-                                    !string.IsNullOrWhiteSpace(
-                                        log.OldValue) ||
-                                    !string.IsNullOrWhiteSpace(
-                                        log.NewValue))
+                                @if (!string.IsNullOrWhiteSpace(log.OldValue) || !string.IsNullOrWhiteSpace(log.NewValue))
                                 {
-                                    <details class="audit-change">
-
-                                        <summary>
-                                            View change
+                                    <details class="audit-change-details">
+                                        <summary class="audit-change-summary">
+                                            <i class="bi bi-code-square"></i>
+                                            <span>Xem thay đổi</span>
                                         </summary>
-
-
-                                        @if (
-                                            !string.IsNullOrWhiteSpace(
-                                                log.OldValue))
-                                        {
-                                            <div>
-
-                                                <span>
-                                                    Old
-                                                </span>
-
-                                                <pre>@log.OldValue</pre>
-
-                                            </div>
-                                        }
-
-
-                                        @if (
-                                            !string.IsNullOrWhiteSpace(
-                                                log.NewValue))
-                                        {
-                                            <div>
-
-                                                <span>
-                                                    New
-                                                </span>
-
-                                                <pre>@log.NewValue</pre>
-
-                                            </div>
-                                        }
-
+                                        <div class="audit-change-body">
+                                            @if (!string.IsNullOrWhiteSpace(log.OldValue))
+                                            {
+                                                <div class="audit-change-block">
+                                                    <span class="audit-change-label label-old">Dữ liệu cũ:</span>
+                                                    <pre class="audit-change-pre">@log.OldValue</pre>
+                                                </div>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(log.NewValue))
+                                            {
+                                                <div class="audit-change-block">
+                                                    <span class="audit-change-label label-new">Dữ liệu mới:</span>
+                                                    <pre class="audit-change-pre">@log.NewValue</pre>
+                                                </div>
+                                            }
+                                        </div>
                                     </details>
                                 }
                                 else
                                 {
-                                    <span class="table-muted">
-                                        —
-                                    </span>
+                                    <span class="text-muted">—</span>
                                 }
-
                             </td>
-
                         </tr>
                     }
-
                 </tbody>
-
             </table>
-
         </div>
 
         <partial name="_Pagination" model="Model" />
@@ -421,17 +312,23 @@
     else
     {
         <div class="empty-state">
-
-            <h3>
-                No audit logs.
-            </h3>
-
+            <div style="font-size: 40px; color: var(--muted); margin-bottom: 12px;">
+                <i class="bi bi-journal-x"></i>
+            </div>
+            <h3>Không tìm thấy nhật ký thao tác nào</h3>
             <p>
-                Không tìm thấy lịch sử thao tác phù hợp
-                với bộ lọc hiện tại.
+                Không có bản ghi nhật ký nào phù hợp với điều kiện tìm kiếm hoặc bộ lọc hiện tại.
+                Vui lòng thử lại với từ khóa hoặc bộ lọc khác.
             </p>
-
+            @if (isFiltered)
+            {
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 16px;">
+                    <a asp-action="Index" class="btn-outline">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                        <span>Đặt lại bộ lọc</span>
+                    </a>
+                </div>
+            }
         </div>
     }
-
 </div>

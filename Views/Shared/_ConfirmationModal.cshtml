@@ -1,37 +1,80 @@
 <!-- =========================================================
      ENTERPRISE DSS CONFIRMATION MODAL
+     Unified split-screen layout with visual asset: duck.jpg
      ========================================================= -->
 <div id="dssConfirmModal"
      class="dss-modal-overlay"
      aria-hidden="true"
      role="dialog"
      aria-modal="true"
+     aria-labelledby="dssConfirmTitle"
+     aria-describedby="dssConfirmMessage"
      style="display:none;"
-     onclick="if (event.target === this) DSS.closeConfirmModal();">
+     onclick="if (event.target === this) DSS.handleBackdropClick();">
 
     <div class="dss-modal-box">
 
-        <div class="dss-modal-header">
-            <div class="dss-modal-title-group">
-                <i id="dssConfirmIcon" class="bi bi-question-circle-fill text-warning"></i>
-                <h3 id="dssConfirmTitle" class="dss-modal-title">Xác nhận thao tác</h3>
-            </div>
-            <button type="button" class="dss-modal-close" onclick="DSS.closeConfirmModal()" aria-label="Close">
+        <!-- LEFT VISUAL PANEL (duck.jpg) -->
+        <div class="dss-modal-visual" aria-hidden="true">
+            <img src="/images/duck.jpg"
+                 alt=""
+                 class="dss-modal-img"
+                 aria-hidden="true" />
+        </div>
+
+        <!-- RIGHT CONFIRMATION CONTENT -->
+        <div class="dss-modal-content">
+
+            <!-- Close Button [X] positioned absolute top-right -->
+            <button type="button"
+                    class="dss-modal-close"
+                    id="dssConfirmCloseBtn"
+                    onclick="DSS.closeConfirmModal()"
+                    aria-label="Đóng">
                 <i class="bi bi-x-lg"></i>
             </button>
-        </div>
 
-        <div class="dss-modal-body">
-            <p id="dssConfirmMessage" class="dss-modal-text">Bạn có chắc chắn muốn thực hiện thao tác này?</p>
-            <div id="dssConfirmInputGroup" style="display:none; margin-top: 14px;">
-                <label id="dssConfirmInputLabel" class="form-label" for="dssConfirmInput">Ghi chú / Lý do:</label>
-                <textarea id="dssConfirmInput" class="form-textarea" rows="3" placeholder="Nhập lý do hoặc ý kiến..."></textarea>
+            <!-- Top Row: Icon Badge + Title (Ample space, no orphan line wrap) -->
+            <div class="dss-modal-top-row">
+                <div class="dss-modal-header-group">
+                    <span class="dss-modal-icon-badge badge-primary" id="dssConfirmIconBadge">
+                        <i id="dssConfirmIcon" class="bi bi-question-circle-fill"></i>
+                    </span>
+                    <h3 id="dssConfirmTitle" class="dss-modal-title">Xác nhận thao tác</h3>
+                </div>
             </div>
-        </div>
 
-        <div class="dss-modal-footer">
-            <button type="button" class="btn-outline" onclick="DSS.closeConfirmModal()">Hủy bỏ</button>
-            <button type="button" id="dssConfirmSubmitBtn" class="btn-primary">Xác nhận</button>
+            <!-- Body Message -->
+            <div class="dss-modal-body-wrap">
+                <p id="dssConfirmMessage" class="dss-modal-message">Bạn có chắc chắn muốn thực hiện thao tác này?</p>
+
+                <!-- Optional Consequence Callout (Only visible when text is provided) -->
+                <div id="dssConfirmConsequence" class="dss-modal-consequence">
+                    <i class="bi bi-exclamation-circle-fill me-1"></i>
+                    <span id="dssConfirmConsequenceText"></span>
+                </div>
+
+                <!-- Optional Input for Reason / Notes -->
+                <div id="dssConfirmInputGroup" class="dss-modal-input-group" style="display:none;">
+                    <label id="dssConfirmInputLabel" class="form-label" for="dssConfirmInput">Ghi chú / Lý do:</label>
+                    <textarea id="dssConfirmInput" class="form-textarea" rows="3" placeholder="Nhập lý do hoặc ý kiến..."></textarea>
+                </div>
+            </div>
+
+            <!-- Action Buttons Footer -->
+            <div class="dss-modal-actions">
+                <button type="button"
+                        id="dssConfirmCancelBtn"
+                        class="dss-modal-btn dss-modal-btn-cancel"
+                        onclick="DSS.closeConfirmModal()">Hủy bỏ</button>
+                <button type="button"
+                        id="dssConfirmSubmitBtn"
+                        class="dss-modal-btn dss-modal-btn-confirm btn-primary">
+                    <span id="dssConfirmSubmitSpinner" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true" style="display:none;"></span>
+                    <span id="dssConfirmSubmitText">Xác nhận</span>
+                </button>
+            </div>
+
         </div>
 
     </div>
@@ -39,6 +82,10 @@
 </div>
 
 <style>
+    /* =========================================================
+       DSS CONFIRMATION MODAL (CLEAN SEAMLESS SPLIT-SCREEN)
+       ========================================================= */
+
     #dssConfirmModal.dss-modal-overlay,
     .dss-modal-overlay {
         position: fixed !important;
@@ -49,7 +96,7 @@
         bottom: 0 !important;
         width: 100vw !important;
         height: 100vh !important;
-        background: rgba(36, 33, 30, 0.6) !important;
+        background: rgba(15, 23, 42, 0.52) !important;
         backdrop-filter: blur(4px) !important;
         -webkit-backdrop-filter: blur(4px) !important;
         z-index: 999999 !important;
@@ -69,108 +116,316 @@
     #dssConfirmModal .dss-modal-box,
     .dss-modal-box {
         background: #ffffff !important;
-        background: var(--surface, #ffffff) !important;
-        border-radius: var(--radius-lg, 12px) !important;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+        border-radius: 20px !important;
+        box-shadow: 0 24px 60px -12px rgba(15, 23, 42, 0.28), 0 0 0 1px rgba(15, 23, 42, 0.05) !important;
         width: 100% !important;
-        max-width: 500px !important;
-        border: 1px solid var(--border, #e5e0d8) !important;
+        max-width: 630px !important;
+        border: none !important;
         overflow: hidden !important;
         display: flex !important;
-        flex-direction: column !important;
+        flex-direction: row !important;
+        align-items: stretch !important;
         box-sizing: border-box !important;
         margin: auto !important;
         animation: modalPopIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
     }
 
-    #dssConfirmModal .dss-modal-header,
-    .dss-modal-header {
+    /* Left Visual Panel with duck.jpg */
+    .dss-modal-visual {
+        flex: 0 0 34% !important;
+        width: 34% !important;
+        min-width: 180px !important;
+        background-color: #024ba9 !important;
+        position: relative !important;
+        overflow: hidden !important;
         display: flex !important;
         align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .dss-modal-img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        object-position: center bottom !important;
+        display: block !important;
+        user-select: none !important;
+        pointer-events: none !important;
+    }
+
+    /* Right Content Panel - Clean Seamless Card */
+    .dss-modal-content {
+        flex: 1 1 66% !important;
+        min-width: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
         justify-content: space-between !important;
-        padding: 18px 24px 14px !important;
-        border-bottom: 1px solid var(--border-soft, #ece7df) !important;
-        background: var(--surface, #ffffff) !important;
+        background: #ffffff !important;
+        padding: 26px 28px 22px 26px !important;
+        box-sizing: border-box !important;
+        position: relative !important;
     }
 
-    #dssConfirmModal .dss-modal-title-group,
-    .dss-modal-title-group {
+    /* Top Row: Icon Badge & Title */
+    .dss-modal-top-row {
         display: flex !important;
         align-items: center !important;
-        gap: 10px !important;
+        justify-content: flex-start !important;
+        padding-right: 36px !important;
+        margin-bottom: 12px !important;
     }
 
-    #dssConfirmModal .dss-modal-title-group i,
-    .dss-modal-title-group i {
-        font-size: 22px !important;
-        line-height: 1 !important;
+    .dss-modal-header-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+    }
+
+    /* Icon Badges */
+    .dss-modal-icon-badge {
+        width: 38px !important;
+        height: 38px !important;
+        border-radius: 10px !important;
         display: inline-flex !important;
         align-items: center !important;
+        justify-content: center !important;
+        font-size: 18px !important;
+        line-height: 1 !important;
+        flex-shrink: 0 !important;
     }
 
-    #dssConfirmModal .dss-modal-title,
+    .dss-modal-icon-badge.badge-danger {
+        background: #fee2e2 !important;
+        color: #dc2626 !important;
+    }
+
+    .dss-modal-icon-badge.badge-warning {
+        background: #fef3c7 !important;
+        color: #d97706 !important;
+    }
+
+    .dss-modal-icon-badge.badge-success {
+        background: #dcfce7 !important;
+        color: #16a34a !important;
+    }
+
+    .dss-modal-icon-badge.badge-primary {
+        background: #eff6ff !important;
+        color: #1d4ed8 !important;
+    }
+
     .dss-modal-title {
         margin: 0 !important;
-        font-family: var(--font-serif, "Source Serif 4", serif) !important;
-        font-size: 18px !important;
-        font-weight: 600 !important;
-        color: var(--ink, #1a1917) !important;
-        line-height: 1.2 !important;
+        font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif) !important;
+        font-size: 17.5px !important;
+        font-weight: 700 !important;
+        color: #0f172a !important;
+        line-height: 1.25 !important;
+        letter-spacing: -0.2px !important;
+        white-space: nowrap !important;
     }
 
-    #dssConfirmModal .dss-modal-close,
     .dss-modal-close {
+        position: absolute !important;
+        top: 18px !important;
+        right: 18px !important;
         background: none !important;
         border: none !important;
         cursor: pointer !important;
-        font-size: 16px !important;
-        color: var(--muted, #7c776e) !important;
-        padding: 6px 8px !important;
-        border-radius: var(--radius-sm, 4px) !important;
+        font-size: 13.5px !important;
+        color: #94a3b8 !important;
+        width: 30px !important;
+        height: 30px !important;
+        border-radius: 6px !important;
         line-height: 1 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
         transition: color 0.15s ease, background 0.15s ease !important;
+        z-index: 5 !important;
     }
 
-    #dssConfirmModal .dss-modal-close:hover,
     .dss-modal-close:hover {
-        color: var(--ink, #1a1917) !important;
-        background: var(--surface-muted, #f4f0ea) !important;
+        color: #0f172a !important;
+        background: #f1f5f9 !important;
     }
 
-    #dssConfirmModal .dss-modal-body,
-    .dss-modal-body {
-        padding: 20px 24px !important;
-        background: var(--surface, #ffffff) !important;
+    /* Body Message */
+    .dss-modal-body-wrap {
+        flex: 1 1 auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        padding: 6px 0 18px 0 !important;
     }
 
-    #dssConfirmModal .dss-modal-text,
-    .dss-modal-text {
+    .dss-modal-message {
         margin: 0 !important;
-        font-family: var(--font-serif, "Source Serif 4", serif) !important;
-        font-size: 14px !important;
+        font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif) !important;
+        font-size: 14.5px !important;
         line-height: 1.6 !important;
-        color: var(--body, #423e39) !important;
+        color: #334155 !important;
+        word-break: normal !important;
     }
 
-    #dssConfirmModal .dss-modal-footer,
-    .dss-modal-footer {
+    /* Consequence Callout - Hidden by default */
+    .dss-modal-consequence {
+        display: none !important;
+        margin-top: 12px !important;
+        padding: 9px 12px !important;
+        background: #fffbeb !important;
+        border: 1px solid #fef3c7 !important;
+        border-radius: 8px !important;
+        font-size: 12.5px !important;
+        color: #92400e !important;
+        align-items: flex-start !important;
+        gap: 6px !important;
+        line-height: 1.45 !important;
+    }
+
+    .dss-modal-consequence.is-visible {
+        display: flex !important;
+    }
+
+    .dss-modal-input-group {
+        margin-top: 12px !important;
+    }
+
+    /* Action Buttons */
+    .dss-modal-actions {
         display: flex !important;
         justify-content: flex-end !important;
         align-items: center !important;
-        gap: 12px !important;
-        padding: 14px 24px !important;
-        background: var(--surface-soft, #fbf9f6) !important;
-        border-top: 1px solid var(--border-soft, #ece7df) !important;
+        gap: 10px !important;
+        margin-top: auto !important;
+        padding-top: 6px !important;
     }
 
+    .dss-modal-btn {
+        min-height: 38px !important;
+        padding: 0 18px !important;
+        font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif) !important;
+        font-size: 13.5px !important;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        cursor: pointer !important;
+        line-height: 1 !important;
+        text-decoration: none !important;
+        transition: all 0.15s ease !important;
+        box-sizing: border-box !important;
+    }
+
+    .dss-modal-btn-cancel {
+        background: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #475569 !important;
+    }
+
+    .dss-modal-btn-cancel:hover {
+        background: #f8fafc !important;
+        border-color: #94a3b8 !important;
+        color: #0f172a !important;
+    }
+
+    .dss-modal-btn-confirm {
+        border: none !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+    }
+
+    .dss-modal-btn-confirm.btn-danger {
+        background: #dc2626 !important;
+        color: #ffffff !important;
+    }
+    .dss-modal-btn-confirm.btn-danger:hover {
+        background: #b91c1c !important;
+    }
+
+    .dss-modal-btn-confirm.btn-primary {
+        background: #1d4ed8 !important;
+        color: #ffffff !important;
+    }
+    .dss-modal-btn-confirm.btn-primary:hover {
+        background: #1e40af !important;
+    }
+
+    .dss-modal-btn-confirm.btn-warning {
+        background: #d97706 !important;
+        color: #ffffff !important;
+    }
+    .dss-modal-btn-confirm.btn-warning:hover {
+        background: #b45309 !important;
+    }
+
+    .dss-modal-btn-confirm.btn-success {
+        background: #16a34a !important;
+        color: #ffffff !important;
+    }
+    .dss-modal-btn-confirm.btn-success:hover {
+        background: #15803d !important;
+    }
+
+    .dss-modal-btn:disabled {
+        opacity: 0.65 !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+    }
+
+    /* Modal Animation */
     @@keyframes modalPopIn {
         from {
             opacity: 0;
-            transform: scale(0.94) translateY(12px);
+            transform: scale(0.95) translateY(10px);
         }
         to {
             opacity: 1;
             transform: scale(1) translateY(0);
+        }
+    }
+
+    /* Responsive: Mobile Layout (<= 640px) */
+    @@media (max-width: 640px) {
+        #dssConfirmModal .dss-modal-box,
+        .dss-modal-box {
+            flex-direction: column !important;
+            max-width: 94vw !important;
+            border-radius: 16px !important;
+        }
+
+        .dss-modal-visual {
+            flex: none !important;
+            width: 100% !important;
+            height: 150px !important;
+            min-width: 0 !important;
+        }
+
+        .dss-modal-img {
+            object-position: center 35% !important;
+        }
+
+        .dss-modal-content {
+            flex: 1 1 auto !important;
+            width: 100% !important;
+            padding: 18px 20px 18px !important;
+        }
+
+        .dss-modal-title {
+            white-space: normal !important;
+        }
+
+        .dss-modal-actions {
+            flex-direction: row !important;
+            gap: 8px !important;
+        }
+
+        .dss-modal-actions button {
+            flex: 1 1 50% !important;
         }
     }
 </style>

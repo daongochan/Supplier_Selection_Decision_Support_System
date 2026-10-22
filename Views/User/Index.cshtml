@@ -1,386 +1,362 @@
 @model SupplierSelectionDSS.Models.UserIndexViewModel
 
 @{
-    ViewData["Title"] = "Users";
+    ViewData["Title"] = "Người dùng";
+
+    var activePercent = Model.TotalUsers > 0 
+        ? (Model.ActiveUsers * 100.0 / Model.TotalUsers).ToString("0.#") 
+        : "0";
+    var lockedPercent = Model.TotalUsers > 0 
+        ? (Model.LockedUsers * 100.0 / Model.TotalUsers).ToString("0.#") 
+        : "0";
+    var inactivePercent = Model.TotalUsers > 0 
+        ? (Model.InactiveUsers * 100.0 / Model.TotalUsers).ToString("0.#") 
+        : "0";
 }
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/user.css" asp-append-version="true" />
+}
 
 <!-- =========================================================
      PAGE HEADER
      ========================================================= -->
-
-<div class="page-header user-page-header">
-
+<div class="page-header">
     <div>
-
-        <div class="page-eyebrow">
-            SYSTEM
-        </div>
-
-        <h1 class="page-title">
-            Users
-        </h1>
-
+        <h1 class="page-title">Người dùng</h1>
         <p class="page-description">
-            Quản lý tài khoản, vai trò và trạng thái truy cập
-            của người dùng hệ thống.
+            Quản lý danh sách tài khoản, phân quyền vai trò và trạng thái truy cập hệ thống DSS.
         </p>
-
     </div>
 
-
-    <a asp-action="Create"
-       class="btn-primary">
-
-        New user
-
+    <a asp-action="Create" class="btn-primary">
+        <i class="bi bi-person-plus"></i>
+        <span>Thêm người dùng</span>
     </a>
-
 </div>
 
+<!-- =========================================================
+     KPI SUMMARY GRID (100% GENUINE DATABASE METRICS)
+     ========================================================= -->
+<div class="user-kpi-grid">
+    <!-- Card 1: Tổng người dùng -->
+    <div class="user-kpi-card">
+        <div class="user-kpi-content">
+            <span class="user-kpi-label">Tổng tài khoản</span>
+            <span class="user-kpi-value">@Model.TotalUsers.ToString("N0")</span>
+            <div class="user-kpi-meta">
+                <span class="kpi-meta-pill pill-blue">
+                    <i class="bi bi-people"></i> Tài khoản hệ thống
+                </span>
+            </div>
+        </div>
+        <div class="user-kpi-icon icon-blue" aria-hidden="true">
+            <i class="bi bi-people"></i>
+        </div>
+    </div>
 
+    <!-- Card 2: Đang hoạt động -->
+    <div class="user-kpi-card">
+        <div class="user-kpi-content">
+            <span class="user-kpi-label">Đang hoạt động</span>
+            <span class="user-kpi-value">@Model.ActiveUsers.ToString("N0")</span>
+            <div class="user-kpi-meta">
+                <span class="kpi-meta-pill pill-green">
+                    <i class="bi bi-check2"></i> @activePercent% tổng số
+                </span>
+            </div>
+        </div>
+        <div class="user-kpi-icon icon-green" aria-hidden="true">
+            <i class="bi bi-check-circle"></i>
+        </div>
+    </div>
 
+    <!-- Card 3: Đang bị khóa -->
+    <div class="user-kpi-card">
+        <div class="user-kpi-content">
+            <span class="user-kpi-label">Đang bị khóa</span>
+            <span class="user-kpi-value">@Model.LockedUsers.ToString("N0")</span>
+            <div class="user-kpi-meta">
+                <span class="kpi-meta-pill pill-amber">
+                    <i class="bi bi-lock"></i> @lockedPercent% tổng số
+                </span>
+            </div>
+        </div>
+        <div class="user-kpi-icon icon-amber" aria-hidden="true">
+            <i class="bi bi-lock"></i>
+        </div>
+    </div>
+
+    <!-- Card 4: Ngừng hoạt động -->
+    <div class="user-kpi-card">
+        <div class="user-kpi-content">
+            <span class="user-kpi-label">Ngừng hoạt động</span>
+            <span class="user-kpi-value">@Model.InactiveUsers.ToString("N0")</span>
+            <div class="user-kpi-meta">
+                <span class="kpi-meta-pill pill-muted">
+                    <i class="bi bi-person-slash"></i> @inactivePercent% tổng số
+                </span>
+            </div>
+        </div>
+        <div class="user-kpi-icon icon-slate" aria-hidden="true">
+            <i class="bi bi-person-slash"></i>
+        </div>
+    </div>
+</div>
 
 <!-- =========================================================
-     FILTER
+     SEARCH & FILTER CARD
      ========================================================= -->
-
 <div class="filter-card">
+    <form asp-action="Index" method="get" class="user-filter">
+        <input type="hidden" name="page" value="1" />
 
-    <form asp-action="Index"
-          method="get"
-          class="user-filter">
-
-
+        <!-- 1. Keyword Search -->
         <div class="filter-field">
-
-            <label for="keyword">
-                Search
-            </label>
-
+            <label for="keyword">Tìm kiếm</label>
             <input id="keyword"
                    name="keyword"
                    value="@Model.Keyword"
                    class="form-control"
-                   placeholder="Username, name or email..." />
-
+                   placeholder="Tên đăng nhập, họ tên, email, SĐT..." />
         </div>
 
-
+        <!-- 2. Role Dropdown -->
         <div class="filter-field">
-
-            <label for="role">
-                Role
-            </label>
-
-            <select id="role"
-                    name="role"
-                    class="form-control">
-
-                <option value="All"
-                        selected="@(Model.Role == "All")">
-                    All roles
+            <label for="role">Vai trò</label>
+            <select id="role" name="role" class="form-control">
+                <option value="All" selected="@(string.IsNullOrEmpty(Model.Role) || Model.Role == "All")">
+                    Tất cả vai trò
                 </option>
-
-                <option value="Administrator"
-                        selected="@(Model.Role == "Administrator")">
-                    Administrator
+                <option value="Administrator" selected="@(Model.Role == "Administrator")">
+                    Quản trị viên (Admin)
                 </option>
-
-                <option value="PurchasingStaff"
-                        selected="@(Model.Role == "PurchasingStaff")">
-                    Purchasing Staff
+                <option value="PurchasingStaff" selected="@(Model.Role == "PurchasingStaff")">
+                    Nhân viên mua hàng
                 </option>
-
-                <option value="Expert"
-                        selected="@(Model.Role == "Expert")">
-                    Expert
+                <option value="Expert" selected="@(Model.Role == "Expert")">
+                    Chuyên gia đánh giá
                 </option>
-
-                <option value="Manager"
-                        selected="@(Model.Role == "Manager")">
-                    Manager
+                <option value="Manager" selected="@(Model.Role == "Manager")">
+                    Quản lý / Lãnh đạo
                 </option>
-
             </select>
-
         </div>
 
-
+        <!-- 3. Status Dropdown -->
         <div class="filter-field">
-
-            <label for="status">
-                Status
-            </label>
-
-            <select id="status"
-                    name="status"
-                    class="form-control">
-
-                <option value="All"
-                        selected="@(Model.Status == "All")">
-                    All status
+            <label for="status">Trạng thái</label>
+            <select id="status" name="status" class="form-control">
+                <option value="All" selected="@(string.IsNullOrEmpty(Model.Status) || Model.Status == "All")">
+                    Tất cả trạng thái
                 </option>
-
-                <option value="Active"
-                        selected="@(Model.Status == "Active")">
-                    Active
+                <option value="Active" selected="@(Model.Status == "Active")">
+                    Đang hoạt động
                 </option>
-
-                <option value="Locked"
-                        selected="@(Model.Status == "Locked")">
-                    Locked
+                <option value="Locked" selected="@(Model.Status == "Locked")">
+                    Đang bị khóa
                 </option>
-
-                <option value="Inactive"
-                        selected="@(Model.Status == "Inactive")">
-                    Inactive
+                <option value="Inactive" selected="@(Model.Status == "Inactive")">
+                    Ngừng hoạt động
                 </option>
-
             </select>
-
         </div>
 
-
+        <!-- 4. Filter Action Buttons (Same height 42px) -->
         <div class="filter-actions">
-
-            <button type="submit"
-                    class="btn-primary">
-
-                Search
-
+            <button type="submit" class="btn-primary" title="Tìm kiếm">
+                Tìm kiếm
             </button>
 
-
-            <a asp-action="Index"
-               class="btn-outline">
-
-                Reset
-
+            <a asp-action="Index" class="btn-outline" title="Đặt lại bộ lọc">
+                Đặt lại
             </a>
-
         </div>
-
     </form>
-
 </div>
 
-
 <!-- =========================================================
-     TABLE
+     CENTRAL DATA TABLE CARD
      ========================================================= -->
-
 <div class="table-card">
-
     @if (Model.Users.Any())
     {
         <div class="data-table-wrapper">
-
-            <table class="data-table user-table">
-
+            <table class="data-table">
                 <thead>
-
                     <tr>
-
-                        <th>
-                            Username
-                        </th>
-
-                        <th>
-                            User
-                        </th>
-
-                        <th>
-                            Role
-                        </th>
-
-                        <th>
-                            Contact
-                        </th>
-
-                        <th>
-                            Status
-                        </th>
-
-                        <th>
-                            Last login
-                        </th>
-
-                        <th>
-                            Actions
-                        </th>
-
+                        <th style="width: 140px;">Tên đăng nhập</th>
+                        <th style="min-width: 220px;">Họ và tên</th>
+                        <th style="width: 170px;">Vai trò</th>
+                        <th style="min-width: 210px;">Thông tin liên hệ</th>
+                        <th style="width: 160px;">Đăng nhập cuối</th>
+                        <th style="width: 140px;">Trạng thái</th>
+                        <th style="width: 70px; text-align: center;">Thao tác</th>
                     </tr>
-
                 </thead>
 
-
                 <tbody>
-
-                    @foreach (
-                        var user
-                        in Model.Users)
+                    @foreach (var user in Model.Users)
                     {
                         <tr>
-
-
-                            <!-- Username -->
-
+                            <!-- Tên đăng nhập -->
                             <td>
-
-                                <strong>
-                                    @user.Username
-                                </strong>
-
+                                <span class="user-code-badge">@user.Username</span>
                             </td>
 
-
-                            <!-- User -->
-
+                            <!-- Họ và tên + Ngày khởi tạo -->
                             <td>
-
-                                <strong>
-                                    @user.FullName
-                                </strong>
-
-                                <span class="table-muted">
-                                    Created
-                                    @user.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")
-                                </span>
-
+                                <div class="user-name-cell">
+                                    <a asp-action="Edit" asp-route-id="@user.UserId" class="user-name-link">
+                                        @user.FullName
+                                    </a>
+                                    <span class="user-created-tag">
+                                        <i class="bi bi-clock"></i> Tạo @user.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")
+                                    </span>
+                                </div>
                             </td>
 
-
-                            <!-- Role -->
-
+                            <!-- Vai trò -->
                             <td>
-
-                                <span class="
-                                    user-role-pill
-                                    user-role-@user.Role.ToLowerInvariant()">
-
-                                    @switch (user.Role)
-                                    {
-                                        case "Administrator":
-                                            @:Administrator
-                                            break;
-
-                                        case "PurchasingStaff":
-                                            @:Purchasing Staff
-                                            break;
-
-                                        case "Expert":
-                                            @:Expert
-                                            break;
-
-                                        case "Manager":
-                                            @:Manager
-                                            break;
-
-                                        default:
+                                @switch (user.Role)
+                                {
+                                    case "Administrator":
+                                        <span class="role-badge role-admin">
+                                            <i class="bi bi-shield-lock"></i> Quản trị viên
+                                        </span>
+                                        break;
+                                    case "PurchasingStaff":
+                                        <span class="role-badge role-staff">
+                                            <i class="bi bi-cart3"></i> Nhân viên mua hàng
+                                        </span>
+                                        break;
+                                    case "Expert":
+                                        <span class="role-badge role-expert">
+                                            <i class="bi bi-award"></i> Chuyên gia
+                                        </span>
+                                        break;
+                                    case "Manager":
+                                        <span class="role-badge role-manager">
+                                            <i class="bi bi-briefcase"></i> Quản lý
+                                        </span>
+                                        break;
+                                    default:
+                                        <span class="role-badge role-default">
                                             @user.Role
-                                            break;
+                                        </span>
+                                        break;
+                                }
+                            </td>
+
+                            <!-- Thông tin liên hệ (Email, SĐT) -->
+                            <td>
+                                <div class="user-contact-cell">
+                                    @if (!string.IsNullOrWhiteSpace(user.Email))
+                                    {
+                                        <span class="user-contact-info">
+                                            <i class="bi bi-envelope"></i>
+                                            <a href="mailto:@user.Email">@user.Email</a>
+                                        </span>
                                     }
-
-                                </span>
-
+                                    @if (!string.IsNullOrWhiteSpace(user.Phone))
+                                    {
+                                        <span class="user-contact-info">
+                                            <i class="bi bi-telephone"></i>
+                                            <a href="tel:@user.Phone">@user.Phone</a>
+                                        </span>
+                                    }
+                                    @if (string.IsNullOrWhiteSpace(user.Email) && string.IsNullOrWhiteSpace(user.Phone))
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </div>
                             </td>
 
-
-                            <!-- Contact -->
-
+                            <!-- Đăng nhập cuối -->
                             <td>
-
-                                @if (
-                                    !string.IsNullOrWhiteSpace(
-                                        user.Email))
-                                {
-                                    <strong>
-                                        @user.Email
-                                    </strong>
-                                }
-
-                                @if (
-                                    !string.IsNullOrWhiteSpace(
-                                        user.Phone))
-                                {
-                                    <span class="table-muted">
-                                        @user.Phone
-                                    </span>
-                                }
-
-                                @if (
-                                    string.IsNullOrWhiteSpace(
-                                        user.Email) &&
-                                    string.IsNullOrWhiteSpace(
-                                        user.Phone))
-                                {
-                                    <span class="table-muted">
-                                        —
-                                    </span>
-                                }
-
-                            </td>
-
-
-                            <!-- Status -->
-
-                            <td>
-
-                                <span class="
-                                    status-pill
-                                    user-status-@user.Status.ToLowerInvariant()">
-
-                                    @user.Status
-
-                                </span>
-
-                            </td>
-
-
-                            <!-- Last Login -->
-
-                            <td>
-
                                 @if (user.LastLoginAt.HasValue)
                                 {
-                                    @user.LastLoginAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                    <span class="user-login-time" title="@user.LastLoginAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")">
+                                        @user.LastLoginAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                    </span>
                                 }
                                 else
                                 {
-                                    <span class="table-muted">
-                                        Never
-                                    </span>
+                                    <span class="text-muted">Chưa đăng nhập</span>
                                 }
-
                             </td>
 
-
-                            <!-- Actions -->
-
+                            <!-- Trạng thái -->
                             <td>
-
-                                <div class="table-actions">
-
-                                    <a asp-action="Edit"
-                                       asp-route-id="@user.UserId"
-                                       class="action-link">
-
-                                        Edit
-
-                                    </a>
-
-                                </div>
-
+                                @switch (user.Status)
+                                {
+                                    case "Active":
+                                        <span class="status-pill status-active">Hoạt động</span>
+                                        break;
+                                    case "Locked":
+                                        <span class="status-pill status-locked">Đã khóa</span>
+                                        break;
+                                    default:
+                                        <span class="status-pill status-inactive">Ngừng hoạt động</span>
+                                        break;
+                                }
                             </td>
 
+                            <!-- Thao tác dropdown [ ⋯ ] -->
+                            <td style="text-align: center;">
+                                <div class="user-actions-dropdown">
+                                    <button type="button"
+                                            class="btn-action-dots"
+                                            aria-label="Thao tác cho @user.FullName"
+                                            title="Thao tác">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+
+                                    <div class="user-actions-menu">
+                                        <a asp-action="Edit"
+                                           asp-route-id="@user.UserId"
+                                           class="user-action-item">
+                                            <i class="bi bi-pencil"></i>
+                                            <span>Chỉnh sửa</span>
+                                        </a>
+
+                                        <div class="user-action-divider"></div>
+
+                                        <form asp-action="ToggleStatus"
+                                              method="post"
+                                              class="m-0 p-0">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@user.UserId" />
+                                            @if (user.Status == "Active")
+                                            {
+                                                <button type="submit"
+                                                        class="user-action-item text-danger"
+                                                        data-dss-confirm="Bạn có chắc chắn muốn ngừng hoạt động tài khoản '@user.Username'?"
+                                                        data-dss-title="Xác nhận ngừng hoạt động"
+                                                        data-dss-btn-text="Ngừng hoạt động">
+                                                    <i class="bi bi-slash-circle"></i>
+                                                    <span>Ngừng hoạt động</span>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="submit"
+                                                        class="user-action-item text-success"
+                                                        data-dss-confirm="Bạn có chắc chắn muốn kích hoạt lại tài khoản '@user.Username'?"
+                                                        data-dss-title="Xác nhận kích hoạt"
+                                                        data-dss-btn-text="Kích hoạt">
+                                                    <i class="bi bi-check-circle"></i>
+                                                    <span>Kích hoạt tài khoản</span>
+                                                </button>
+                                            }
+                                        </form>
+                                    </div>
+                                </div>
+                            </td>
                         </tr>
                     }
-
                 </tbody>
-
             </table>
-
         </div>
 
         <partial name="_Pagination" model="Model" />
@@ -388,24 +364,59 @@
     else
     {
         <div class="empty-state">
-
-            <h3>
-                No users found.
-            </h3>
-
+            <div style="font-size: 40px; color: var(--muted); margin-bottom: 12px;">
+                <i class="bi bi-search"></i>
+            </div>
+            <h3>Không tìm thấy người dùng nào</h3>
             <p>
-                Không có tài khoản nào phù hợp với bộ lọc hiện tại.
+                Không có tài khoản người dùng nào phù hợp với điều kiện tìm kiếm hoặc bộ lọc hiện tại.
+                Vui lòng thử lại với từ khóa hoặc bộ lọc khác.
             </p>
-
-
-            <a asp-action="Create"
-               class="btn-primary">
-
-                New user
-
-            </a>
-
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 16px;">
+                <a asp-action="Index" class="btn-outline">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                    <span>Xóa bộ lọc</span>
+                </a>
+                <a asp-action="Create" class="btn-primary">
+                    <i class="bi bi-person-plus"></i>
+                    <span>Thêm người dùng mới</span>
+                </a>
+            </div>
         </div>
     }
-
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Dropdown menu toggle
+            document.addEventListener("click", function (e) {
+                const trigger = e.target.closest(".btn-action-dots");
+                const openDropdown = document.querySelector(".user-actions-dropdown.is-open");
+
+                if (trigger) {
+                    e.stopPropagation();
+                    const parent = trigger.closest(".user-actions-dropdown");
+                    if (openDropdown && openDropdown !== parent) {
+                        openDropdown.classList.remove("is-open");
+                    }
+                    if (parent) {
+                        parent.classList.toggle("is-open");
+                    }
+                } else if (openDropdown && !e.target.closest(".user-actions-menu")) {
+                    openDropdown.classList.remove("is-open");
+                }
+            });
+
+            // Close on Escape key
+            document.addEventListener("keydown", function (e) {
+                if (e.key === "Escape") {
+                    const openDropdown = document.querySelector(".user-actions-dropdown.is-open");
+                    if (openDropdown) {
+                        openDropdown.classList.remove("is-open");
+                    }
+                }
+            });
+        });
+    </script>
+}
