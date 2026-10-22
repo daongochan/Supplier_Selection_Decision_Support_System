@@ -17,4 +17,19 @@ public class TOPSISCalculationResult
     public TOPSISSupplierDistance[] Distances { get; init; } = Array.Empty<TOPSISSupplierDistance>();
 
     public int[] RankByIndex { get; init; } = Array.Empty<int>();
+
+    /// <summary>
+    /// Danh sách chỉ số (0-based) các tiêu chí có toàn bộ giá trị bằng 0 hoặc không phân biệt.
+    /// </summary>
+    public IReadOnlyList<int> ZeroVarianceCriteriaIndices { get; init; } = Array.Empty<int>();
+
+    /// <summary>
+    /// Đánh dấu nếu có từ 2 nhà cung cấp trở lên có thứ hạng hòa nhau (Standard Competition Ranking).
+    /// </summary>
+    public bool HasTies { get; init; }
+
+    /// <summary>
+    /// Đánh dấu khi tất cả nhà cung cấp có cùng điểm trên mọi tiêu chí (không phân biệt được).
+    /// </summary>
+    public bool IsIndistinguishable { get; init; }
 }
