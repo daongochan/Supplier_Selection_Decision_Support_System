@@ -4,7 +4,7 @@
 
 ---
 
-## 1. Giới thiệu Dự án
+## 1. Giới thiệu dự án
 
 Dự án là hệ thống hỗ trợ ra quyết định nội bộ (Decision Support System - DSS) phục vụ công tác mua sắm và quản lý chuỗi cung ứng của doanh nghiệp. Hệ thống giải quyết bài toán ra quyết định đa tiêu chí (MCDM - Multi-Criteria Decision Making) khi lựa chọn nhà cung cấp tối ưu giữa nhiều phương án cạnh tranh:
 
@@ -15,7 +15,7 @@ Dự án là hệ thống hỗ trợ ra quyết định nội bộ (Decision Sup
 
 ---
 
-## 2. Công nghệ Sử dụng (Tech Stack)
+## 2. Công nghệ sử dụng (Tech Stack)
 
 - **Framework:** .NET 10 (`net10.0`), ASP.NET Core MVC (Razor Views).
 - **Cơ sở dữ liệu:** SQL Server (Collation: `Vietnamese_CI_AS`), Entity Framework Core 10.
@@ -26,7 +26,7 @@ Dự án là hệ thống hỗ trợ ra quyết định nội bộ (Decision Sup
 
 ---
 
-## 3. Sơ đồ Luồng Nghiệp vụ (Workflow Diagram)
+## 3. Sơ đồ Luồng nghiệp vụ (Workflow Diagram)
 
 ```mermaid
 graph LR
@@ -41,20 +41,20 @@ graph LR
 
 ---
 
-## 4. Hướng dẫn Cài đặt từ Máy Trống (Clean Setup Guide)
+## 4. Hướng dẫn cài đặt từ máy trống (Clean Setup Guide)
 
 ### 4.1. Yêu cầu Tiên quyết
 - **.NET 10 SDK** (phiên bản `10.0.100` trở lên). Kiểm tra bằng lệnh: `dotnet --version`.
 - **Microsoft SQL Server** (2019, 2022 hoặc LocalDB).
 - *(Tùy chọn cho đối chiếu toán học):* Python 3.10+ kèm thư viện `numpy`.
 
-### 4.2. Khởi tạo Cơ sở Dữ liệu
+### 4.2. Khởi tạo Cơ sở dữ liệu
 Các tệp script SQL nguyên bản nằm trong thư mục `database/`:
 1. Mở SQL Server Management Studio (SSMS), Azure Data Studio, hoặc chạy qua `sqlcmd`.
 2. Thực thi tệp `database/01_schema.sql` để tạo cấu trúc 17 bảng, các khóa ngoại, 7 triggers kiểm soát trạng thái và 2 views thống kê.
 3. Thực thi tệp `database/02_seed.sql` để nạp dữ liệu mẫu ban đầu (nhóm hàng, 8 tiêu chí chuẩn gồm cả Benefit và Cost, 5 nhà cung cấp mẫu, và 4 tài khoản người dùng ứng với 4 vai trò).
 
-### 4.3. Cấu hình Chuỗi Kết nối (Connection String)
+### 4.3. Cấu hình chuỗi Kết nối (Connection String)
 Để an toàn và không làm lộ mật khẩu, khuyến nghị cấu hình chuỗi kết nối qua **.NET User-Secrets** hoặc biến môi trường:
 
 **Cách 1: Sử dụng .NET User-Secrets (Khuyến nghị cho môi trường phát triển)**
@@ -62,7 +62,7 @@ Các tệp script SQL nguyên bản nằm trong thư mục `database/`:
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=.;Database=SupplierSelectionDSS;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True"
 ```
 
-**Cách 2: Sử dụng Biến môi trường**
+**Cách 2: Sử dụng biến môi trường**
 ```powershell
 # PowerShell:
 $env:ConnectionStrings__DefaultConnection="Server=.;Database=SupplierSelectionDSS;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True"
@@ -79,7 +79,7 @@ dotnet run --project SupplierSelectionDSS.csproj
 
 ---
 
-## 5. Danh sách Tài khoản Demo (Demo Accounts)
+## 5. Danh sách tài khoản Demo (Demo Accounts)
 
 Cơ sở dữ liệu mẫu đi kèm 4 tài khoản đã băm BCrypt an toàn:
 
@@ -94,9 +94,9 @@ Cơ sở dữ liệu mẫu đi kèm 4 tài khoản đã băm BCrypt an toàn:
 
 ---
 
-## 6. Hướng dẫn Chạy Kiểm thử (Automated Tests & Math Verification)
+## 6. Hướng dẫn chạy kiểm thử (Automated Tests & Math Verification)
 
-### 6.1. Chạy Bộ Kiểm thử .NET (123 Tests)
+### 6.1. Chạy bộ kiểm thử .NET (123 Tests)
 Toàn bộ thuật toán AHP, TOPSIS, Phân tích độ nhạy, Bảo mật tệp báo cáo, Khóa tài khoản và Logic quản trị viên đều được kiểm thử tự động:
 ```bash
 # Chạy toàn bộ 123 unit/integration tests
@@ -106,7 +106,7 @@ dotnet test
 dotnet test --collect:"XPlat Code Coverage"
 ```
 
-### 6.2. Kiểm chứng Toán học Độc lập bằng Python (NumPy)
+### 6.2. Kiểm chứng toán học độc lập bằng Python (NumPy)
 Hệ thống cung cấp một script kiểm chứng độc lập nằm tại `tools/verify/verify_mcdm.py`. Script này sử dụng hàm tính vector riêng chính xác (`numpy.linalg.eig`) và công thức vector TOPSIS viết độc lập để đối chiếu chéo với kết quả của C#:
 ```bash
 # Chạy với uv (hoặc python thông thường)
@@ -116,7 +116,7 @@ Kết quả cho thấy sai số giữa C# và NumPy nhỏ hơn $10^{-6}$ (chính
 
 ---
 
-## 7. Cấu trúc Thư mục Dự án
+## 7. Cấu trúc thư mục dự án
 
 ```text
 SupplierSelectionDSS/
@@ -138,18 +138,8 @@ SupplierSelectionDSS/
 ├── SupplierSelectionDSS.Tests/ # Dự án kiểm thử nội bộ xUnit (123 tests)
 └── App_Data/reports/           # Thư mục lưu trữ báo cáo cách ly ngoài webroot
 ```
-
 ---
 
-## 8. Tài liệu Phục vụ Bảo vệ Đồ án (Academic Defense Docs)
-
-Để bảo vệ đồ án trước hội đồng học thuật, hãy tham khảo các tài liệu chuyên sâu được chuẩn bị trong thư mục `docs/`:
-- **[ALGORITHMS.md](file:///D:/DEAN/Projects/SupplierSelectionDSS/docs/ALGORITHMS.md):** Diễn giải tường minh từng công thức toán học, bảng ngẫu nhiên Saaty $RI$, phương pháp chuẩn hóa vector, xếp hạng 1224 và bài toán mẫu từng bước.
-- **[ARCHITECTURE.md](file:///D:/DEAN/Projects/SupplierSelectionDSS/docs/ARCHITECTURE.md):** Sơ đồ thành phần, máy trạng thái hữu hạn của đợt đánh giá, kiến trúc bảo mật chống tấn công leo quyền và mô hình cơ sở dữ liệu.
-- **[AUDIT.md](file:///D:/DEAN/Projects/SupplierSelectionDSS/docs/AUDIT.md):** Báo cáo rà soát độc lập từng dòng lệnh và ma trận đối chiếu mức độ an toàn của hệ thống.
-
----
-
-## 9. Giấy phép Mã nguồn (License)
+## 8. Giấy phép mã nguồn (License)
 
 Dự án được phân phối dưới giấy phép **[MIT License](file:///D:/DEAN/Projects/SupplierSelectionDSS/LICENSE)**.
