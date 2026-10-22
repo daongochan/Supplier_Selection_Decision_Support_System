@@ -194,6 +194,8 @@ strong {
 .ahp-table-wrapper {
     width: 100%;
     overflow-x: auto;
+    position: relative;
+    max-height: 70vh;
 }
 
 
@@ -220,6 +222,9 @@ strong {
         background: var(--canvas-soft);
         color: var(--ink);
         vertical-align: bottom;
+        position: sticky;
+        top: 0;
+        z-index: 10;
     }
 
 
@@ -237,6 +242,11 @@ strong {
     width: 220px;
     min-width: 220px;
     text-align: left !important;
+    position: sticky;
+    top: 0;
+    left: 0;
+    z-index: 20 !important;
+    background: var(--canvas-soft);
 }
 
 
@@ -266,6 +276,9 @@ strong {
     min-width: 220px;
     background: var(--surface-soft);
     text-align: left !important;
+    position: sticky;
+    left: 0;
+    z-index: 5;
 }
 
 

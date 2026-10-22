@@ -809,6 +809,42 @@ small {
    ACCESSIBILITY & FOCUS
    ========================================================= */
 
+.skip-link {
+    position: fixed;
+    top: -100px;
+    left: 16px;
+    z-index: 99999;
+    padding: 10px 18px;
+    background: var(--terracotta);
+    color: #ffffff;
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+    font-weight: 600;
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    text-decoration: none;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+    transition: top 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+    top: 0;
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+}
+
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
 :focus-visible {
     outline: 2px solid var(--terracotta);
     outline-offset: 2px;
@@ -820,6 +856,21 @@ input:focus:not(:focus-visible),
 select:focus:not(:focus-visible),
 textarea:focus:not(:focus-visible) {
     outline: none;
+}
+
+/* =========================================================
+   PREFERS REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }
 /* --- END base/layout.css --- */
 
@@ -842,19 +893,40 @@ textarea:focus:not(:focus-visible) {
 
 
 /* =========================================================
-   COLLAPSIBLE SIDEBAR
+   COLLAPSIBLE SIDEBAR & BACKDROP
    ========================================================= */
+
+.sidebar-backdrop {
+    display: none;
+}
 
 @media (max-width: 900px) {
 
     .app-sidebar {
         transform: translateX(-100%);
-        box-shadow: 10px 0 30px rgba(36, 33, 30, 0.08);
+        transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 10px 0 30px rgba(36, 33, 30, 0.12);
+        z-index: 1000;
     }
 
-        .app-sidebar.open {
-            transform: translateX(0);
-        }
+    body.sidebar-mobile-open {
+        overflow: hidden !important;
+    }
+
+    body.sidebar-mobile-open .app-sidebar,
+    .app-sidebar.open {
+        transform: translateX(0);
+    }
+
+    body.sidebar-mobile-open .sidebar-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+        z-index: 999;
+    }
 
     .app-main {
         width: 100%;
@@ -3245,4 +3317,5 @@ a:active,
     line-height: 1.3 !important;
     text-transform: none !important;
 }
+/* --- END site utilities & resets --- */
 /* --- END site utilities & resets --- */

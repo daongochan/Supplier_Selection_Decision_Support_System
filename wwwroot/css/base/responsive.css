@@ -16,19 +16,40 @@
 
 
 /* =========================================================
-   COLLAPSIBLE SIDEBAR
+   COLLAPSIBLE SIDEBAR & BACKDROP
    ========================================================= */
+
+.sidebar-backdrop {
+    display: none;
+}
 
 @media (max-width: 900px) {
 
     .app-sidebar {
         transform: translateX(-100%);
-        box-shadow: 10px 0 30px rgba(36, 33, 30, 0.08);
+        transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 10px 0 30px rgba(36, 33, 30, 0.12);
+        z-index: 1000;
     }
 
-        .app-sidebar.open {
-            transform: translateX(0);
-        }
+    body.sidebar-mobile-open {
+        overflow: hidden !important;
+    }
+
+    body.sidebar-mobile-open .app-sidebar,
+    .app-sidebar.open {
+        transform: translateX(0);
+    }
+
+    body.sidebar-mobile-open .sidebar-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+        z-index: 999;
+    }
 
     .app-main {
         width: 100%;
