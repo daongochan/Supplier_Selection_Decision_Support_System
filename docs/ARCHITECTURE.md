@@ -1,153 +1,172 @@
-# SupplierSelectionDSS - Architecture & Technical Design Specification
+# Kiến trúc Hệ thống Supplier Selection DSS
 
-## 1. Executive Summary & Domain Scope
-
-`SupplierSelectionDSS` is an enterprise Decision Support System (DSS) designed to solve complex multi-criteria supplier selection problems by synthesizing:
-1. **Analytic Hierarchy Process (AHP)**: Determination of relative criteria weights through structured pairwise comparisons and Saaty consistency evaluation.
-2. **Technique for Order of Preference by Similarity to Ideal Solution (TOPSIS)**: Multi-attribute ranking of suppliers based on Euclidean distance to Positive and Negative Ideal Solutions ($PIS$ and $NIS$).
-3. **Managerial Decision Workflow**: Human-in-the-loop decision-making where managers review rankings, inspect sensitivity and consistency metrics, and record formal approval or re-evaluation justifications.
+Tài liệu này mô tả chi tiết kiến trúc tổng thể, thiết kế bảo mật, vòng đời nghiệp vụ và mô hình dữ liệu của hệ thống **Supplier Selection Decision Support System (DSS)**.
 
 ---
 
-## 2. System Architecture & Layering
+## 1. Kiến trúc Tổng thể (High-Level Architecture)
 
-The application operates as a single-project ASP.NET Core MVC application (.NET 10) backed by Entity Framework Core 10 and Microsoft SQL Server. The database schema is frozen; all optimizations respect existing table schemas and invariants.
+Hệ thống được xây dựng theo kiến trúc phân tầng (Layered Architecture) trên nền tảng **ASP.NET Core 10 (MVC)** kết hợp **Entity Framework Core 10** và cơ sở dữ liệu **Microsoft SQL Server**.
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           Web / Presentation Layer                      │
-│   Controllers (EvaluationBatch, Evaluation, AHP, TOPSIS, DecisionResult)│
-│   Razor Views + Modular CSS (tokens, base, components, pages)           │
-│   Client Scripts (site.js: double-submit, toasts, modal confirm)        │
-│   Authorization Policies (PolicyNames) + ClaimsPrincipalExtensions     │
-└────────────────────────────────────┬────────────────────────────────────┘
-                                     │
-┌────────────────────────────────────▼────────────────────────────────────┐
-│                             Domain Layer                                │
-│   Enums (BatchStatus, UserRole, DecisionApprovalStatus)                 │
-│   State Rules (EvaluationBatchStateRules)                               │
-└────────────────────────────────────┬────────────────────────────────────┘
-                                     │
-┌────────────────────────────────────▼────────────────────────────────────┐
-│                           Application Services                          │
-│   Calculation Engines: AHPCalculationService, TOPSISCalculationService  │
-│   Orchestration: EvaluationBatchService, EvaluationService, AHPService, │
-│                  TOPSISService, DecisionResultService, AuditLogService   │
-└────────────────────────────────────┬────────────────────────────────────┘
-                                     │
-┌────────────────────────────────────▼────────────────────────────────────┐
-│                    Infrastructure & Data Access Layer                   │
-│   Exporters: ClosedXmlExcelReportExporter, QuestPdfReportExporter       │
-│   ReportService (Orchestrator for exports and views)                    │
-│   SupplierSelectionDssDbContext (EF Core 10)                            │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+```mermaid
+graph TD
+    User["Người dùng (Web Browser)"] -->|HTTPS / Cookie Auth| WebApp["ASP.NET Core 10 MVC"]
+    
+    subgraph WebApp [Tầng Trình diễn & Điều hướng]
+        Middleware["Security Headers / Rate Limiter / Antiforgery"]
+        Controllers["Controllers (Role-based Authorization)"]
+        Views["Razor Views (Navy + Gold Design System)"]
+    end
 
----
+    subgraph ServiceLayer [Tầng Nghiệp vụ & Thuật toán]
+        AHPCalc["AHPCalculationService (RGMM, Consistency Check)"]
+        TOPSISCalc["TOPSISCalculationService (Vector Norm, Competition Ranking)"]
+        SensCalc["SensitivityAnalysisService (±10%, ±20% Weight Perturbation)"]
+        BizServices["AHPService, TOPSISService, EvaluationBatchService, UserService, ..."]
+        ExportServices["QuestPDF (PDF Export), ClosedXML (Excel Export)"]
+    end
 
-## 3. Mathematical & Algorithmic Engines
+    subgraph DataLayer [Tầng Dữ liệu]
+        EFContext["ApplicationDbContext (EF Core 10)"]
+        Storage["App_Data/reports (Isolated Report Storage)"]
+    end
 
-### 3.1 AHP Calculation Engine (`AHPCalculationService`)
-- **Pairwise Comparison Matrix**: $A = [a_{ij}]$ where $a_{ji} = 1 / a_{ij}$ and $a_{ii} = 1$.
-- **Weight Vector ($w$)**: Calculated using the geometric mean method (normalized principal eigenvector approximation).
-- **Principal Eigenvalue ($\lambda_{max}$)**: $\lambda_{max} = \frac{1}{n} \sum_{i=1}^n \frac{(A w)_i}{w_i}$.
-- **Consistency Index ($CI$)**: $CI = \frac{\lambda_{max} - n}{n - 1}$.
-- **Random Index ($RI$)**: Extended Saaty Random Index table up to $n = 15$:
-  $$\{1: 0.00, 2: 0.00, 3: 0.58, 4: 0.90, 5: 1.12, 6: 1.24, 7: 1.32, 8: 1.41, 9: 1.45, 10: 1.49, 11: 1.51, 12: 1.54, 13: 1.56, 14: 1.57, 15: 1.59\}$$
-- **Consistency Ratio ($CR$)**: $CR = \frac{CI}{RI}$. The comparison is declared consistent if $CR \le 0.10$.
+    subgraph Database [Cơ sở Dữ liệu]
+        SQLServer[("SQL Server (17 Tables, 7 Triggers, 2 Views)")]
+    end
 
-### 3.2 TOPSIS Calculation Engine (`TOPSISCalculationService`)
-- **Evaluation Matrix**: $X = [x_{ij}]$ where $i$ indexes suppliers and $j$ indexes criteria.
-- **Euclidean Normalization**:
-  $$r_{ij} = \frac{x_{ij}}{\sqrt{\sum_{k=1}^m x_{kj}^2}}$$
-- **Weighted Normalized Matrix**:
-  $$v_{ij} = w_j \cdot r_{ij}$$
-- **Ideal Solutions**:
-  - **Positive Ideal Solution ($PIS$ / $A^+$)**:
-    $v_j^+ = \max_i v_{ij}$ (if Benefit) or $\min_i v_{ij}$ (if Cost).
-  - **Negative Ideal Solution ($NIS$ / $A^-$)**:
-    $v_j^- = \min_i v_{ij}$ (if Benefit) or $\max_i v_{ij}$ (if Cost).
-- **Separation Distances**:
-  $$S_i^+ = \sqrt{\sum_{j=1}^n (v_{ij} - v_j^+)^2}, \quad S_i^- = \sqrt{\sum_{j=1}^n (v_{ij} - v_j^-)^2}$$
-- **Relative Closeness ($C_i$)**:
-  $$C_i = \frac{S_i^-}{S_i^+ + S_i^-}, \quad 0 \le C_i \le 1$$
-  Suppliers are sorted in descending order of $C_i$ (higher closeness = superior supplier).
-
----
-
-## 4. Workflow Lifecycle & State Machine
-
-```
-              ┌────────────────────────┐
-              │         Draft          │
-              └───────────┬────────────┘
-                          │ StartAsync() (Requires >= 2 suppliers, >= 2 criteria)
-                          ▼
-              ┌────────────────────────┐
-   ┌─────────►│       Evaluating       │◄────────┐
-   │          └─────┬────────────┬─────┘         │
-   │                │            │               │ ReevaluateAsync()
-   │  Save Scores / │            │ ApproveAsync()│
-   │  AHP Weights   │            │               │
-   │  (Invalidates  │            ▼               │
-   │   TOPSIS)      │  ┌──────────────────┐      │
-   │                │  │    Completed     │──────┘
-   │                │  └──────────────────┘
-   │                │ CancelAsync()
-   │                ▼
-   │          ┌────────────────────────┐
-   └──────────│       Cancelled        │
-              └────────────────────────┘
+    Middleware --> Controllers
+    Controllers --> Views
+    Controllers --> BizServices
+    BizServices --> AHPCalc
+    BizServices --> TOPSISCalc
+    BizServices --> SensCalc
+    BizServices --> ExportServices
+    BizServices --> EFContext
+    ExportServices --> Storage
+    EFContext --> SQLServer
 ```
 
-### 4.1 State Invariant Rules (`EvaluationBatchStateRules`)
-1. **CanStart**: Only batches in `Draft` state with $\ge 2$ suppliers and $\ge 2$ criteria can transition to `Evaluating`.
-2. **CanEvaluate**: Only batches in `Evaluating` state accept score entries.
-3. **CanPerformTOPSIS**: Requires `Evaluating` state, complete score matrix, and AHP calculated with $CR \le 0.10$.
-4. **CanCancel**: Only `Draft` and `Evaluating` batches can be cancelled. `Completed` and `Cancelled` batches are terminal and locked.
-5. **Cascade Invalidation**:
-   - Whenever evaluation scores are edited/saved (`EvaluationService.SaveAsync`), all existing `TopsisResults` and `TopsisIdealSolutions` for the batch are deleted.
-   - Whenever AHP pairwise comparisons or weights are updated (`AHPService.SaveComparisonsAsync`, `AHPService.CalculateAsync`), existing `TopsisResults` and `TopsisIdealSolutions` are deleted.
-   - This prevents stale or mathematically inconsistent rankings from persisting into decision-making.
+---
+
+## 2. Vòng đời Nghiệp vụ Đợt Đánh giá (Evaluation Batch Lifecycle)
+
+Mỗi đợt lựa chọn nhà cung cấp (`EvaluationBatch`) tuân thủ nghiêm ngặt máy trạng thái hữu hạn (Finite State Machine). Các trigger trong SQL Server và nghiệp vụ trong `EvaluationBatchService` đảm bảo không có bước nào bị nhảy cóc hoặc vi phạm toàn vẹn dữ liệu.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Draft : Tạo mới đợt đánh giá
+    Draft --> Evaluating : Kích hoạt đánh giá (Có đủ NCC & Tiêu chí)
+    Draft --> Cancelled : Hủy bỏ đợt đánh giá
+    
+    state Evaluating {
+        [*] --> Scoring : Chấm điểm nhà cung cấp
+        Scoring --> AHP_Matrix : Thiết lập ma trận so sánh cặp AHP
+        AHP_Matrix --> AHP_Consistent : Tính trọng số (CR <= 0.10)
+        AHP_Consistent --> TOPSIS_Run : Tính khoảng cách & Closeness (TOPSIS)
+        TOPSIS_Run --> Decision_Review : Xem xếp hạng & Phân tích độ nhạy
+    }
+    
+    Evaluating --> Completed : Phê duyệt kết quả chính thức (Approval)
+    Evaluating --> Cancelled : Hủy bỏ đợt đánh giá
+    Completed --> [*] : Xuất báo cáo (PDF / Excel)
+    Cancelled --> [*]
+```
+
+### Ràng buộc trạng thái:
+1. **Draft:** Chỉ cho phép thêm/bớt nhà cung cấp và tiêu chí thuộc nhóm hàng. Chưa cho phép chấm điểm.
+2. **Evaluating:** Ma trận điểm được khóa cấu trúc. Chuyên gia nhập điểm và lập ma trận so sánh cặp AHP. Phải đạt $CR \le 0.10$ mới được phép kích hoạt tính TOPSIS.
+3. **Completed:** Đã có phê duyệt cuối cùng (`IsFinal = 1`). Mọi dữ liệu điểm số, trọng số và xếp hạng trở thành chỉ đọc (Read-only).
+4. **Cancelled:** Đợt đánh giá bị hủy, không thể chỉnh sửa hay phê duyệt tiếp.
 
 ---
 
-## 5. Security & Authorization Architecture
+## 3. Kiến trúc Bảo mật (Security Architecture)
 
-### 5.1 Claims Principal Extensions (`Web/Extensions/ClaimsPrincipalExtensions.cs`)
-Eliminates redundant claim string lookups across all controllers:
-- `User.GetUserId()`: Parses integer User ID safely.
-- `User.GetDisplayName()`: Retrieves GivenName or Name fallback.
-- `User.GetRole()`: Retrieves ClaimTypes.Role.
+Hệ thống được thiết kế theo nguyên lý **Phòng thủ theo chiều sâu (Defense-in-Depth)** phù hợp với ứng dụng nội bộ doanh nghiệp:
 
-### 5.2 Declarative Policies (`Web/Authorization/PolicyNames.cs`)
-Registered centrally in `Program.cs`:
-- `PolicyNames.BatchManage`: Administrator, PurchasingStaff.
-- `PolicyNames.EvaluationManage`: Administrator, PurchasingStaff, Expert.
-- `PolicyNames.AhpManage`: Administrator, Expert.
-- `PolicyNames.TopsisManage`: Administrator, Expert.
-- `PolicyNames.DecisionApprove`: Administrator, Manager.
-- `PolicyNames.ReportView`: Administrator, Manager, PurchasingStaff.
-- `PolicyNames.AuditLogView`: Administrator.
-- `PolicyNames.UserManage`: Administrator.
+### 3.1. Xác thực & Quản lý Phiên (Authentication)
+- **Cơ chế:** Cookie Authentication an toàn (`HttpOnly = true`, `SameSite = Lax`, `SecurePolicy = SameAsRequest`).
+- **Mã hóa mật khẩu:** Sử dụng thuật toán chuẩn công nghiệp **BCrypt** (`workFactor = 11`).
+- **Chống Timing Attack:** Tại `AccountController.Login`, khi tài khoản không tồn tại, hệ thống vẫn thực thi một hàm băm BCrypt giả lập để giữ thời gian phản hồi đồng nhất với trường hợp sai mật khẩu.
+- **Chống Dò quét Tài khoản (User Enumeration):** Thông báo đăng nhập luôn đồng nhất: *"Tên đăng nhập hoặc mật khẩu không chính xác"*.
+- **Giới hạn Thử sai (Account Lockout):** Khóa tạm thời 15 phút nếu nhập sai mật khẩu quá 5 lần liên tiếp.
 
----
+### 3.2. Bảo vệ Tệp Báo cáo & Chống Leo quyền Thư mục (Directory Traversal)
+- **Tách biệt WebRoot:** Toàn bộ báo cáo PDF và Excel được lưu trữ ngoài webroot tại `App_Data/reports` (được cấu hình qua `Reports:Directory`).
+- **Chặn truy cập tĩnh:** `Program.cs` cấu hình `UseStaticFiles` ngăn chặn toàn bộ các yêu cầu trực tiếp vào đường dẫn `/reports/*`, trả về mã lỗi `404 Not Found`.
+- **Cổng tải an toàn:** Mọi thao tác tải file bắt buộc đi qua Action `Report/Download/{id}` có kiểm tra quyền role và ghi nhật ký kiểm toán (Audit Log).
+- **Chuẩn hóa đường dẫn:** Phương thức `ReportService.GetDownloadAsync` sử dụng `Path.GetFullPath` kết hợp kiểm tra tiền tố `StartsWith(canonicalReportsDir, OrdinalIgnoreCase)` để triệt tiêu hoàn toàn nguy cơ Path Traversal (`../../`).
 
-## 6. Reporting & Export Infrastructure
+### 3.3. Bảo vệ Tầng Mạng & Tiêu đề Phản hồi (Security Headers)
+Tích hợp Middleware tùy biến tự động chèn các tiêu đề bảo mật vào mọi phản hồi HTTP:
+- `X-Content-Type-Options: nosniff` (Chống MIME-type sniffing).
+- `X-Frame-Options: SAMEORIGIN` (Chống Clickjacking).
+- `Referrer-Policy: strict-origin-when-cross-origin` (Bảo vệ thông tin chuyển hướng).
 
-The previous monolithic `ReportService` (~1,800 lines) was refactored by extracting export format concerns into dedicated strategy classes:
-- **`Infrastructure/Exports/ClosedXmlExcelReportExporter.cs`**: Generates high-fidelity Excel workbooks with styled summary metadata, criteria weight tables, evaluation matrices, TOPSIS rankings, and formal decision signatures.
-- **`Infrastructure/Exports/QuestPdfReportExporter.cs`**: Produces publication-grade PDF documents with vector charts, page numbers, running headers, and audit stamps.
-- **`Services/ReportService.cs`**: Acts strictly as the orchestrator, fetching and compiling `ReportData` and delegating binary output generation to the corresponding exporter.
+### 3.4. Phòng chống Tấn công Giả mạo Yêu cầu (CSRF)
+- Đăng ký bộ lọc toàn cục `AutoValidateAntiforgeryTokenAttribute` trong `Program.cs`, tự động bảo vệ tất cả các HTTP method thay đổi trạng thái (`POST`, `PUT`, `DELETE`).
 
 ---
 
-## 7. UI/UX Design System & Client Controls
+## 4. Ma trận Phân quyền theo Vai trò (RBAC Matrix)
 
-- **Design System Tokens (`tokens.css`)**: Typography (`Source Serif 4`), semantic palette (`--terracotta`, `--sage`, `--lavender`, `--sky`, `--amber`, `--danger`).
-- **Sidebar Navigation (`_Sidebar.cshtml`)**: Semantic Bootstrap Icons applied to all navigational links with active route highlighting.
-- **Breadcrumb System (`_Breadcrumb.cshtml`)**: Automatic contextual hierarchy displayed on non-dashboard pages.
-- **Enterprise Footer (`_Footer.cshtml`)**: Consistent branding, versioning, and copyright notice.
-- **Toast Notifications (`_Toast.cshtml`)**: Floating alert stack supporting Success, Danger, Warning, and Info with auto-dismiss after 5 seconds.
-- **Confirmation Modal (`_ConfirmationModal.cshtml`)**: Modal dialog for critical DSS operations.
-- **Double-Submit Prevention (`site.js`)**: Automatic disablement and spinner activation on form submissions to protect computation integrity.
+Hệ thống quản lý 4 vai trò người dùng chuẩn hóa trong `Constants/UserRole.cs`:
+
+| Chức năng | Administrator | PurchasingStaff | Expert | Manager |
+| :--- | :---: | :---: | :---: | :---: |
+| Quản lý Người dùng & Phân quyền | **Toàn quyền** | Không | Không | Không |
+| Xem Nhật ký Kiểm toán (Audit Log) | **Toàn quyền** | Không | Không | Chỉ xem |
+| Quản lý Danh mục Nhà cung cấp | **Toàn quyền** | Tạo, Sửa | Chỉ xem | Chỉ xem |
+| Quản lý Nhóm hàng & Tiêu chí | **Toàn quyền** | Tạo, Sửa | Chỉ xem | Chỉ xem |
+| Tạo & Quản lý Đợt đánh giá (Batch) | **Toàn quyền** | Tạo, Sửa (Draft) | Chỉ xem | Duyệt chuyển bước |
+| Chấm điểm Đánh giá Nhà cung cấp | Không | Chấm điểm | Chấm điểm | Chỉ xem |
+| Lập Ma trận So sánh Cặp AHP | Không | Lập ma trận | **Chuyên gia chính** | Chỉ xem |
+| Chạy Thuật toán TOPSIS | Cho phép | Cho phép | Cho phép | Cho phép |
+| Phê duyệt / Yêu cầu Đánh giá lại | Không | Không | Không | **Quyết định** |
+| Xuất Báo cáo (PDF / Excel) | Cho phép | Chỉ xem | Chỉ xem | **Toàn quyền** |
+
+---
+
+## 5. Sơ đồ Cơ sở Dữ liệu (Database Schema)
+
+Cơ sở dữ liệu gồm 17 bảng được thiết kế chuẩn hóa, sử dụng collation tiếng Việt `Vietnamese_CI_AS`:
+
+```mermaid
+erDiagram
+    Users ||--o{ AuditLogs : "logs"
+    Users ||--o{ EvaluationBatches : "creates"
+    Users ||--o{ Approvals : "approves"
+    
+    ProductGroups ||--o{ Suppliers : "belongs_to"
+    ProductGroups ||--o{ Criteria : "defines"
+    ProductGroups ||--o{ EvaluationBatches : "applies_to"
+    
+    EvaluationBatches ||--o{ BatchSuppliers : "includes"
+    EvaluationBatches ||--o{ BatchCriteria : "includes"
+    EvaluationBatches ||--o{ EvaluationScores : "contains"
+    EvaluationBatches ||--o{ AHPPairwiseComparisons : "evaluates"
+    EvaluationBatches ||--o{ AHPResults : "yields"
+    EvaluationBatches ||--o{ AHPCriteriaWeights : "stores"
+    EvaluationBatches ||--o{ TOPSISResults : "ranks"
+    EvaluationBatches ||--o{ TOPSISIdealSolutions : "determines"
+    EvaluationBatches ||--o{ Approvals : "finalizes"
+    EvaluationBatches ||--o{ Reports : "exports"
+    
+    Suppliers ||--o{ EvaluationScores : "evaluated"
+    Suppliers ||--o{ TOPSISResults : "ranked"
+    Suppliers ||--o{ Approvals : "selected"
+    
+    Criteria ||--o{ EvaluationScores : "scored_on"
+    Criteria ||--o{ AHPCriteriaWeights : "weighted"
+    Criteria ||--o{ TOPSISIdealSolutions : "bounded"
+```
+
+### Các Trigger Kiểm soát Toàn vẹn Nghiệp vụ:
+1. `TR_EvaluationScores_ValidateBatch`: Chặn sửa đổi điểm khi đợt đánh giá đã Completed hoặc Cancelled.
+2. `TR_AHPPairwise_ValidateBatch`: Đảm bảo chỉ nhập ma trận AHP khi đợt ở trạng thái Evaluating.
+3. `TR_BatchSuppliers_ValidateBatch`: Ngăn thêm bớt nhà cung cấp sau khi đợt đã bắt đầu đánh giá.
+4. `TR_BatchCriteria_ValidateBatch`: Ngăn thêm bớt tiêu chí sau khi đợt đã bắt đầu đánh giá.
+5. `TR_Approvals_ValidateState`: Đảm bảo chỉ phê duyệt khi TOPSIS đã chạy và đợt ở trạng thái hợp lệ.
+6. `TR_Prevent_Demote_Last_Admin`: Ngăn hạ quyền Administrator cuối cùng của hệ thống.
+7. `TR_Prevent_Deactivate_Last_Admin`: Ngăn vô hiệu hóa Administrator cuối cùng của hệ thống.
