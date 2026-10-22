@@ -710,6 +710,21 @@ else
                     }
                 </div>
 
+                <div class="decision-approval-notes-field" style="margin-top: 16px; margin-bottom: 20px;">
+                    <label for="approvalNotesInput" class="form-label" style="font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                        <span>Lý do / Ghi chú phê duyệt</span>
+                        <span id="rankWarningBadge" style="display: none; color: #dc2626; font-size: 12px; font-weight: normal; background: #fee2e2; padding: 2px 8px; border-radius: 4px;">
+                            <i class="bi bi-exclamation-triangle"></i> Bắt buộc nhập lý do khi chọn nhà cung cấp không phải Hạng 1
+                        </span>
+                    </label>
+                    <textarea id="approvalNotesInput"
+                              name="notes"
+                              class="form-control"
+                              rows="2"
+                              placeholder="Nhập lý do hoặc căn cứ phê duyệt (bắt buộc nếu không chọn Hạng 1)..."
+                              style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; font-family: inherit; font-size: 14px;"></textarea>
+                </div>
+
                 <div class="decision-approval-toolbar">
                     <div class="decision-toolbar-secondary">
                         <button type="submit"
@@ -752,4 +767,48 @@ else
 
 @section Styles {
     <link rel="stylesheet" href="~/css/pages/decision-result.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var radios = document.querySelectorAll('input[name="supplierId"]');
+            var notesBadge = document.getElementById('rankWarningBadge');
+            var notesInput = document.getElementById('approvalNotesInput');
+            var form = document.getElementById('approvalForm');
+
+            function updateNotesRequirement() {
+                var selectedRadio = document.querySelector('input[name="supplierId"]:checked');
+                if (!selectedRadio) return;
+                var label = selectedRadio.closest('.decision-supplier-option');
+                var isRank1 = label && label.querySelector('.decision-supplier-rank') && label.querySelector('.decision-supplier-rank').textContent.includes('#1');
+                if (isRank1) {
+                    if (notesBadge) notesBadge.style.display = 'none';
+                    if (notesInput) notesInput.removeAttribute('required');
+                } else {
+                    if (notesBadge) notesBadge.style.display = 'inline-flex';
+                    if (notesInput) notesInput.setAttribute('required', 'required');
+                }
+            }
+
+            radios.forEach(function (r) {
+                r.addEventListener('change', updateNotesRequirement);
+            });
+            updateNotesRequirement();
+
+            if (form) {
+                form.addEventListener('submit', function (e) {
+                    var selectedRadio = document.querySelector('input[name="supplierId"]:checked');
+                    if (!selectedRadio) return;
+                    var label = selectedRadio.closest('.decision-supplier-option');
+                    var isRank1 = label && label.querySelector('.decision-supplier-rank') && label.querySelector('.decision-supplier-rank').textContent.includes('#1');
+                    if (!isRank1 && (!notesInput || !notesInput.value.trim())) {
+                        e.preventDefault();
+                        alert('Bạn đang chọn nhà cung cấp không phải Hạng 1. Bắt buộc phải nhập lý do giải trình phê duyệt.');
+                        if (notesInput) notesInput.focus();
+                    }
+                });
+            }
+        });
+    </script>
 }

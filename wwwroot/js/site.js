@@ -142,13 +142,38 @@
     document.addEventListener("DOMContentLoaded", function () {
 
         // =====================================================
-        // SIDEBAR STATE CLEANUP (REVERT TO STATIC SIDEBAR)
+        // SIDEBAR STATE CLEANUP & MOBILE NAVIGATION
         // =====================================================
         try {
             localStorage.removeItem("dss_sidebar_collapsed");
         } catch (e) { }
         document.documentElement.classList.remove("sidebar-collapsed");
         document.body.classList.remove("sidebar-collapsed", "sidebar-mobile-open");
+
+        const sidebarToggleBtn = document.getElementById("sidebarToggle");
+        const sidebarBackdrop = document.getElementById("sidebarBackdrop");
+
+        function closeMobileSidebar() {
+            document.body.classList.remove("sidebar-mobile-open");
+        }
+
+        if (sidebarToggleBtn) {
+            sidebarToggleBtn.addEventListener("click", function () {
+                document.body.classList.toggle("sidebar-mobile-open");
+            });
+        }
+
+        if (sidebarBackdrop) {
+            sidebarBackdrop.addEventListener("click", closeMobileSidebar);
+        }
+
+        document.querySelectorAll(".sidebar-link").forEach(function (link) {
+            link.addEventListener("click", function () {
+                if (window.innerWidth <= 900) {
+                    closeMobileSidebar();
+                }
+            });
+        });
 
 
         // =====================================================
@@ -210,10 +235,12 @@
             });
         }
 
-        // Close modal on Escape (only when idle)
+        // Close modal or mobile sidebar on Escape (only when idle)
         document.addEventListener("keydown", function (e) {
             if (e.key === "Escape") {
-                if (!DSS._isProcessing) {
+                if (document.body.classList.contains("sidebar-mobile-open")) {
+                    closeMobileSidebar();
+                } else if (!DSS._isProcessing) {
                     DSS.closeConfirmModal();
                 }
             }

@@ -32,6 +32,7 @@ public class EvaluationService
     {
         var batch = await _context.EvaluationBatches
             .AsNoTracking()
+            .AsSplitQuery()
             .Include(x => x.Group)
             .Include(x => x.Suppliers)
             .Include(x => x.Criteria)
@@ -149,6 +150,7 @@ public class EvaluationService
     {
         var batch =
             await _context.EvaluationBatches
+                .AsSplitQuery()
                 .Include(x => x.Suppliers)
                 .Include(x => x.Criteria)
                 .FirstOrDefaultAsync(
@@ -364,7 +366,26 @@ public class EvaluationService
             _context.TopsisIdealSolutions.RemoveRange(staleTopsisIdeals);
         }
 
-        await _context.SaveChangesAsync();
+        // -------------------------------------------------
+        // Invalidate stale pending/unfinalized Approvals
+        // -------------------------------------------------
+        var staleApprovals = await _context.Approvals
+            .Where(x => x.BatchId == model.BatchId && !x.IsFinal)
+            .ToListAsync();
+        if (staleApprovals.Count > 0)
+        {
+            _context.Approvals.RemoveRange(staleApprovals);
+        }
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            _logger.LogWarning(ex, "Xung đột đồng thời khi lưu điểm đợt đánh giá {BatchId}.", model.BatchId);
+            throw new BusinessRuleException("Dữ liệu đợt đánh giá vừa được người khác thay đổi, vui lòng tải lại trang.");
+        }
 
         _logger.LogInformation(
             "Lưu bảng điểm đánh giá cho đợt ID {BatchId} bởi User {UserId} thành công ({RowCount} nhà cung cấp).",
@@ -441,6 +462,7 @@ public class EvaluationService
         var batch =
             await _context.EvaluationBatches
                 .AsNoTracking()
+                .AsSplitQuery()
                 .Include(x => x.Suppliers)
                 .Include(x => x.Criteria)
                 .FirstOrDefaultAsync(

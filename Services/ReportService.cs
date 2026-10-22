@@ -560,6 +560,7 @@ public class ReportService
         var batch =
             await _context.EvaluationBatches
                 .AsNoTracking()
+                .AsSplitQuery()
                 .Include(
                     x =>
                         x.Group)

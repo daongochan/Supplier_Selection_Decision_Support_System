@@ -26,6 +26,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<AuditLog> AuditLogs { get; set; }
 
+    public virtual DbSet<BatchRoundSnapshot> BatchRoundSnapshots { get; set; }
+
     public virtual DbSet<Criterion> Criteria { get; set; }
 
     public virtual DbSet<EvaluationBatch> EvaluationBatches { get; set; }

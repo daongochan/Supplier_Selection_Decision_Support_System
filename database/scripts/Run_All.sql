@@ -372,6 +372,20 @@ CREATE TABLE AuditLogs (
 );
 GO
 
+-- 5.4. Lưu vết ảnh chụp nhanh đợt đánh giá (Batch Round Snapshot)
+CREATE TABLE BatchRoundSnapshots (
+    SnapshotID          INT IDENTITY(1,1) NOT NULL,
+    BatchID             INT            NOT NULL,
+    SnapshotType        NVARCHAR(50)   NOT NULL,
+    SnapshotData        NVARCHAR(MAX)  NOT NULL,
+    CreatedAt           DATETIME2      NOT NULL CONSTRAINT DF_BatchRoundSnapshots_CreatedAt DEFAULT (SYSDATETIME()),
+    CreatedBy           INT            NULL,
+    CONSTRAINT PK_BatchRoundSnapshots PRIMARY KEY (SnapshotID),
+    CONSTRAINT FK_BatchRoundSnapshots_Batch FOREIGN KEY (BatchID) REFERENCES EvaluationBatches(BatchID),
+    CONSTRAINT FK_BatchRoundSnapshots_User FOREIGN KEY (CreatedBy) REFERENCES Users(UserID)
+);
+GO
+
 GO
 
 /* ==================== 06_Triggers.sql ==================== */
@@ -563,6 +577,11 @@ CREATE INDEX IX_TopsisResults_Batch_Rank        ON TopsisResults(BatchID, RankNo
 CREATE INDEX IX_TopsisResults_CC                ON TopsisResults(BatchID, ClosenessCoefficient DESC);
 CREATE INDEX IX_Suppliers_Status                ON Suppliers(Status);
 CREATE INDEX IX_AuditLogs_User_Time             ON AuditLogs(UserID, ActionTime);
+CREATE INDEX IX_EvaluationBatches_CreatedAt      ON EvaluationBatches(CreatedAt DESC);
+CREATE INDEX IX_Reports_BatchID_GeneratedAt     ON Reports(BatchID, GeneratedAt DESC);
+CREATE INDEX IX_Approvals_BatchID_ApprovalDate  ON Approvals(BatchID, ApprovalDate DESC);
+CREATE INDEX IX_AuditLogs_ActionTime            ON AuditLogs(ActionTime DESC);
+CREATE INDEX IX_BatchRoundSnapshots_Batch       ON BatchRoundSnapshots(BatchID, CreatedAt DESC);
 GO
 
 GO

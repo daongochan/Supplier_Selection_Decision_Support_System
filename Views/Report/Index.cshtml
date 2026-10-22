@@ -5,6 +5,16 @@
 
     var canGenerate =
         Model.CanGenerate;
+
+    var latestPdf = Model.Reports
+        .FirstOrDefault(r => string.Equals(r.ReportType, SupplierSelectionDSS.Constants.ReportTypes.Pdf, StringComparison.OrdinalIgnoreCase));
+
+    var latestExcel = Model.Reports
+        .FirstOrDefault(r => string.Equals(r.ReportType, SupplierSelectionDSS.Constants.ReportTypes.Excel, StringComparison.OrdinalIgnoreCase));
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/report.css" asp-append-version="true" />
 }
 
 
@@ -97,58 +107,81 @@
     </div>
 
 
-    <div class="report-status-actions">
+    <div class="report-status-actions" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
 
         @if (canGenerate)
         {
-            <!-- PDF -->
-
-            <form method="post"
-                  action="@Url.Action(
-                      "GeneratePdf",
-                      "Report",
-                      new
-                      {
-                          batchId = Model.BatchId
-                      })">
-
-                @Html.AntiForgeryToken()
-
-                <button type="submit"
-                        class="btn-primary">
-
+            @if (latestPdf != null)
+            {
+                <a asp-controller="Report"
+                   asp-action="Download"
+                   asp-route-reportId="@latestPdf.ReportId"
+                   class="btn-primary"
+                   title="Tải bản PDF đã sinh gần nhất (@latestPdf.GeneratedAt.ToString("dd/MM/yyyy HH:mm"))">
                     <i class="bi bi-file-earmark-pdf"></i>
+                    Tải PDF hiện tại
+                </a>
 
-                    Generate PDF
+                <form method="post"
+                      action="@Url.Action("GeneratePdf", "Report", new { batchId = Model.BatchId })"
+                      style="display: inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit"
+                            class="btn-outline"
+                            title="Tạo lại bản PDF mới">
+                        <i class="bi bi-arrow-repeat"></i>
+                        Tạo lại PDF
+                    </button>
+                </form>
+            }
+            else
+            {
+                <form method="post"
+                      action="@Url.Action("GeneratePdf", "Report", new { batchId = Model.BatchId })">
+                    @Html.AntiForgeryToken()
+                    <button type="submit"
+                            class="btn-primary">
+                        <i class="bi bi-file-earmark-pdf"></i>
+                        Tạo PDF
+                    </button>
+                </form>
+            }
 
-                </button>
-
-            </form>
-
-
-            <!-- EXCEL -->
-
-            <form method="post"
-                  action="@Url.Action(
-                      "GenerateExcel",
-                      "Report",
-                      new
-                      {
-                          batchId = Model.BatchId
-                      })">
-
-                @Html.AntiForgeryToken()
-
-                <button type="submit"
-                        class="btn-outline">
-
+            @if (latestExcel != null)
+            {
+                <a asp-controller="Report"
+                   asp-action="Download"
+                   asp-route-reportId="@latestExcel.ReportId"
+                   class="btn-outline"
+                   title="Tải bản Excel đã sinh gần nhất (@latestExcel.GeneratedAt.ToString("dd/MM/yyyy HH:mm"))">
                     <i class="bi bi-file-earmark-spreadsheet"></i>
+                    Tải Excel hiện tại
+                </a>
 
-                    Generate Excel
-
-                </button>
-
-            </form>
+                <form method="post"
+                      action="@Url.Action("GenerateExcel", "Report", new { batchId = Model.BatchId })"
+                      style="display: inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit"
+                            class="btn-outline"
+                            title="Tạo lại file Excel mới">
+                        <i class="bi bi-arrow-repeat"></i>
+                        Tạo lại Excel
+                    </button>
+                </form>
+            }
+            else
+            {
+                <form method="post"
+                      action="@Url.Action("GenerateExcel", "Report", new { batchId = Model.BatchId })">
+                    @Html.AntiForgeryToken()
+                    <button type="submit"
+                            class="btn-outline">
+                        <i class="bi bi-file-earmark-spreadsheet"></i>
+                        Tạo Excel
+                    </button>
+                </form>
+            }
         }
         else
         {

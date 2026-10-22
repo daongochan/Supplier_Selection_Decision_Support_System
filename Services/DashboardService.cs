@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using SupplierSelectionDSS.Constants;
 using SupplierSelectionDSS.Data;
 using SupplierSelectionDSS.Models;
@@ -12,10 +13,15 @@ namespace SupplierSelectionDSS.Services;
 public class DashboardService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IMemoryCache? _cache;
 
-    public DashboardService(ApplicationDbContext context)
+    private const string SystemKpisCacheKey = "Dashboard_SystemKpis_v1";
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromSeconds(30);
+
+    public DashboardService(ApplicationDbContext context, IMemoryCache? cache = null)
     {
         _context = context;
+        _cache = cache;
     }
 
     public async Task<DashboardViewModel> GetDashboardAsync(int? batchId = null)
@@ -23,21 +29,26 @@ public class DashboardService
         var model = new DashboardViewModel();
 
         // =========================================================
-        // 1. SYSTEM-WIDE KPIS (100% GENUINE DATABASE DATA)
+        // 1. SYSTEM-WIDE KPIS (CACHED FOR 30s)
         // =========================================================
-        model.TotalSuppliers = await _context.Suppliers.AsNoTracking().CountAsync();
-        model.ActiveSuppliers = await _context.Suppliers.AsNoTracking().CountAsync(x => x.Status == EntityStatus.Active);
-        model.TotalProductGroups = await _context.ProductGroups.AsNoTracking().CountAsync();
-        model.TotalBatches = await _context.EvaluationBatches.AsNoTracking().CountAsync();
-        model.CompletedBatches = await _context.EvaluationBatches.AsNoTracking().CountAsync(x => x.Status == BatchStatus.Completed);
-        model.TotalCriteria = await _context.Criteria.AsNoTracking().CountAsync();
+        var kpis = await GetSystemKpisAsync();
+        model.TotalSuppliers = kpis.TotalSuppliers;
+        model.ActiveSuppliers = kpis.ActiveSuppliers;
+        model.TotalProductGroups = kpis.TotalProductGroups;
+        model.TotalBatches = kpis.TotalBatches;
+        model.CompletedBatches = kpis.CompletedBatches;
+        model.TotalCriteria = kpis.TotalCriteria;
+        model.BatchStatusDistribution = kpis.BatchStatusDistribution;
+        model.SupplierStatusDistribution = kpis.SupplierStatusDistribution;
+        model.EvaluationTrend = kpis.EvaluationTrend;
 
         // =========================================================
-        // 2. AVAILABLE BATCHES LIST (ORDERED DESC)
+        // 2. AVAILABLE BATCHES LIST (ORDERED DESC, TOP 50)
         // =========================================================
         var batches = await _context.EvaluationBatches
             .AsNoTracking()
             .OrderByDescending(x => x.CreatedAt)
+            .Take(50)
             .Select(x => new BatchSelectionOptionViewModel
             {
                 BatchId = x.BatchId,
@@ -47,6 +58,28 @@ public class DashboardService
                 CreatedAt = x.CreatedAt
             })
             .ToListAsync();
+
+        // If a specific batch was requested and is outside top 50, load it so dropdown can select it
+        if (batchId.HasValue && batches.All(b => b.BatchId != batchId.Value))
+        {
+            var requestedBatch = await _context.EvaluationBatches
+                .AsNoTracking()
+                .Where(x => x.BatchId == batchId.Value)
+                .Select(x => new BatchSelectionOptionViewModel
+                {
+                    BatchId = x.BatchId,
+                    BatchCode = x.BatchCode,
+                    BatchName = x.BatchName,
+                    Status = x.Status,
+                    CreatedAt = x.CreatedAt
+                })
+                .FirstOrDefaultAsync();
+
+            if (requestedBatch != null)
+            {
+                batches.Insert(0, requestedBatch);
+            }
+        }
 
         model.AvailableBatches = batches;
 
@@ -73,12 +106,31 @@ public class DashboardService
         if (targetBatchId.HasValue)
         {
             var bId = targetBatchId.Value;
+
+            // Load batch header and criteria via projection to avoid Cartesian product and entity overhead
             var currentBatchEntity = await _context.EvaluationBatches
                 .AsNoTracking()
-                .Include(x => x.Group)
-                .Include(x => x.Suppliers)
-                .Include(x => x.Criteria)
-                .FirstOrDefaultAsync(x => x.BatchId == bId);
+                .Where(x => x.BatchId == bId)
+                .Select(x => new
+                {
+                    x.BatchId,
+                    x.BatchCode,
+                    x.BatchName,
+                    GroupCode = x.Group != null ? x.Group.GroupCode : string.Empty,
+                    GroupName = x.Group != null ? x.Group.GroupName : "Chưa chỉ định",
+                    x.Status,
+                    TotalSuppliers = x.Suppliers.Count,
+                    x.CreatedAt,
+                    Criteria = x.Criteria.OrderBy(c => c.CriteriaCode).Select(c => new
+                    {
+                        c.CriteriaId,
+                        c.CriteriaCode,
+                        c.CriteriaName,
+                        c.CriteriaType,
+                        c.Unit
+                    }).ToList()
+                })
+                .FirstOrDefaultAsync();
 
             if (currentBatchEntity != null)
             {
@@ -94,12 +146,12 @@ public class DashboardService
                     BatchId = currentBatchEntity.BatchId,
                     BatchCode = currentBatchEntity.BatchCode,
                     BatchName = currentBatchEntity.BatchName,
-                    GroupCode = currentBatchEntity.Group?.GroupCode ?? string.Empty,
-                    GroupName = currentBatchEntity.Group?.GroupName ?? "Chưa chỉ định",
+                    GroupCode = currentBatchEntity.GroupCode,
+                    GroupName = currentBatchEntity.GroupName,
                     Status = currentBatchEntity.Status,
-                    TotalSuppliers = currentBatchEntity.Suppliers?.Count ?? 0,
+                    TotalSuppliers = currentBatchEntity.TotalSuppliers,
                     ScoredSuppliers = scoredSuppliersCount,
-                    TotalCriteria = currentBatchEntity.Criteria?.Count ?? 0,
+                    TotalCriteria = currentBatchEntity.Criteria.Count,
                     CreatedAt = currentBatchEntity.CreatedAt
                 };
 
@@ -154,7 +206,7 @@ public class DashboardService
                         SupplierId = r.SupplierId,
                         SupplierCode = r.Supplier?.SupplierCode ?? string.Empty,
                         SupplierName = r.Supplier?.SupplierName ?? "NCC #" + r.SupplierId,
-                        GroupName = currentBatchEntity.Group?.GroupName ?? string.Empty,
+                        GroupName = currentBatchEntity.GroupName,
                         ClosenessCoefficient = r.ClosenessCoefficient,
                         DistanceToPis = r.DistanceToPis,
                         DistanceToNis = r.DistanceToNis,
@@ -173,10 +225,11 @@ public class DashboardService
 
                 if (approval != null)
                 {
-                    var latestReport = await _context.Reports
+                    var latestReportId = await _context.Reports
                         .AsNoTracking()
                         .Where(x => x.BatchId == bId)
                         .OrderByDescending(x => x.GeneratedAt)
+                        .Select(x => (int?)x.ReportId)
                         .FirstOrDefaultAsync();
 
                     model.ApprovalInfo = new DashboardApprovalDto
@@ -188,8 +241,8 @@ public class DashboardService
                         ApproverName = approval.ApprovedByNavigation?.FullName ?? "Quản trị viên",
                         ApprovalDate = approval.ApprovalDate,
                         Notes = approval.Notes,
-                        HasReport = latestReport != null,
-                        LatestReportId = latestReport?.ReportId
+                        HasReport = latestReportId.HasValue,
+                        LatestReportId = latestReportId
                     };
                 }
 
@@ -242,15 +295,20 @@ public class DashboardService
                 model.WorkflowProgress = workflow;
 
                 // Radar Comparison for Top 3 Suppliers (Normalized 0-100 scale)
-                if (topsisResults.Count >= 2 && currentBatchEntity.Criteria != null && currentBatchEntity.Criteria.Any())
+                if (topsisResults.Count >= 2 && currentBatchEntity.Criteria.Any())
                 {
                     var topSuppliers = topsisResults.Take(3).ToList();
-                    var topSupplierIds = topSuppliers.Select(s => s.SupplierId).ToList();
-                    var criteriaList = currentBatchEntity.Criteria.OrderBy(c => c.CriteriaCode).ToList();
+                    var criteriaList = currentBatchEntity.Criteria;
 
                     var batchScores = await _context.EvaluationScores
                         .AsNoTracking()
                         .Where(x => x.BatchId == bId)
+                        .Select(s => new
+                        {
+                            s.SupplierId,
+                            s.CriteriaId,
+                            s.ScoreValue
+                        })
                         .ToListAsync();
 
                     var radar = new DashboardRadarComparisonDto
@@ -341,115 +399,29 @@ public class DashboardService
         }
 
         // =========================================================
-        // 4. CHARTS ROW 1 DTOS
+        // 4. SYSTEM INFO
         // =========================================================
+        var version = typeof(DashboardService).Assembly.GetName().Version;
+        var appVersion = version != null && (version.Major > 0 || version.Minor > 0)
+            ? $"v{version.Major}.{version.Minor}.{version.Build} Enterprise"
+            : "v1.2.0 Enterprise";
 
-        // Donut: Batch Status Distribution
-        var batchStatusGroups = await _context.EvaluationBatches
-            .AsNoTracking()
-            .GroupBy(x => x.Status)
-            .Select(g => new { Status = g.Key, Count = g.Count() })
-            .ToListAsync();
-
-        var completedCount = batchStatusGroups.FirstOrDefault(x => x.Status == BatchStatus.Completed)?.Count ?? 0;
-        var evaluatingCount = batchStatusGroups.FirstOrDefault(x => x.Status == BatchStatus.Evaluating)?.Count ?? 0;
-        var draftCount = batchStatusGroups.FirstOrDefault(x => x.Status == BatchStatus.Draft)?.Count ?? 0;
-        var cancelledCount = batchStatusGroups.FirstOrDefault(x => x.Status == BatchStatus.Cancelled)?.Count ?? 0;
-
-        model.BatchStatusDistribution = new DashboardDonutChartDto
-        {
-            TotalCount = model.TotalBatches,
-            Labels = new List<string> { "Hoàn thành", "Đang đánh giá", "Bản nháp", "Đã hủy" },
-            Values = new List<int> { completedCount, evaluatingCount, draftCount, cancelledCount },
-            Colors = new List<string> { "#16a34a", "#2563eb", "#f59e0b", "#ef4444" }
-        };
-
-        // Donut: Supplier Status Distribution
-        var inactiveSuppliers = model.TotalSuppliers - model.ActiveSuppliers;
-        model.SupplierStatusDistribution = new DashboardDonutChartDto
-        {
-            TotalCount = model.TotalSuppliers,
-            Labels = new List<string> { "Hoạt động", "Không hoạt động" },
-            Values = new List<int> { model.ActiveSuppliers, inactiveSuppliers },
-            Colors = new List<string> { "#16a34a", "#94a3b8" }
-        };
-
-        // Line: Evaluation Trend over recent months
-        var now = DateTime.UtcNow;
-        var trendLabels = new List<string>();
-        var trendBatchCounts = new List<int>();
-        var trendSupplierCounts = new List<int>();
-
-        // Query historical batches grouped by year and month
-        var recentBatchEntities = await _context.EvaluationBatches
-            .AsNoTracking()
-            .Include(x => x.Suppliers)
-            .Where(x => x.CreatedAt >= now.AddMonths(-5).Date)
-            .ToListAsync();
-
-        for (int i = 5; i >= 0; i--)
-        {
-            var targetMonthDate = now.AddMonths(-i);
-            var monthLabel = "T" + targetMonthDate.Month + "/" + targetMonthDate.ToString("yy");
-            trendLabels.Add(monthLabel);
-
-            var monthBatches = recentBatchEntities
-                .Where(b => b.CreatedAt.Year == targetMonthDate.Year && b.CreatedAt.Month == targetMonthDate.Month)
-                .ToList();
-
-            trendBatchCounts.Add(monthBatches.Count);
-            trendSupplierCounts.Add(monthBatches.Sum(b => b.Suppliers?.Count ?? 0));
-        }
-
-        // If no data in the last 6 months (e.g. database seeded on specific past dates), fall back to all recorded batches
-        if (trendBatchCounts.All(c => c == 0))
-        {
-            var allBatchesGrouped = await _context.EvaluationBatches
-                .AsNoTracking()
-                .Include(x => x.Suppliers)
-                .OrderBy(x => x.CreatedAt)
-                .ToListAsync();
-
-            trendLabels.Clear();
-            trendBatchCounts.Clear();
-            trendSupplierCounts.Clear();
-
-            var groups = allBatchesGrouped
-                .GroupBy(b => new { b.CreatedAt.Year, b.CreatedAt.Month })
-                .TakeLast(6);
-
-            foreach (var g in groups)
-            {
-                trendLabels.Add("T" + g.Key.Month + "/" + (g.Key.Year % 100));
-                trendBatchCounts.Add(g.Count());
-                trendSupplierCounts.Add(g.Sum(b => b.Suppliers?.Count ?? 0));
-            }
-        }
-
-        model.EvaluationTrend = new DashboardTrendChartDto
-        {
-            MonthLabels = trendLabels,
-            BatchCounts = trendBatchCounts,
-            SupplierCounts = trendSupplierCounts
-        };
-
-        // =========================================================
-        // 5. SYSTEM INFO & AUDIT LOGS
-        // =========================================================
         model.SystemInfo = new DashboardSystemInfoDto
         {
-            UserCount = await _context.Users.AsNoTracking().CountAsync(),
-            RoleCount = 4,
-            AppVersion = "v1.0.0 Enterprise",
+            UserCount = kpis.UserCount,
+            RoleCount = UserRole.All.Count,
+            AppVersion = appVersion,
             DatabaseType = "Microsoft SQL Server",
             SystemStatus = "Sẵn sàng (Online)"
         };
 
+        // =========================================================
+        // 5. RECENT ACTIVITIES (AUDIT LOGS)
+        // =========================================================
         model.RecentActivities = await _context.AuditLogs
             .AsNoTracking()
             .OrderByDescending(x => x.ActionTime)
             .Take(5)
-            .Include(x => x.User)
             .Select(l => new DashboardActivityItemDto
             {
                 LogId = l.LogId,
@@ -462,4 +434,176 @@ public class DashboardService
 
         return model;
     }
+
+    private async Task<DashboardKpisCache> GetSystemKpisAsync()
+    {
+        if (_cache != null && _cache.TryGetValue(SystemKpisCacheKey, out DashboardKpisCache? cached) && cached != null)
+        {
+            return cached;
+        }
+
+        // 1. Supplier counts (1 query: Total and Active)
+        var supplierCounts = await _context.Suppliers
+            .AsNoTracking()
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                Total = g.Count(),
+                Active = g.Count(x => x.Status == EntityStatus.Active)
+            })
+            .FirstOrDefaultAsync();
+
+        var totalSuppliers = supplierCounts?.Total ?? 0;
+        var activeSuppliers = supplierCounts?.Active ?? 0;
+
+        // 2. Product Groups count
+        var totalProductGroups = await _context.ProductGroups
+            .AsNoTracking()
+            .CountAsync();
+
+        // 3. Criteria count
+        var totalCriteria = await _context.Criteria
+            .AsNoTracking()
+            .CountAsync();
+
+        // 4. Batch Status Distribution & Total/Completed counts (1 query)
+        var batchStatusGroups = await _context.EvaluationBatches
+            .AsNoTracking()
+            .GroupBy(x => x.Status)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        var completedBatches = batchStatusGroups.FirstOrDefault(x => x.Status == BatchStatus.Completed)?.Count ?? 0;
+        var evaluatingBatches = batchStatusGroups.FirstOrDefault(x => x.Status == BatchStatus.Evaluating)?.Count ?? 0;
+        var draftBatches = batchStatusGroups.FirstOrDefault(x => x.Status == BatchStatus.Draft)?.Count ?? 0;
+        var cancelledBatches = batchStatusGroups.FirstOrDefault(x => x.Status == BatchStatus.Cancelled)?.Count ?? 0;
+        var totalBatches = batchStatusGroups.Sum(x => x.Count);
+
+        var batchStatusDistribution = new DashboardDonutChartDto
+        {
+            TotalCount = totalBatches,
+            Labels = new List<string> { "Hoàn thành", "Đang đánh giá", "Bản nháp", "Đã hủy" },
+            Values = new List<int> { completedBatches, evaluatingBatches, draftBatches, cancelledBatches },
+            Colors = new List<string> { "#16a34a", "#2563eb", "#f59e0b", "#ef4444" }
+        };
+
+        var supplierStatusDistribution = new DashboardDonutChartDto
+        {
+            TotalCount = totalSuppliers,
+            Labels = new List<string> { "Hoạt động", "Không hoạt động" },
+            Values = new List<int> { activeSuppliers, Math.Max(0, totalSuppliers - activeSuppliers) },
+            Colors = new List<string> { "#16a34a", "#94a3b8" }
+        };
+
+        // 5. Evaluation Trend (1st of month 5 months ago to cover full 6 calendar months)
+        var now = DateTime.UtcNow;
+        var startMonth = new DateTime(now.Year, now.Month, 1).AddMonths(-5);
+
+        var recentBatches = await _context.EvaluationBatches
+            .AsNoTracking()
+            .Where(x => x.CreatedAt >= startMonth)
+            .Select(b => new
+            {
+                b.CreatedAt,
+                SupplierCount = b.Suppliers.Count
+            })
+            .ToListAsync();
+
+        var trendLabels = new List<string>();
+        var trendBatchCounts = new List<int>();
+        var trendSupplierCounts = new List<int>();
+
+        for (int i = 5; i >= 0; i--)
+        {
+            var targetMonthDate = now.AddMonths(-i);
+            var monthLabel = "T" + targetMonthDate.Month + "/" + targetMonthDate.ToString("yy");
+            trendLabels.Add(monthLabel);
+
+            var monthBatches = recentBatches
+                .Where(b => b.CreatedAt.Year == targetMonthDate.Year && b.CreatedAt.Month == targetMonthDate.Month)
+                .ToList();
+
+            trendBatchCounts.Add(monthBatches.Count);
+            trendSupplierCounts.Add(monthBatches.Sum(b => b.SupplierCount));
+        }
+
+        // Fallback: if no data in the last 6 months, take the last 6 recorded months without loading full supplier entities
+        if (trendBatchCounts.All(c => c == 0))
+        {
+            var pastBatches = await _context.EvaluationBatches
+                .AsNoTracking()
+                .OrderByDescending(b => b.CreatedAt)
+                .Take(200)
+                .Select(b => new
+                {
+                    b.CreatedAt.Year,
+                    b.CreatedAt.Month,
+                    SupplierCount = b.Suppliers.Count
+                })
+                .ToListAsync();
+
+            if (pastBatches.Any())
+            {
+                trendLabels.Clear();
+                trendBatchCounts.Clear();
+                trendSupplierCounts.Clear();
+
+                var groups = pastBatches
+                    .GroupBy(b => new { b.Year, b.Month })
+                    .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
+                    .TakeLast(6);
+
+                foreach (var g in groups)
+                {
+                    trendLabels.Add("T" + g.Key.Month + "/" + (g.Key.Year % 100));
+                    trendBatchCounts.Add(g.Count());
+                    trendSupplierCounts.Add(g.Sum(b => b.SupplierCount));
+                }
+            }
+        }
+
+        var evaluationTrend = new DashboardTrendChartDto
+        {
+            MonthLabels = trendLabels,
+            BatchCounts = trendBatchCounts,
+            SupplierCounts = trendSupplierCounts
+        };
+
+        // 6. User Count
+        var userCount = await _context.Users
+            .AsNoTracking()
+            .CountAsync();
+
+        var kpiResult = new DashboardKpisCache(
+            totalSuppliers,
+            activeSuppliers,
+            totalProductGroups,
+            totalBatches,
+            completedBatches,
+            totalCriteria,
+            userCount,
+            batchStatusDistribution,
+            supplierStatusDistribution,
+            evaluationTrend);
+
+        var cacheOptions = new MemoryCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = CacheDuration,
+            Size = 1
+        };
+        _cache?.Set(SystemKpisCacheKey, kpiResult, cacheOptions);
+        return kpiResult;
+    }
+
+    private sealed record DashboardKpisCache(
+        int TotalSuppliers,
+        int ActiveSuppliers,
+        int TotalProductGroups,
+        int TotalBatches,
+        int CompletedBatches,
+        int TotalCriteria,
+        int UserCount,
+        DashboardDonutChartDto BatchStatusDistribution,
+        DashboardDonutChartDto SupplierStatusDistribution,
+        DashboardTrendChartDto EvaluationTrend);
 }

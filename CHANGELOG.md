@@ -4,6 +4,40 @@ Toàn bộ các thay đổi quan trọng về kiến trúc, thuật toán, bảo
 
 ---
 
+## [1.3.0] - 2026-10-22
+
+### Tối Ưu Hiệu Năng, Giao Diện & Toàn Vẹn Luồng Nghiệp Vụ (Round 3 Optimization)
+
+- **Đo lường & Tối ưu truy vấn dữ liệu (Data Access Optimization):**
+  - **Dashboard:** Giảm 53% số lệnh SQL (từ 17 xuống 8 câu lệnh), loại bỏ tích Descartes (`Suppliers` × `Criteria`), bổ sung bộ đệm `IMemoryCache` (30 giây) cho 6 KPI hệ thống, giới hạn dropdown `Take(50)`. Thời gian phản hồi p50 giảm từ **25.649,8 ms** xuống **155,2 ms** (nhanh hơn **165 lần / giảm 99,4%**).
+  - **Audit Log:** Bổ sung chỉ mục `IX_AuditLogs_ActionTime` trên 10.000 dòng nhật ký. Thời gian phản hồi p50 giảm từ **580,4 ms** xuống **40,1 ms** (nhanh hơn **14,5 lần / giảm 93,1%**).
+  - **Split Queries:** Áp dụng `.AsSplitQuery()` cho các truy vấn nạp đồng thời `Suppliers` và `Criteria` tại `EvaluationService`, `ReportService`, và `TOPSISService`, ngăn ngừa bùng nổ dữ liệu truyền tải.
+- **Tối ưu Tài nguyên tĩnh & Phân phối (Static Asset Delivery):**
+  - **Cục bộ hóa Font & Icon 100%:** Tải và nhúng toàn bộ font Source Serif 4 (WOFF2) và Bootstrap Icons v1.11.3 vào kho cục bộ (`wwwroot/fonts/`), loại bỏ hoàn toàn các liên kết CDN (`fonts.googleapis.com`, `cdn.jsdelivr.net`), giúp hệ thống chạy độc lập 100% trong môi trường mạng nội bộ (intranet/offline).
+  - **Xóa bỏ thác nước `@import`:** Đóng gói toàn bộ token, kiểu chữ, bố cục và component vào `site.css` (76 KB), xóa bỏ chuỗi 26 file con nạp tuần tự. Các view nạp CSS đặc thù qua `@section Styles` kèm `asp-append-version="true"`.
+  - **Nén phản hồi & Bộ đệm:** Kích hoạt nén Brotli + Gzip (`CompressionLevel.Fastest`) và cấu hình `Cache-Control: public, max-age=31536000, immutable` cho tài nguyên tĩnh gắn mã phiên bản.
+  - **Chuyển đổi hình ảnh WebP:** Giảm 75,2% dung lượng ảnh hệ thống (`access-denied-duck.webp` 4,1 KB, `login-left.webp` 18,7 KB, `sidebar-bg.webp` 2,9 KB) kèm thẻ `<picture>` fallback.
+- **Khả năng tiếp cận (Accessibility - A11y) & Trải nghiệm người dùng (UX):**
+  - Bổ sung **Skip-link** (`#main-content`) và chuẩn hóa `:focus-visible` phục vụ điều hướng hoàn toàn bằng bàn phím.
+  - Thanh bên di động (Mobile Sidebar) được trang bị backdrop làm mờ, khóa cuộn thân trang (`overflow: hidden`), hỗ trợ đóng bằng phím `Escape` hoặc khi bấm ngoài.
+  - Ma trận so sánh AHP được bổ sung `scope="col"`, `scope="row"`, nhãn `aria-label` chi tiết cho từng ô thang đo Saaty, tiêu đề hàng/cột cố định (`position: sticky`) khi cuộn ngang/dọc.
+  - Các biểu đồ Dashboard được gắn `role="img"`, `aria-label` và bảng tóm tắt số liệu ẩn cho trình đọc màn hình (`.sr-only`).
+  - Tách toàn bộ script nội tuyến của trang AHP sang `wwwroot/js/pages/ahp.js` và dọn dẹp 35 thuộc tính `style="..."` tĩnh trên Dashboard vào class CSS trong `dashboard.css`.
+  - Hỗ trợ chuẩn người dùng nhạy cảm chuyển động qua `@media (prefers-reduced-motion: reduce)`.
+- **Toàn vẹn Nghiệp vụ & Dữ liệu (Business Logic Hardening):**
+  - **Lưu vết Snapshot vòng đánh giá (C1):** Bổ sung bảng `BatchRoundSnapshots` lưu trữ toàn vẹn JSON UTF-8 của đợt đánh giá khi yêu cầu **Đánh giá lại (Re-evaluation)** hoặc **Phê duyệt chính thức (Final Approval)**, không làm mất dữ liệu lịch sử các vòng trước.
+  - **Tự động hủy phê duyệt chờ khi sửa điểm/trọng số (C2):** Tự động vô hiệu hóa các bản ghi `Approvals` chưa hoàn tất khi lưu điểm đánh giá hoặc cập nhật ma trận AHP.
+  - **Bắt buộc giải trình khi chọn NCC ngoài Top 1 (C4):** Yêu cầu nhập lý do giải trình khi phê duyệt nhà cung cấp không xếp hạng 1 TOPSIS (`RankNo != 1`), bổ sung badge cảnh báo trực quan trên giao diện phê duyệt.
+  - **Kiểm soát đồng thời lạc quan (C5):** Bắt `DbUpdateConcurrencyException` và dịch thành thông báo tiếng Việt thân thiện trên toàn bộ các tác vụ lưu điểm, lưu AHP và phê duyệt.
+  - **Khóa đơn vị đo tiêu chí đang sử dụng (C6):** Ngăn chặn chỉnh sửa thuộc tính `Unit` trên các tiêu chí đã có điểm đánh giá hoặc dữ liệu AHP/TOPSIS.
+  - **Tái sử dụng báo cáo sẵn có (A5):** Cung cấp nút tải tức thì báo cáo PDF/Excel đã sinh kèm nút "Tạo lại" khi cần cập nhật.
+- **Đề xuất Kiến trúc Hội đồng Đa Chuyên gia (Group AHP Proposal):**
+  - Soạn thảo tài liệu thiết kế học thuật `docs/GROUP-AHP-PROPOSAL.md` theo phương pháp Trung bình nhân (Geometric Mean - AIJ của Thomas L. Saaty), gồm thiết kế DDL 2 bảng `AHPEvaluatorAssignments` và `AHPEvaluatorComparisons`, công thức toán học và chỉ số đồng thuận nhóm.
+- **Đồng bộ Cơ sở dữ liệu & Kiểm thử:**
+  - Đồng bộ 100% CSDL qua bản vá `database/patches/20261022_round3_indexes_and_snapshots.sql`, cập nhật `01_schema.sql` và `database/scripts/*`.
+  - Đạt 100% qua công cụ kiểm tra `python tools/verify/verify_schema_sync.py` (18 bảng, 21 chỉ mục, 7 triggers, 2 views).
+  - Bộ kiểm thử tự động tăng lên **151 ca kiểm thử** (`151 passed, 0 failed`).
+
 ## [1.2.0] - 2026-10-22
 
 ### Củng Cố Toàn Diện & Tự Động Hóa CI (Round 2 Hardening)

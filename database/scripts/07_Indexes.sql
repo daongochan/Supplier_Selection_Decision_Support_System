@@ -18,4 +18,9 @@ CREATE INDEX IX_TopsisResults_Batch_Rank        ON TopsisResults(BatchID, RankNo
 CREATE INDEX IX_TopsisResults_CC                ON TopsisResults(BatchID, ClosenessCoefficient DESC);
 CREATE INDEX IX_Suppliers_Status                ON Suppliers(Status);
 CREATE INDEX IX_AuditLogs_User_Time             ON AuditLogs(UserID, ActionTime);
+CREATE INDEX IX_EvaluationBatches_CreatedAt      ON EvaluationBatches(CreatedAt DESC);
+CREATE INDEX IX_Reports_BatchID_GeneratedAt     ON Reports(BatchID, GeneratedAt DESC);
+CREATE INDEX IX_Approvals_BatchID_ApprovalDate  ON Approvals(BatchID, ApprovalDate DESC);
+CREATE INDEX IX_AuditLogs_ActionTime            ON AuditLogs(ActionTime DESC);
+CREATE INDEX IX_BatchRoundSnapshots_Batch       ON BatchRoundSnapshots(BatchID, CreatedAt DESC);
 GO

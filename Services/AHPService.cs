@@ -366,6 +366,15 @@ public class AHPService
                     _context.TopsisIdealSolutions.RemoveRange(staleTopsisIdeals);
                 }
 
+                // Invalidate stale pending/unfinalized Approvals
+                var staleApprovals = await _context.Approvals
+                    .Where(x => x.BatchId == model.BatchId && !x.IsFinal)
+                    .ToListAsync();
+                if (staleApprovals.Count > 0)
+                {
+                    _context.Approvals.RemoveRange(staleApprovals);
+                }
+
                 await _context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
@@ -374,6 +383,12 @@ public class AHPService
                     "Lưu ma trận so sánh cặp AHP thành công cho đợt đánh giá ID {BatchId} bởi người dùng ID {UserId}.",
                     model.BatchId,
                     evaluatedBy);
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogWarning(ex, "Xung đột đồng thời khi lưu ma trận so sánh cặp AHP cho đợt {BatchId}.", model.BatchId);
+                throw new BusinessRuleException("Dữ liệu đợt đánh giá vừa được người khác thay đổi, vui lòng tải lại trang.");
             }
             catch (Exception ex)
             {
@@ -543,6 +558,15 @@ public class AHPService
                     _context.TopsisIdealSolutions.RemoveRange(staleTopsisIdeals);
                 }
 
+                // Invalidate stale pending/unfinalized Approvals
+                var staleApprovals = await _context.Approvals
+                    .Where(x => x.BatchId == batchId && !x.IsFinal)
+                    .ToListAsync();
+                if (staleApprovals.Count > 0)
+                {
+                    _context.Approvals.RemoveRange(staleApprovals);
+                }
+
                 var calculatedAt =
                     DateTime.UtcNow;
 
@@ -669,6 +693,12 @@ public class AHPService
                                     })
                             .ToList()
                 };
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogWarning(ex, "Xung đột đồng thời khi tính toán và lưu trọng số AHP cho đợt {BatchId}.", batchId);
+                throw new BusinessRuleException("Dữ liệu đợt đánh giá vừa được người khác thay đổi, vui lòng tải lại trang.");
             }
             catch (Exception ex)
             {

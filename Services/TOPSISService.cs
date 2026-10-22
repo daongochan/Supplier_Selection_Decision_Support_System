@@ -41,6 +41,7 @@ public class TOPSISService
         var batch =
             await _context.EvaluationBatches
                 .AsNoTracking()
+                .AsSplitQuery()
                 .Include(x => x.Suppliers)
                 .Include(x => x.Criteria)
                 .FirstOrDefaultAsync(
@@ -417,6 +418,7 @@ public class TOPSISService
 
         var batch =
             await _context.EvaluationBatches
+                .AsSplitQuery()
                 .Include(x => x.Suppliers)
                 .Include(x => x.Criteria)
                 .FirstOrDefaultAsync(
