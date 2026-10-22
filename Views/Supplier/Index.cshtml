@@ -1,12 +1,7 @@
-﻿@model SupplierSelectionDSS.Models.SupplierIndexViewModel
+@model SupplierSelectionDSS.Models.SupplierIndexViewModel
 
 @{
     ViewData["Title"] = "Suppliers";
-
-    var pageSize =
-        Model.PageSize <= 0
-            ? 10
-            : Model.PageSize;
 }
 
 <div class="page-header">
@@ -35,20 +30,6 @@
 </div>
 
 
-@if (TempData["SuccessMessage"] is string successMessage)
-{
-    <div class="alert-success">
-        @successMessage
-    </div>
-}
-
-
-@if (TempData["ErrorMessage"] is string errorMessage)
-{
-    <div class="alert-danger">
-        @errorMessage
-    </div>
-}
 
 
 <!-- =========================================================
@@ -104,36 +85,6 @@
                 <option value="Inactive"
                         selected="@(Model.Status == "Inactive")">
                     Inactive
-                </option>
-
-            </select>
-
-        </div>
-
-
-        <div class="filter-field">
-
-            <label for="pageSize">
-                Rows
-            </label>
-
-            <select id="pageSize"
-                    name="pageSize"
-                    class="form-control">
-
-                <option value="10"
-                        selected="@(pageSize == 10)">
-                    10
-                </option>
-
-                <option value="20"
-                        selected="@(pageSize == 20)">
-                    20
-                </option>
-
-                <option value="50"
-                        selected="@(pageSize == 50)">
-                    50
                 </option>
 
             </select>
@@ -327,20 +278,8 @@
         </div>
 
 
-        {
-            ViewData["PageNumber"] = Model.PageNumber;
-            ViewData["TotalPages"] = Model.TotalPages;
-            ViewData["TotalCount"] = Model.TotalCount;
-            ViewData["StartItemNumber"] = Model.StartItemNumber;
-            ViewData["EndItemNumber"] = Model.EndItemNumber;
-            ViewData["HasPreviousPage"] = Model.HasPreviousPage;
-            ViewData["HasNextPage"] = Model.HasNextPage;
-            ViewData["Keyword"] = Model.Keyword;
-            ViewData["Status"] = Model.Status;
-            ViewData["PageSize"] = Model.PageSize;
-            ViewData["Action"] = "Index";
-        }
-        <partial name="_Pagination" />
+
+        <partial name="_Pagination" model="Model" />
     }
     else
     {

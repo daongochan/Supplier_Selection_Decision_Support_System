@@ -1,4 +1,4 @@
-﻿namespace SupplierSelectionDSS.Models;
+namespace SupplierSelectionDSS.Models;
 
 public class TOPSISViewModel
 {
@@ -53,91 +53,44 @@ public class TOPSISViewModel
     public List<TOPSISRankingViewModel> Ranking { get; set; }
         = new();
 
-
     public bool HasTOPSISResult =>
         Ranking.Any();
-}
 
+    // =========================================================
+    // ACADEMIC FEATURES: INTERMEDIATE MATRICES & SENSITIVITY
+    // =========================================================
 
-// =============================================================
-// CRITERIA
-// =============================================================
+    /// <summary>
+    /// Ma trận chuẩn hóa vector R = [r_ij].
+    /// </summary>
+    public List<TOPSISMatrixRowViewModel> NormalizedMatrix { get; set; }
+        = new();
 
-public class TOPSISCriteriaViewModel
-{
-    public int CriteriaId { get; set; }
+    /// <summary>
+    /// Ma trận chuẩn hóa có trọng số V = [v_ij].
+    /// </summary>
+    public List<TOPSISMatrixRowViewModel> WeightedMatrix { get; set; }
+        = new();
 
-    public string CriteriaCode { get; set; } = string.Empty;
+    /// <summary>
+    /// Kết quả phân tích độ nhạy (biến thiên trọng số +-10%, +-20%).
+    /// </summary>
+    public SensitivityAnalysisResultViewModel? SensitivityAnalysis { get; set; }
 
-    public string CriteriaName { get; set; } = string.Empty;
+    /// <summary>
+    /// Đánh dấu nếu có từ 2 nhà cung cấp trở lên hòa hạng.
+    /// </summary>
+    public bool HasTies { get; set; }
 
-    public string CriteriaType { get; set; } = string.Empty;
+    /// <summary>
+    /// Đánh dấu khi tất cả nhà cung cấp có cùng điểm trên mọi tiêu chí.
+    /// </summary>
+    public bool IsIndistinguishable { get; set; }
 
-    public string? Unit { get; set; }
-
-    public decimal Weight { get; set; }
-
-    public double WeightPercentage =>
-        (double)Weight * 100.0;
-}
-
-
-// =============================================================
-// SUPPLIER DECISION MATRIX ROW
-// =============================================================
-
-public class TOPSISEvaluationRowViewModel
-{
-    public int SupplierId { get; set; }
-
-    public string SupplierCode { get; set; } = string.Empty;
-
-    public string SupplierName { get; set; } = string.Empty;
-
-    public Dictionary<int, decimal> Scores { get; set; }
+    /// <summary>
+    /// Mã các tiêu chí có phương sai bằng 0 (không phân biệt được).
+    /// </summary>
+    public List<string> ZeroVarianceCriteriaCodes { get; set; }
         = new();
 }
 
-
-// =============================================================
-// IDEAL SOLUTION
-// =============================================================
-
-public class TOPSISIdealViewModel
-{
-    public int CriteriaId { get; set; }
-
-    public string CriteriaCode { get; set; } = string.Empty;
-
-    public string CriteriaName { get; set; } = string.Empty;
-
-    public string CriteriaType { get; set; } = string.Empty;
-
-    public string? Unit { get; set; }
-
-    public decimal PISValue { get; set; }
-
-    public decimal NISValue { get; set; }
-}
-
-
-// =============================================================
-// RANKING
-// =============================================================
-
-public class TOPSISRankingViewModel
-{
-    public int SupplierId { get; set; }
-
-    public string SupplierCode { get; set; } = string.Empty;
-
-    public string SupplierName { get; set; } = string.Empty;
-
-    public decimal DistanceToPIS { get; set; }
-
-    public decimal DistanceToNIS { get; set; }
-
-    public decimal ClosenessCoefficient { get; set; }
-
-    public int RankNo { get; set; }
-}

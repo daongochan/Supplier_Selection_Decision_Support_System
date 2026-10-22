@@ -1,25 +1,21 @@
-﻿html,
-body,
-button,
-input,
-select,
-textarea,
-table {
-    font-family: var(--font-serif);
-}
-
 html {
     font-size: 16px;
+    box-sizing: border-box;
+}
+
+*, *::before, *::after {
+    box-sizing: inherit;
 }
 
 body {
     margin: 0;
     background: var(--canvas);
     color: var(--body);
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: var(--font-size-md);
-    line-height: 1.55;
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
 }
 
@@ -27,7 +23,14 @@ button,
 input,
 select,
 textarea {
-    font: inherit;
+    font-family: var(--font-sans);
+    font-size: inherit;
+    color: inherit;
+}
+
+table {
+    font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums;
 }
 
 h1,
@@ -35,13 +38,19 @@ h2,
 h3,
 h4,
 h5,
-h6,
+h6 {
+    font-family: var(--font-serif);
+    color: var(--ink);
+    margin-top: 0;
+}
+
 p {
     margin-top: 0;
 }
 
 a {
     color: inherit;
+    text-decoration: none;
 }
 
 
@@ -103,11 +112,11 @@ a {
 }
 
 .page-description {
-    max-width: 680px;
-    margin: var(--space-4) 0 0;
-    color: var(--body);
+    max-width: 720px;
+    margin: 6px 0 0;
+    color: var(--muted);
     font-size: var(--font-size-md);
-    line-height: 1.55;
+    line-height: 1.5;
 }
 
 

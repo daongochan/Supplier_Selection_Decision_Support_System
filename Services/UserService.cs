@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SupplierSelectionDSS.Data;
 using SupplierSelectionDSS.Data.Entities;
 using SupplierSelectionDSS.Models;
@@ -39,12 +39,16 @@ public class UserService
     // SEARCH
     // =========================================================
 
-    public async Task<List<UserListItemViewModel>>
-        SearchAsync(
-            string? keyword,
-            string? role,
-            string? status)
+    public async Task<PagedResult<UserListItemViewModel>> SearchAsync(
+        string? keyword,
+        string? role,
+        string? status,
+        int pageNumber = 1,
+        int pageSize = 10)
     {
+        pageNumber = Math.Max(pageNumber, 1);
+        pageSize = Math.Max(pageSize, 1);
+
         keyword =
             keyword?.Trim();
 
@@ -115,7 +119,7 @@ public class UserService
         }
 
 
-        return await query
+        var projectedQuery = query
             .OrderBy(
                 x =>
                     x.FullName)
@@ -152,8 +156,9 @@ public class UserService
 
                         CreatedAt =
                             x.CreatedAt
-                    })
-            .ToListAsync();
+                    });
+
+        return await PagedResult<UserListItemViewModel>.CreateAsync(projectedQuery, pageNumber, pageSize);
     }
 
 
@@ -374,9 +379,15 @@ public class UserService
         // LAST ADMIN PROTECTION
         // =====================================================
 
-        if (
-            user.Role == UserRole.Administrator &&
-            model.Status != EntityStatus.Active)
+        var isCurrentlyActiveAdmin =
+            string.Equals(user.Role, UserRole.Administrator, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(user.Status, EntityStatus.Active, StringComparison.OrdinalIgnoreCase);
+
+        var willRemainActiveAdmin =
+            string.Equals(model.Role, UserRole.Administrator, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(model.Status, EntityStatus.Active, StringComparison.OrdinalIgnoreCase);
+
+        if (isCurrentlyActiveAdmin && !willRemainActiveAdmin)
         {
             var activeAdminCount =
                 await _context.Users
@@ -392,7 +403,7 @@ public class UserService
             if (activeAdminCount <= 1)
             {
                 throw new InvalidOperationException(
-                    "Không thể vô hiệu hóa Administrator cuối cùng.");
+                    "Không thể vô hiệu hóa hoặc hạ quyền Administrator đang hoạt động cuối cùng của hệ thống.");
             }
         }
 
@@ -440,6 +451,66 @@ public class UserService
 
 
         await _context.SaveChangesAsync();
+    }
+
+
+    // =========================================================
+    // KPI SUMMARY
+    // =========================================================
+
+    public async Task<(int Total, int Active, int Locked, int Inactive)> GetKpiSummaryAsync()
+    {
+        var total = await _context.Users.CountAsync();
+        var active = await _context.Users.CountAsync(x => x.Status == EntityStatus.Active);
+        var locked = await _context.Users.CountAsync(x => x.Status == EntityStatus.Locked);
+        var inactive = await _context.Users.CountAsync(x => x.Status == EntityStatus.Inactive);
+
+        return (total, active, locked, inactive);
+    }
+
+
+    // =========================================================
+    // TOGGLE STATUS
+    // =========================================================
+
+    public async Task<User> ToggleStatusAsync(int id, int currentUserId)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(x => x.UserId == id);
+        if (user == null)
+        {
+            throw new KeyNotFoundException("Không tìm thấy người dùng.");
+        }
+
+        if (user.UserId == currentUserId)
+        {
+            throw new InvalidOperationException("Bạn không thể thay đổi trạng thái của chính tài khoản đang đăng nhập.");
+        }
+
+        if (user.Role == UserRole.Administrator && user.Status == EntityStatus.Active)
+        {
+            var activeAdminCount = await _context.Users.CountAsync(x =>
+                x.Role == UserRole.Administrator &&
+                x.Status == EntityStatus.Active);
+
+            if (activeAdminCount <= 1)
+            {
+                throw new InvalidOperationException("Không thể vô hiệu hóa Administrator cuối cùng của hệ thống.");
+            }
+        }
+
+        if (user.Status == EntityStatus.Active)
+        {
+            user.Status = EntityStatus.Inactive;
+        }
+        else
+        {
+            user.Status = EntityStatus.Active;
+        }
+
+        user.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        return user;
     }
 
 

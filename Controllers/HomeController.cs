@@ -22,29 +22,13 @@ public class HomeController : Controller
 
 
     // =========================================================
-    // DASHBOARD
+    // REDIRECT TO DASHBOARD
     // =========================================================
 
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public IActionResult Index()
     {
-        var model =
-            await _dashboardService
-                .GetDashboardAsync();
-
-
-        return View(model);
-    }
-
-
-    // =========================================================
-    // PRIVACY
-    // =========================================================
-
-    [HttpGet]
-    public IActionResult Privacy()
-    {
-        return View();
+        return RedirectToAction("Index", "Dashboard");
     }
 
 

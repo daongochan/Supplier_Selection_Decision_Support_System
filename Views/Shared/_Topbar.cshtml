@@ -1,85 +1,26 @@
-﻿@using System.Security.Claims
-
-<header class="app-topbar">
+<header class="app-topbar" role="banner">
 
     <div class="topbar-left">
 
         <button type="button"
                 id="sidebarToggle"
                 class="sidebar-toggle"
-                aria-label="Open navigation">
-
-            ☰
-
+                aria-label="Toggle Navigation">
+            <i class="bi bi-list"></i>
         </button>
 
-
         <div class="topbar-context">
-
             <span class="topbar-eyebrow">
                 SUPPLIER SELECTION DSS
             </span>
-
             <span class="topbar-title">
-                Decision workspace
+                Decision Workspace
             </span>
-
         </div>
 
     </div>
 
-
     <div class="topbar-right">
-
-        @if (User.Identity?.IsAuthenticated == true)
-        {
-            var fullName =
-                User.FindFirst(ClaimTypes.GivenName)?.Value
-                ?? User.Identity?.Name
-                ?? "User";
-
-            var role =
-                User.FindFirst(ClaimTypes.Role)?.Value
-                ?? "User";
-
-
-            <div class="user-summary">
-
-                <div class="user-avatar">
-                    @fullName.FirstOrDefault()
-                </div>
-
-                <div class="user-info">
-
-                    <span class="user-name">
-                        @fullName
-                    </span>
-
-                    <span class="user-role">
-                        @role
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            <form asp-controller="Account"
-                  asp-action="Logout"
-                  method="post">
-
-                @Html.AntiForgeryToken()
-
-                <button type="submit"
-                        class="btn-logout">
-
-                    Sign out
-
-                </button>
-
-            </form>
-        }
-
     </div>
 
 </header>

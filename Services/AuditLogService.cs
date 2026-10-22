@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SupplierSelectionDSS.Data;
 using SupplierSelectionDSS.Data.Entities;
 using SupplierSelectionDSS.Models;
@@ -11,51 +11,27 @@ public class AuditLogService
     private readonly ApplicationDbContext _context;
 
 
-    // =========================================================
-    // STANDARD ACTION TYPES
-    // =========================================================
-
     public static class Actions
     {
-        // User
         public const string CreateUser = AuditActions.CreateUser;
         public const string UpdateUser = AuditActions.UpdateUser;
-
-        // Batch
         public const string CreateBatch = AuditActions.CreateBatch;
         public const string StartBatch = AuditActions.StartBatch;
-
-        // Evaluation
+        public const string CancelBatch = AuditActions.CancelBatch;
         public const string SaveEvaluation = AuditActions.SaveEvaluation;
-
-        // AHP
         public const string SaveAHP = AuditActions.SaveAHP;
         public const string CalculateAHP = AuditActions.CalculateAHP;
-
-        // TOPSIS
         public const string CalculateTOPSIS = AuditActions.CalculateTOPSIS;
-
-        // Decision
         public const string Approve = AuditActions.Approve;
         public const string Reject = AuditActions.Reject;
         public const string Reevaluate = AuditActions.Reevaluate;
+        public const string GeneratePdf = AuditActions.GeneratePdf;
+        public const string GenerateExcel = AuditActions.GenerateExcel;
+        public const string DownloadPdf = AuditActions.DownloadPdf;
+        public const string DownloadExcel = AuditActions.DownloadExcel;
     }
 
-
-    private static readonly string[] SupportedActions =
-    {
-        Actions.CreateUser,
-        Actions.UpdateUser,
-        Actions.CreateBatch,
-        Actions.StartBatch,
-        Actions.SaveEvaluation,
-        Actions.SaveAHP,
-        Actions.CalculateAHP,
-        Actions.CalculateTOPSIS,
-        Actions.Approve,
-        Actions.Reject,
-        Actions.Reevaluate
-    };
+    private static readonly string[] SupportedActions = AuditActions.All;
 
 
     public AuditLogService(
@@ -139,8 +115,13 @@ public class AuditLogService
         SearchAsync(
             string? keyword,
             string? actionType,
-            int? userId)
+            int? userId,
+            int pageNumber = 1,
+            int pageSize = 15)
     {
+        pageNumber = Math.Max(pageNumber, 1);
+        pageSize = Math.Max(pageSize, 1);
+
         keyword =
             keyword?.Trim();
 
@@ -240,6 +221,8 @@ public class AuditLogService
                         userId.Value);
         }
 
+        var totalCount = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
         var logs =
             await query
@@ -249,6 +232,8 @@ public class AuditLogService
                 .ThenByDescending(
                     x =>
                         x.LogId)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .Select(
                     x =>
                         new AuditLogListItemViewModel
@@ -333,7 +318,19 @@ public class AuditLogService
                 logs,
 
             Users =
-                users
+                users,
+
+            PageNumber =
+                pageNumber,
+
+            PageSize =
+                pageSize,
+
+            TotalCount =
+                totalCount,
+
+            TotalPages =
+                totalPages
         };
     }
 

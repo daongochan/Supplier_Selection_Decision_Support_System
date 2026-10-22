@@ -1,0 +1,76 @@
+@{
+    var successMsg = TempData["SuccessMessage"] as string ?? TempData["Success"] as string;
+    var errorMsg = TempData["ErrorMessage"] as string ?? TempData["Error"] as string;
+    var warningMsg = TempData["WarningMessage"] as string ?? TempData["Warning"] as string;
+    var infoMsg = TempData["InfoMessage"] as string ?? TempData["Info"] as string;
+    var hasToast = !string.IsNullOrEmpty(successMsg) || !string.IsNullOrEmpty(errorMsg) || !string.IsNullOrEmpty(warningMsg) || !string.IsNullOrEmpty(infoMsg);
+}
+
+@if (hasToast)
+{
+    <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true">
+        @if (!string.IsNullOrEmpty(successMsg))
+        {
+            <div class="dss-toast dss-toast-success" role="alert">
+                <div class="dss-toast-icon">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div class="dss-toast-body">
+                    <div class="dss-toast-title">Thành công</div>
+                    <div class="dss-toast-message">@successMsg</div>
+                </div>
+                <button type="button" class="dss-toast-close" onclick="this.closest('.dss-toast').remove()" aria-label="Close">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(errorMsg))
+        {
+            <div class="dss-toast dss-toast-danger" role="alert">
+                <div class="dss-toast-icon">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+                <div class="dss-toast-body">
+                    <div class="dss-toast-title">Lỗi</div>
+                    <div class="dss-toast-message">@errorMsg</div>
+                </div>
+                <button type="button" class="dss-toast-close" onclick="this.closest('.dss-toast').remove()" aria-label="Close">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(warningMsg))
+        {
+            <div class="dss-toast dss-toast-warning" role="alert">
+                <div class="dss-toast-icon">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                </div>
+                <div class="dss-toast-body">
+                    <div class="dss-toast-title">Cảnh báo</div>
+                    <div class="dss-toast-message">@warningMsg</div>
+                </div>
+                <button type="button" class="dss-toast-close" onclick="this.closest('.dss-toast').remove()" aria-label="Close">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(infoMsg))
+        {
+            <div class="dss-toast dss-toast-info" role="alert">
+                <div class="dss-toast-icon">
+                    <i class="bi bi-info-circle-fill"></i>
+                </div>
+                <div class="dss-toast-body">
+                    <div class="dss-toast-title">Thông báo</div>
+                    <div class="dss-toast-message">@infoMsg</div>
+                </div>
+                <button type="button" class="dss-toast-close" onclick="this.closest('.dss-toast').remove()" aria-label="Close">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+        }
+    </div>
+}

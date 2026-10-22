@@ -1,8 +1,8 @@
-﻿using SupplierSelectionDSS.Data.Entities;
+using SupplierSelectionDSS.Data.Entities;
 
 namespace SupplierSelectionDSS.Models;
 
-public class SupplierIndexViewModel
+public class SupplierIndexViewModel : IPagedResult
 {
     public string? Keyword { get; set; }
 

@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SupplierSelectionDSS.Services;
 using System.Security.Claims;
 using System.Text.Json;
 using SupplierSelectionDSS.Constants;
+using SupplierSelectionDSS.Web.Extensions;
 
 namespace SupplierSelectionDSS.Controllers;
 
@@ -140,20 +141,12 @@ public class DecisionResultController : Controller
         }
 
 
-        var claim =
-            User.FindFirst(
-                ClaimTypes.NameIdentifier);
-
-
-        if (
-            claim == null ||
-            !int.TryParse(
-                claim.Value,
-                out var approvedBy) ||
-            approvedBy <= 0)
+        var userId = User.GetUserId();
+        if (!userId.HasValue)
         {
             return Unauthorized();
         }
+        var approvedBy = userId.Value;
 
 
         try
@@ -314,20 +307,12 @@ public class DecisionResultController : Controller
         }
 
 
-        var claim =
-            User.FindFirst(
-                ClaimTypes.NameIdentifier);
-
-
-        if (
-            claim == null ||
-            !int.TryParse(
-                claim.Value,
-                out var approvedBy) ||
-            approvedBy <= 0)
+        var userId = User.GetUserId();
+        if (!userId.HasValue)
         {
             return Unauthorized();
         }
+        var approvedBy = userId.Value;
 
 
         try
@@ -456,20 +441,12 @@ public class DecisionResultController : Controller
         }
 
 
-        var claim =
-            User.FindFirst(
-                ClaimTypes.NameIdentifier);
-
-
-        if (
-            claim == null ||
-            !int.TryParse(
-                claim.Value,
-                out var approvedBy) ||
-            approvedBy <= 0)
+        var userId = User.GetUserId();
+        if (!userId.HasValue)
         {
             return Unauthorized();
         }
+        var approvedBy = userId.Value;
 
 
         try

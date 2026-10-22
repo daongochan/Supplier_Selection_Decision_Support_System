@@ -1,7 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SupplierSelectionDSS.Data;
 using SupplierSelectionDSS.Data.Entities;
 using SupplierSelectionDSS.Constants;
+using SupplierSelectionDSS.Models;
 
 namespace SupplierSelectionDSS.Services;
 
@@ -14,9 +15,11 @@ public class ProductGroupService
         _context = context;
     }
 
-    public async Task<List<ProductGroup>> SearchAsync(
+    public async Task<PagedResult<ProductGroup>> SearchAsync(
         string? keyword,
-        string? status)
+        string? status,
+        int pageNumber = 1,
+        int pageSize = 10)
     {
         var query = _context.ProductGroups
             .AsNoTracking()
@@ -37,9 +40,9 @@ public class ProductGroupService
             query = query.Where(x => x.Status == status);
         }
 
-        return await query
-            .OrderBy(x => x.GroupCode)
-            .ToListAsync();
+        query = query.OrderBy(x => x.GroupCode);
+
+        return await PagedResult<ProductGroup>.CreateAsync(query, pageNumber, pageSize);
     }
 
     public async Task<ProductGroup?> GetByIdAsync(int id)

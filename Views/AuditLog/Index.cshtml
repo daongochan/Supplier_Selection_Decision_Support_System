@@ -1,5 +1,5 @@
-﻿@model SupplierSelectionDSS.Models.AuditLogIndexViewModel
-@using SupplierSelectionDSS.Services;
+@model SupplierSelectionDSS.Models.AuditLogIndexViewModel
+@using SupplierSelectionDSS.Constants;
 
 @{
     ViewData["Title"] = "Audit Logs";
@@ -73,20 +73,7 @@
 
                 @foreach (
                     var action
-                    in new[]
-                    {
-                        AuditLogService.Actions.CreateUser,
-                        AuditLogService.Actions.UpdateUser,
-                        AuditLogService.Actions.CreateBatch,
-                        AuditLogService.Actions.StartBatch,
-                        AuditLogService.Actions.SaveEvaluation,
-                        AuditLogService.Actions.SaveAHP,
-                        AuditLogService.Actions.CalculateAHP,
-                        AuditLogService.Actions.CalculateTOPSIS,
-                        AuditLogService.Actions.Approve,
-                        AuditLogService.Actions.Reject,
-                        AuditLogService.Actions.Reevaluate
-                    })
+                    in AuditActions.All)
                 {
                     if (Model.ActionType == action)
                     {
@@ -428,6 +415,8 @@
             </table>
 
         </div>
+
+        <partial name="_Pagination" model="Model" />
     }
     else
     {

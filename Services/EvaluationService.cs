@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SupplierSelectionDSS.Data;
 using SupplierSelectionDSS.Data.Entities;
 using SupplierSelectionDSS.Models;
@@ -338,6 +338,24 @@ public class EvaluationService
             }
         }
 
+        // -------------------------------------------------
+        // Invalidate stale TOPSIS results & ideals (scores changed)
+        // -------------------------------------------------
+        var staleTopsisResults = await _context.TopsisResults
+            .Where(x => x.BatchId == model.BatchId)
+            .ToListAsync();
+        if (staleTopsisResults.Count > 0)
+        {
+            _context.TopsisResults.RemoveRange(staleTopsisResults);
+        }
+
+        var staleTopsisIdeals = await _context.TopsisIdealSolutions
+            .Where(x => x.BatchId == model.BatchId)
+            .ToListAsync();
+        if (staleTopsisIdeals.Count > 0)
+        {
+            _context.TopsisIdealSolutions.RemoveRange(staleTopsisIdeals);
+        }
 
         await _context.SaveChangesAsync();
     }
@@ -359,10 +377,7 @@ public class EvaluationService
         // Rating Criteria
         // -----------------------------------------------------
 
-        if (string.Equals(
-            unit,
-            "Điểm",
-            StringComparison.OrdinalIgnoreCase))
+        if (CriteriaUnits.IsRatingScale(unit))
         {
             if (score < 0m ||
                 score > 10m)

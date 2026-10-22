@@ -1,4 +1,4 @@
-﻿/* =========================================================
+/* =========================================================
    EVALUATION HEADER
    ========================================================= */
 
@@ -34,9 +34,10 @@
     }
 
     .evaluation-summary strong {
-        font-family: var(--font-serif);
+        font-family: var(--font-sans);
         font-size: 22px;
-        font-weight: 500;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
     }
 
 
@@ -58,7 +59,7 @@
     min-width: 1000px;
     border-collapse: separate;
     border-spacing: 0;
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
 }
 
 
@@ -92,6 +93,8 @@
     width: 230px;
     min-width: 230px;
     background: var(--canvas-soft) !important;
+    border-right: 1px solid var(--border) !important;
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.03);
 }
 
 
@@ -187,6 +190,8 @@
     z-index: 5;
     min-width: 230px;
     background: var(--surface) !important;
+    border-right: 1px solid var(--border) !important;
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.03);
 }
 
 .evaluation-table tbody tr:hover .supplier-cell {
@@ -231,8 +236,10 @@
     border-radius: var(--radius-sm);
     background: var(--surface);
     color: var(--ink);
-    font-family: var(--font-serif);
-    font-size: 16px;
+    font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums;
+    font-size: 15px;
+    font-weight: 500;
     text-align: right;
     transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
 }
@@ -245,7 +252,7 @@
         outline: none;
         border-color: var(--terracotta);
         background: var(--surface);
-        box-shadow: 0 0 0 3px rgba(183, 93, 69, 0.10);
+        box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
     }
 
     .score-input::placeholder {
@@ -507,29 +514,59 @@
     gap: 8px 18px;
     margin-top: 13px;
     color: var(--muted);
-    font-size: 10px;
+    font-size: 13px;
 }
 
 
     .evaluation-next-step-meta span {
         display: inline-flex;
         align-items: center;
-        gap: 5px;
+        gap: 6px;
     }
 
 
     .evaluation-next-step-meta i {
         color: var(--sage-dark);
-        font-size: 11px;
+        font-size: 13px;
+        line-height: 1;
     }
 
 
 .evaluation-next-step-actions {
     display: flex;
     align-items: center;
-    gap: 9px;
+    gap: 12px;
     flex: 0 0 auto;
 }
+
+    .evaluation-next-step-actions a,
+    .evaluation-next-step-actions .btn-outline,
+    .evaluation-next-step-actions .btn-primary {
+        height: 42px !important;
+        min-height: 42px !important;
+        max-height: 42px !important;
+        padding: 0 22px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+        font-family: var(--font-serif) !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        line-height: 1 !important;
+        border-radius: var(--radius-pill) !important;
+        text-decoration: none !important;
+        white-space: nowrap !important;
+        gap: 8px !important;
+    }
+
+    .evaluation-next-step-actions a i {
+        font-size: 14px !important;
+        line-height: 1 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        margin: 0 !important;
+    }
 
 
 @media (max-width: 800px) {

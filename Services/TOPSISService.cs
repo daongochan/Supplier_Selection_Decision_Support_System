@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SupplierSelectionDSS.Data;
 using SupplierSelectionDSS.Data.Entities;
 using SupplierSelectionDSS.Models;
@@ -10,19 +10,20 @@ public class TOPSISService
 {
     private readonly ApplicationDbContext _context;
 
-    private readonly TOPSISCalculationService
-        _calculationService;
+    private readonly TOPSISCalculationService _calculationService;
 
+    private readonly SensitivityAnalysisService _sensitivityService;
 
     public TOPSISService(
         ApplicationDbContext context,
-        TOPSISCalculationService calculationService)
+        TOPSISCalculationService calculationService,
+        SensitivityAnalysisService sensitivityService)
     {
         _context = context;
-
-        _calculationService =
-            calculationService;
+        _calculationService = calculationService;
+        _sensitivityService = sensitivityService;
     }
+
 
 
     // =========================================================
@@ -306,9 +307,99 @@ public class TOPSISService
                 });
         }
 
+        // =====================================================
+        // INTERMEDIATE MATRICES & SENSITIVITY ANALYSIS
+        // =====================================================
+        if (results.Any() && model.Suppliers.Count >= 2 && model.Criteria.Any())
+        {
+            var sCount = model.Suppliers.Count;
+            var cCount = model.Criteria.Count;
+            var dMatrix = new double[sCount, cCount];
+            var wArray = new double[cCount];
+            var cTypes = new string[cCount];
+
+            var canCalc = true;
+            for (var j = 0; j < cCount; j++)
+            {
+                wArray[j] = (double)model.Criteria[j].Weight;
+                cTypes[j] = model.Criteria[j].CriteriaType ?? string.Empty;
+
+                for (var i = 0; i < sCount; i++)
+                {
+                    if (model.Suppliers[i].Scores.TryGetValue(model.Criteria[j].CriteriaId, out var val))
+                    {
+                        dMatrix[i, j] = (double)val;
+                    }
+                    else
+                    {
+                        canCalc = false;
+                        break;
+                    }
+                }
+                if (!canCalc) break;
+            }
+
+            if (canCalc)
+            {
+                var calc = _calculationService.Calculate(dMatrix, wArray, cTypes);
+                model.HasTies = calc.HasTies;
+                model.IsIndistinguishable = calc.IsIndistinguishable;
+
+                foreach (var zIdx in calc.ZeroVarianceCriteriaIndices)
+                {
+                    if (zIdx >= 0 && zIdx < cCount)
+                    {
+                        model.ZeroVarianceCriteriaCodes.Add(model.Criteria[zIdx].CriteriaCode);
+                    }
+                }
+
+                for (var i = 0; i < sCount; i++)
+                {
+                    var normRow = new TOPSISMatrixRowViewModel
+                    {
+                        SupplierId = model.Suppliers[i].SupplierId,
+                        SupplierCode = model.Suppliers[i].SupplierCode,
+                        SupplierName = model.Suppliers[i].SupplierName
+                    };
+                    var weightRow = new TOPSISMatrixRowViewModel
+                    {
+                        SupplierId = model.Suppliers[i].SupplierId,
+                        SupplierCode = model.Suppliers[i].SupplierCode,
+                        SupplierName = model.Suppliers[i].SupplierName
+                    };
+
+                    for (var j = 0; j < cCount; j++)
+                    {
+                        var cId = model.Criteria[j].CriteriaId;
+                        normRow.Values[cId] = (decimal)Math.Round(calc.NormalizedMatrix[i, j], 6);
+                        weightRow.Values[cId] = (decimal)Math.Round(calc.WeightedMatrix[i, j], 6);
+                    }
+
+                    model.NormalizedMatrix.Add(normRow);
+                    model.WeightedMatrix.Add(weightRow);
+                }
+
+                var top = model.Ranking.OrderBy(x => x.RankNo).FirstOrDefault();
+                if (top != null)
+                {
+                    model.SensitivityAnalysis = _sensitivityService.Analyze(
+                        model.BatchId,
+                        model.BatchCode,
+                        dMatrix,
+                        wArray,
+                        cTypes,
+                        model.Criteria,
+                        model.Suppliers,
+                        top.SupplierCode,
+                        top.SupplierName,
+                        top.ClosenessCoefficient);
+                }
+            }
+        }
 
         return model;
     }
+
 
 
     // =========================================================
@@ -604,157 +695,151 @@ public class TOPSISService
         // 10. SAVE RESULT
         // =====================================================
 
-        await using var transaction =
-            await _context.Database
-                .BeginTransactionAsync();
+        var strategy = _context.Database.CreateExecutionStrategy();
 
-
-        try
+        await strategy.ExecuteAsync(async () =>
         {
-            // -------------------------------------------------
-            // DELETE OLD IDEALS
-            // -------------------------------------------------
+            await using var transaction =
+                await _context.Database
+                    .BeginTransactionAsync();
 
-            var oldIdeals =
-                await _context.TopsisIdealSolutions
-                    .Where(
-                        x => x.BatchId == batchId)
-                    .ToListAsync();
-
-
-            if (oldIdeals.Any())
+            try
             {
-                _context.TopsisIdealSolutions
-                    .RemoveRange(oldIdeals);
+                // -------------------------------------------------
+                // DELETE OLD IDEALS
+                // -------------------------------------------------
+
+                var oldIdeals =
+                    await _context.TopsisIdealSolutions
+                        .Where(
+                            x => x.BatchId == batchId)
+                        .ToListAsync();
+
+                if (oldIdeals.Any())
+                {
+                    _context.TopsisIdealSolutions
+                        .RemoveRange(oldIdeals);
+                }
+
+                // -------------------------------------------------
+                // DELETE OLD RANKING
+                // -------------------------------------------------
+
+                var oldResults =
+                    await _context.TopsisResults
+                        .Where(
+                            x => x.BatchId == batchId)
+                        .ToListAsync();
+
+                if (oldResults.Any())
+                {
+                    _context.TopsisResults
+                        .RemoveRange(oldResults);
+                }
+
+                await _context.SaveChangesAsync();
+
+                // -------------------------------------------------
+                // SAVE PIS / NIS
+                // -------------------------------------------------
+
+                for (var j = 0;
+                     j < criteriaCount;
+                     j++)
+                {
+                    var ideal =
+                        new TopsisIdealSolution
+                        {
+                            BatchId =
+                                batchId,
+
+                            CriteriaId =
+                                criteria[j].CriteriaId,
+
+                            // IMPORTANT:
+                            // Entity thực tế dùng Pisvalue
+                            Pisvalue =
+                                (decimal)
+                                Math.Round(
+                                    calculation.PISValues[j],
+                                    6),
+
+                            // IMPORTANT:
+                            // Entity thực tế dùng Nisvalue
+                            Nisvalue =
+                                (decimal)
+                                Math.Round(
+                                    calculation.NISValues[j],
+                                    6)
+                        };
+
+                    _context.TopsisIdealSolutions
+                        .Add(ideal);
+                }
+
+                // -------------------------------------------------
+                // SAVE SUPPLIER RESULTS
+                // -------------------------------------------------
+
+                for (var i = 0;
+                     i < supplierCount;
+                     i++)
+                {
+                    var distance =
+                        calculation.Distances[i];
+
+                    var result =
+                        new TopsisResult
+                        {
+                            BatchId =
+                                batchId,
+
+                            SupplierId =
+                                suppliers[i].SupplierId,
+
+                            // IMPORTANT:
+                            // Entity dùng DistanceToPis
+                            DistanceToPis =
+                                (decimal)
+                                Math.Round(
+                                    distance.DistanceToPIS,
+                                    6),
+
+                            // IMPORTANT:
+                            // Entity dùng DistanceToNis
+                            DistanceToNis =
+                                (decimal)
+                                Math.Round(
+                                    distance.DistanceToNIS,
+                                    6),
+
+                            ClosenessCoefficient =
+                                (decimal)
+                                Math.Round(
+                                    distance.ClosenessCoefficient,
+                                    6),
+
+                            RankNo =
+                                calculation.RankByIndex[i],
+
+                            CalculatedAt =
+                                DateTime.UtcNow
+                        };
+
+                    _context.TopsisResults
+                        .Add(result);
+                }
+
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
             }
-
-
-            // -------------------------------------------------
-            // DELETE OLD RANKING
-            // -------------------------------------------------
-
-            var oldResults =
-                await _context.TopsisResults
-                    .Where(
-                        x => x.BatchId == batchId)
-                    .ToListAsync();
-
-
-            if (oldResults.Any())
+            catch
             {
-                _context.TopsisResults
-                    .RemoveRange(oldResults);
+                await transaction.RollbackAsync();
+
+                throw;
             }
-
-
-            await _context.SaveChangesAsync();
-
-
-            // -------------------------------------------------
-            // SAVE PIS / NIS
-            // -------------------------------------------------
-
-            for (var j = 0;
-                 j < criteriaCount;
-                 j++)
-            {
-                var ideal =
-                    new TopsisIdealSolution
-                    {
-                        BatchId =
-                            batchId,
-
-                        CriteriaId =
-                            criteria[j].CriteriaId,
-
-                        // IMPORTANT:
-                        // Entity thực tế dùng Pisvalue
-                        Pisvalue =
-                            (decimal)
-                            Math.Round(
-                                calculation.PISValues[j],
-                                6),
-
-                        // IMPORTANT:
-                        // Entity thực tế dùng Nisvalue
-                        Nisvalue =
-                            (decimal)
-                            Math.Round(
-                                calculation.NISValues[j],
-                                6)
-                    };
-
-
-                _context.TopsisIdealSolutions
-                    .Add(ideal);
-            }
-
-
-            // -------------------------------------------------
-            // SAVE SUPPLIER RESULTS
-            // -------------------------------------------------
-
-            for (var i = 0;
-                 i < supplierCount;
-                 i++)
-            {
-                var distance =
-                    calculation.Distances[i];
-
-
-                var result =
-                    new TopsisResult
-                    {
-                        BatchId =
-                            batchId,
-
-                        SupplierId =
-                            suppliers[i].SupplierId,
-
-                        // IMPORTANT:
-                        // Entity dùng DistanceToPis
-                        DistanceToPis =
-                            (decimal)
-                            Math.Round(
-                                distance.DistanceToPIS,
-                                6),
-
-                        // IMPORTANT:
-                        // Entity dùng DistanceToNis
-                        DistanceToNis =
-                            (decimal)
-                            Math.Round(
-                                distance.DistanceToNIS,
-                                6),
-
-                        ClosenessCoefficient =
-                            (decimal)
-                            Math.Round(
-                                distance.ClosenessCoefficient,
-                                6),
-
-                        RankNo =
-                            calculation.RankByIndex[i],
-
-                        CalculatedAt =
-                            DateTime.UtcNow
-                    };
-
-
-                _context.TopsisResults
-                    .Add(result);
-            }
-
-
-            await _context.SaveChangesAsync();
-
-            await transaction.CommitAsync();
-        }
-        catch
-        {
-            await transaction.RollbackAsync();
-
-            throw;
-        }
+        });
     }
 }

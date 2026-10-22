@@ -1,4 +1,5 @@
-﻿@{
+@using System.Security.Claims
+@{
     var currentController =
         ViewContext.RouteData.Values["controller"]?.ToString();
 
@@ -6,9 +7,7 @@
         ViewContext.RouteData.Values["action"]?.ToString();
 }
 
-
-<aside class="app-sidebar">
-
+<aside class="app-sidebar" aria-label="Main Navigation">
 
     <!-- =====================================================
          BRAND
@@ -33,134 +32,144 @@
 
     <!-- =====================================================
          NAVIGATION
-         Giữ nguyên phong cách sidebar cũ:
-         chỉ thay đổi danh mục menu.
          ===================================================== -->
 
     <nav class="sidebar-nav">
 
-
         <!-- Dashboard -->
-
         <a asp-controller="Dashboard"
            asp-action="Index"
-           class="sidebar-link
-            @(currentController == "Dashboard"
-               ? "active"
-               : "")">
-
-            Dashboard
-
+           class="sidebar-link @(currentController == "Dashboard" ? "active" : "")">
+            <i class="bi bi-grid-1x2"></i>
+            <span>Dashboard</span>
         </a>
 
-
         <!-- Suppliers -->
-        @if (
-                    User.IsInRole("Administrator") ||
-                    User.IsInRole("PurchasingStaff"))
+        @if (User.IsInRole("Administrator") ||
+             User.IsInRole("PurchasingStaff"))
         {
             <a asp-controller="Supplier"
                asp-action="Index"
-               class="sidebar-link
-                @(currentController == "Supplier"
-                   ? "active"
-                   : "")">
-
-                Suppliers
-
+               class="sidebar-link @(currentController == "Supplier" ? "active" : "")">
+                <i class="bi bi-building"></i>
+                <span>Suppliers</span>
             </a>
         }
 
-
         <!-- Product Groups -->
-        @if (
-                    User.IsInRole("Administrator") ||
-                    User.IsInRole("PurchasingStaff"))
+        @if (User.IsInRole("Administrator") ||
+             User.IsInRole("PurchasingStaff"))
         {
             <a asp-controller="ProductGroup"
                asp-action="Index"
-               class="sidebar-link
-                @(currentController == "ProductGroup"
-                   ? "active"
-                   : "")">
-
-                Product Groups
-
+               class="sidebar-link @(currentController == "ProductGroup" ? "active" : "")">
+                <i class="bi bi-box-seam"></i>
+                <span>Product Groups</span>
             </a>
         }
 
-
         <!-- Criteria -->
-        @if (
-                    User.IsInRole("Administrator") ||
-                    User.IsInRole("PurchasingStaff"))
+        @if (User.IsInRole("Administrator") ||
+             User.IsInRole("PurchasingStaff"))
         {
             <a asp-controller="Criteria"
                asp-action="Index"
-               class="sidebar-link
-                @(currentController == "Criteria"
-                   ? "active"
-                   : "")">
-
-                Criteria
-
+               class="sidebar-link @(currentController == "Criteria" ? "active" : "")">
+                <i class="bi bi-sliders"></i>
+                <span>Criteria</span>
             </a>
         }
 
-
         <!-- Evaluation Batches -->
-        @if (
-                    User.IsInRole("Administrator") ||
-                    User.IsInRole("PurchasingStaff") ||
-                    User.IsInRole("Expert") ||
-                    User.IsInRole("Manager"))
+        @if (User.IsInRole("Administrator") ||
+             User.IsInRole("PurchasingStaff") ||
+             User.IsInRole("Expert") ||
+             User.IsInRole("Manager"))
         {
             <a asp-controller="EvaluationBatch"
                asp-action="Index"
-               class="sidebar-link
-                @(currentController == "EvaluationBatch" ||
-                 currentController == "Evaluation" ||
-                 currentController == "AHP" ||
-                 currentController == "TOPSIS"
-                   ? "active"
-                   : "")">
-
-                Batches
-
+               class="sidebar-link @(currentController == "EvaluationBatch" ||
+                                     currentController == "Evaluation" ||
+                                     currentController == "AHP" ||
+                                     currentController == "TOPSIS" ||
+                                     currentController == "DecisionResult" ||
+                                     currentController == "Report"
+                                     ? "active" : "")">
+                <i class="bi bi-collection"></i>
+                <span>Batches</span>
             </a>
         }
-
 
         <!-- Users -->
         @if (User.IsInRole("Administrator"))
         {
             <a asp-controller="User"
                asp-action="Index"
-               class="sidebar-link
-                @(currentController == "User"
-                   ? "active"
-                   : "")">
-
-                Users
-
+               class="sidebar-link @(currentController == "User" ? "active" : "")">
+                <i class="bi bi-people"></i>
+                <span>Users</span>
             </a>
         }
 
+        <!-- Audit Logs -->
         @if (User.IsInRole("Administrator"))
         {
             <a asp-controller="AuditLog"
                asp-action="Index"
-               class="sidebar-link">
-
+               class="sidebar-link @(currentController == "AuditLog" ? "active" : "")">
                 <i class="bi bi-clock-history"></i>
-
-                <span>
-                    Audit logs
-                </span>
-
+                <span>Audit logs</span>
             </a>
         }
 
     </nav>
+
+
+    <!-- =====================================================
+         USER ACCOUNT & LOGOUT (SIDEBAR FOOTER)
+         ===================================================== -->
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        var fullName =
+            User.FindFirst(ClaimTypes.GivenName)?.Value
+            ?? User.Identity?.Name
+            ?? "User";
+
+        var role =
+            User.FindFirst(ClaimTypes.Role)?.Value
+            ?? "User";
+
+        <div class="sidebar-footer">
+
+            <div class="sidebar-user-card">
+                <div class="user-avatar" title="@fullName">
+                    @fullName.FirstOrDefault()
+                </div>
+                <div class="sidebar-user-info">
+                    <span class="sidebar-user-name" title="@fullName">
+                        @fullName
+                    </span>
+                    <span class="sidebar-user-role">
+                        @role
+                    </span>
+                </div>
+            </div>
+
+            <form asp-controller="Account"
+                  asp-action="Logout"
+                  method="post"
+                  class="sidebar-logout-form">
+                @Html.AntiForgeryToken()
+                <button type="submit"
+                        class="btn-logout sidebar-btn-logout"
+                        title="Sign out">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Sign out</span>
+                </button>
+            </form>
+
+        </div>
+    }
 
 </aside>

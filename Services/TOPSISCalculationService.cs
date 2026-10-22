@@ -1,4 +1,4 @@
-﻿using SupplierSelectionDSS.Constants;
+using SupplierSelectionDSS.Constants;
 
 namespace SupplierSelectionDSS.Services;
 
@@ -49,10 +49,16 @@ public class TOPSISCalculationService
         // BASIC VALIDATION
         // =====================================================
 
-        if (supplierCount == 0 || criteriaCount == 0)
+        if (supplierCount < 2)
         {
             throw new InvalidOperationException(
-                "Ma trận TOPSIS không được rỗng.");
+                "Đánh giá TOPSIS yêu cầu tối thiểu 2 nhà cung cấp để so sánh xếp hạng.");
+        }
+
+        if (criteriaCount == 0)
+        {
+            throw new InvalidOperationException(
+                "Ma trận TOPSIS không được rỗng tiêu chí.");
         }
 
         if (weights.Length != criteriaCount)
@@ -82,6 +88,7 @@ public class TOPSISCalculationService
 
         var normalized =
             new double[supplierCount, criteriaCount];
+        var zeroVarianceCriteria = new List<int>();
 
         for (var j = 0; j < criteriaCount; j++)
         {
@@ -101,9 +108,14 @@ public class TOPSISCalculationService
 
             if (maxAbsoluteValue <= NumericalEpsilon)
             {
-                throw new InvalidOperationException(
-                    $"Criteria thứ {j + 1} không thể chuẩn hóa " +
-                    "vì tất cả giá trị đều bằng 0.");
+                // Cột toàn 0: không ném lỗi mà chuẩn hóa về 0,
+                // ghi nhận tiêu chí không có khả năng phân biệt giữa các nhà cung cấp
+                zeroVarianceCriteria.Add(j);
+                for (var i = 0; i < supplierCount; i++)
+                {
+                    normalized[i, j] = 0.0;
+                }
+                continue;
             }
 
             double scaledSquaredSum = 0.0;
@@ -329,7 +341,7 @@ public class TOPSISCalculationService
         }
 
         // =====================================================
-        // 5. RANKING
+        // 5. RANKING (Standard Competition Ranking: 1, 2, 2, 4)
         // =====================================================
 
         var orderedIndexes =
@@ -345,17 +357,34 @@ public class TOPSISCalculationService
                             .DistanceToPIS)
                 .ToArray();
 
-        var rankByIndex =
-            new int[supplierCount];
+        const double tieTolerance = 1e-6;
+        var rankByIndex = new int[supplierCount];
+        var hasTies = false;
 
-        for (var rank = 0;
-             rank < orderedIndexes.Length;
-             rank++)
+        for (var rank = 0; rank < orderedIndexes.Length; rank++)
         {
-            rankByIndex[
-                orderedIndexes[rank]] =
-                rank + 1;
+            var currentIndex = orderedIndexes[rank];
+            if (rank > 0)
+            {
+                var prevIndex = orderedIndexes[rank - 1];
+                var prevDistance = distances[prevIndex];
+                var currentDistance = distances[currentIndex];
+
+                var ccEqual = Math.Abs(prevDistance.ClosenessCoefficient - currentDistance.ClosenessCoefficient) <= tieTolerance;
+                var pisEqual = Math.Abs(prevDistance.DistanceToPIS - currentDistance.DistanceToPIS) <= tieTolerance;
+
+                if (ccEqual && pisEqual)
+                {
+                    rankByIndex[currentIndex] = rankByIndex[prevIndex];
+                    hasTies = true;
+                    continue;
+                }
+            }
+
+            rankByIndex[currentIndex] = rank + 1;
         }
+
+        var isIndistinguishable = distances.All(d => d.DistanceToPIS <= NumericalEpsilon && d.DistanceToNIS <= NumericalEpsilon);
 
         // =====================================================
         // 6. RESULT
@@ -368,7 +397,10 @@ public class TOPSISCalculationService
             PISValues = pis,
             NISValues = nis,
             Distances = distances,
-            RankByIndex = rankByIndex
+            RankByIndex = rankByIndex,
+            ZeroVarianceCriteriaIndices = zeroVarianceCriteria,
+            HasTies = hasTies,
+            IsIndistinguishable = isIndistinguishable
         };
     }
 
@@ -506,42 +538,4 @@ public class TOPSISCalculationService
                 $"Giá trị TOPSIS không hữu hạn tại {location}.");
         }
     }
-}
-
-// =============================================================
-// CALCULATION RESULT
-// =============================================================
-
-public class TOPSISCalculationResult
-{
-    public double[,] NormalizedMatrix { get; init; }
-        = new double[0, 0];
-
-    public double[,] WeightedMatrix { get; init; }
-        = new double[0, 0];
-
-    public double[] PISValues { get; init; }
-        = Array.Empty<double>();
-
-    public double[] NISValues { get; init; }
-        = Array.Empty<double>();
-
-    public TOPSISSupplierDistance[] Distances { get; init; }
-        = Array.Empty<TOPSISSupplierDistance>();
-
-    public int[] RankByIndex { get; init; }
-        = Array.Empty<int>();
-}
-
-// =============================================================
-// SUPPLIER DISTANCE RESULT
-// =============================================================
-
-public class TOPSISSupplierDistance
-{
-    public double DistanceToPIS { get; init; }
-
-    public double DistanceToNIS { get; init; }
-
-    public double ClosenessCoefficient { get; init; }
-}
+}

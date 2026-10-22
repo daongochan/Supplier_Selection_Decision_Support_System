@@ -10,19 +10,45 @@
 
 
 /* =========================================================
-   FORM GRID
+   FORM GRID & SECTIONS
    ========================================================= */
 
 .form-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-6);
+    gap: var(--space-5);
+}
+
+.form-section {
+    grid-column: 1 / -1;
+    margin-top: var(--space-4);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.form-section:first-child {
+    margin-top: 0;
+}
+
+.form-section-title {
+    color: var(--ink);
+    font-family: var(--font-serif);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.form-section-desc {
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.4;
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 7px;
+    gap: 6px;
 }
 
 .form-group-full {
@@ -31,9 +57,22 @@
 
 .form-group label {
     color: var(--ink);
-    font-family: var(--font-serif);
-    font-size: 14px;
+    font-family: var(--font-sans);
+    font-size: 13px;
     font-weight: 600;
+}
+
+.required-field::after {
+    content: " *";
+    color: var(--danger);
+    font-weight: 700;
+}
+
+.form-text,
+.form-hint {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.35;
 }
 
 
@@ -43,27 +82,27 @@
 
 .form-control {
     width: 100%;
-    height: 46px;
-    padding: 10px 14px;
+    height: 44px;
+    padding: 9px 13px;
     box-sizing: border-box;
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-sm);
     background: var(--surface);
     color: var(--ink);
-    font-family: var(--font-serif);
-    font-size: 16px;
+    font-family: var(--font-sans);
+    font-size: 14px;
     transition: border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
     .form-control:focus {
         outline: none;
         border-color: var(--terracotta);
-        box-shadow: 0 0 0 3px rgba(183, 93, 69, 0.10);
+        box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.14);
     }
 
 textarea.form-control {
-    min-height: 110px;
-    padding-top: 12px;
+    min-height: 90px;
+    padding-top: 10px;
     resize: vertical;
 }
 

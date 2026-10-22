@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SupplierSelectionDSS.Data;
 using SupplierSelectionDSS.Data.Entities;
 using SupplierSelectionDSS.Models;
@@ -9,13 +9,16 @@ namespace SupplierSelectionDSS.Services;
 public class DecisionResultService
 {
     private readonly ApplicationDbContext _context;
-
+    private readonly TOPSISService _topsisService;
 
     public DecisionResultService(
-        ApplicationDbContext context)
+        ApplicationDbContext context,
+        TOPSISService topsisService)
     {
         _context = context;
+        _topsisService = topsisService;
     }
+
 
 
     // =========================================================
@@ -213,9 +216,15 @@ public class DecisionResultService
             }
         }
 
+        if (model.Ranking.Any())
+        {
+            var topsisWs = await _topsisService.GetWorkspaceAsync(batchId);
+            model.SensitivityAnalysis = topsisWs?.SensitivityAnalysis;
+        }
 
         return model;
     }
+
 
 
     // =========================================================
@@ -266,239 +275,220 @@ public class DecisionResultService
         string? notes,
         int approvedBy)
     {
-        await using var transaction =
-            await _context.Database
-                .BeginTransactionAsync();
+        var strategy = _context.Database.CreateExecutionStrategy();
 
-
-        try
+        return await strategy.ExecuteAsync(async () =>
         {
-            // =================================================
-            // BATCH
-            // =================================================
+            await using var transaction =
+                await _context.Database
+                    .BeginTransactionAsync();
 
-            var batch =
-                await _context.EvaluationBatches
-                    .FirstOrDefaultAsync(
-                        x =>
-                            x.BatchId ==
-                            batchId);
-
-
-            if (batch == null)
+            try
             {
-                throw new InvalidOperationException(
-                    "Evaluation Batch không tồn tại.");
-            }
+                // =================================================
+                // BATCH
+                // =================================================
 
+                var batch =
+                    await _context.EvaluationBatches
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.BatchId ==
+                                batchId);
 
-            if (batch.Status == BatchStatus.Cancelled)
-            {
-                throw new InvalidOperationException(
-                    "Batch đã bị huỷ và không thể yêu cầu đánh giá lại.");
-            }
-
-
-            if (batch.Status == BatchStatus.Completed)
-            {
-                throw new InvalidOperationException(
-                    "Batch đã hoàn tất và không thể yêu cầu đánh giá lại.");
-            }
-
-
-            if (batch.Status != BatchStatus.Evaluating)
-            {
-                throw new InvalidOperationException(
-                    "Batch chưa ở trạng thái Evaluating.");
-            }
-
-
-            // =================================================
-            // TOPSIS RESULT
-            // =================================================
-
-            var topsisResults =
-                await _context.TopsisResults
-                    .Where(
-                        x =>
-                            x.BatchId ==
-                            batchId)
-                    .ToListAsync();
-
-
-            if (topsisResults.Any())
-            {
-                _context.TopsisResults
-                    .RemoveRange(
-                        topsisResults);
-            }
-
-
-            // =================================================
-            // TOPSIS IDEAL SOLUTIONS
-            // =================================================
-
-            var idealSolutions =
-                await _context.TopsisIdealSolutions
-                    .Where(
-                        x =>
-                            x.BatchId ==
-                            batchId)
-                    .ToListAsync();
-
-
-            if (idealSolutions.Any())
-            {
-                _context.TopsisIdealSolutions
-                    .RemoveRange(
-                        idealSolutions);
-            }
-
-
-            // =================================================
-            // AHP RESULT
-            // =================================================
-
-            var ahpResult =
-                await _context.Ahpresults
-                    .FirstOrDefaultAsync(
-                        x =>
-                            x.BatchId ==
-                            batchId);
-
-
-            if (ahpResult != null)
-            {
-                _context.Ahpresults.Remove(
-                    ahpResult);
-            }
-
-
-            // =================================================
-            // AHP WEIGHTS
-            // =================================================
-
-            var ahpWeights =
-                await _context.AhpcriteriaWeights
-                    .Where(
-                        x =>
-                            x.BatchId ==
-                            batchId)
-                    .ToListAsync();
-
-
-            if (ahpWeights.Any())
-            {
-                _context.AhpcriteriaWeights
-                    .RemoveRange(
-                        ahpWeights);
-            }
-
-
-            // =================================================
-            // AHP PAIRWISE COMPARISONS
-            // =================================================
-
-            var ahpComparisons =
-                await _context.AhppairwiseComparisons
-                    .Where(
-                        x =>
-                            x.BatchId ==
-                            batchId)
-                    .ToListAsync();
-
-
-            if (ahpComparisons.Any())
-            {
-                _context.AhppairwiseComparisons
-                    .RemoveRange(
-                        ahpComparisons);
-            }
-
-
-            // =================================================
-            // EVALUATION SCORES
-            // =================================================
-
-            var evaluationScores =
-                await _context.EvaluationScores
-                    .Where(
-                        x =>
-                            x.BatchId ==
-                            batchId)
-                    .ToListAsync();
-
-
-            if (evaluationScores.Any())
-            {
-                _context.EvaluationScores.RemoveRange(
-                    evaluationScores);
-            }
-
-
-            // =================================================
-            // APPROVAL HISTORY
-            // =================================================
-
-            var approval =
-                new Approval
+                if (batch == null)
                 {
-                    BatchId =
-                        batchId,
+                    throw new InvalidOperationException(
+                        "Evaluation Batch không tồn tại.");
+                }
 
-                    SelectedSupplierId =
-                        null,
+                if (batch.Status == BatchStatus.Cancelled)
+                {
+                    throw new InvalidOperationException(
+                        "Batch đã bị huỷ và không thể yêu cầu đánh giá lại.");
+                }
 
-                    ApprovedBy =
-                        approvedBy,
+                if (batch.Status == BatchStatus.Completed)
+                {
+                    throw new InvalidOperationException(
+                        "Batch đã hoàn tất và không thể yêu cầu đánh giá lại.");
+                }
 
-                    ApprovalDate =
-                        DateTime.UtcNow,
+                if (batch.Status != BatchStatus.Evaluating)
+                {
+                    throw new InvalidOperationException(
+                        "Batch chưa ở trạng thái Evaluating.");
+                }
 
-                    Notes =
-                        string.IsNullOrWhiteSpace(
-                            notes)
-                            ? null
-                            : notes.Trim(),
+                // =================================================
+                // TOPSIS RESULT
+                // =================================================
 
-                    Status =
-                        ApprovalStatus.PendingReevaluation,
+                var topsisResults =
+                    await _context.TopsisResults
+                        .Where(
+                            x =>
+                                x.BatchId ==
+                                batchId)
+                        .ToListAsync();
 
-                    IsFinal =
-                        false
-                };
+                if (topsisResults.Any())
+                {
+                    _context.TopsisResults
+                        .RemoveRange(
+                            topsisResults);
+                }
 
+                // =================================================
+                // TOPSIS IDEAL SOLUTIONS
+                // =================================================
 
-            _context.Approvals.Add(
-                approval);
+                var idealSolutions =
+                    await _context.TopsisIdealSolutions
+                        .Where(
+                            x =>
+                                x.BatchId ==
+                                batchId)
+                        .ToListAsync();
 
+                if (idealSolutions.Any())
+                {
+                    _context.TopsisIdealSolutions
+                        .RemoveRange(
+                            idealSolutions);
+                }
 
-            // =================================================
-            // KEEP BATCH IN EVALUATING
-            // =================================================
+                // =================================================
+                // AHP RESULT
+                // =================================================
 
-            batch.Status =
-                BatchStatus.Evaluating;
+                var ahpResult =
+                    await _context.Ahpresults
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.BatchId ==
+                                batchId);
 
+                if (ahpResult != null)
+                {
+                    _context.Ahpresults.Remove(
+                        ahpResult);
+                }
 
-            batch.CompletedAt =
-                null;
+                // =================================================
+                // AHP WEIGHTS
+                // =================================================
 
+                var ahpWeights =
+                    await _context.AhpcriteriaWeights
+                        .Where(
+                            x =>
+                                x.BatchId ==
+                                batchId)
+                        .ToListAsync();
 
-            await _context.SaveChangesAsync();
+                if (ahpWeights.Any())
+                {
+                    _context.AhpcriteriaWeights
+                        .RemoveRange(
+                            ahpWeights);
+                }
 
+                // =================================================
+                // AHP PAIRWISE COMPARISONS
+                // =================================================
 
-            await transaction.CommitAsync();
+                var ahpComparisons =
+                    await _context.AhppairwiseComparisons
+                        .Where(
+                            x =>
+                                x.BatchId ==
+                                batchId)
+                        .ToListAsync();
 
+                if (ahpComparisons.Any())
+                {
+                    _context.AhppairwiseComparisons
+                        .RemoveRange(
+                            ahpComparisons);
+                }
 
-            return approval.ApprovalId;
-        }
-        catch
-        {
-            await transaction.RollbackAsync();
+                // =================================================
+                // EVALUATION SCORES
+                // =================================================
 
-            throw;
-        }
+                var evaluationScores =
+                    await _context.EvaluationScores
+                        .Where(
+                            x =>
+                                x.BatchId ==
+                                batchId)
+                        .ToListAsync();
+
+                if (evaluationScores.Any())
+                {
+                    _context.EvaluationScores.RemoveRange(
+                        evaluationScores);
+                }
+
+                // =================================================
+                // APPROVAL HISTORY
+                // =================================================
+
+                var approval =
+                    new Approval
+                    {
+                        BatchId =
+                            batchId,
+
+                        SelectedSupplierId =
+                            null,
+
+                        ApprovedBy =
+                            approvedBy,
+
+                        ApprovalDate =
+                            DateTime.UtcNow,
+
+                        Notes =
+                            string.IsNullOrWhiteSpace(
+                                notes)
+                                ? null
+                                : notes.Trim(),
+
+                        Status =
+                            ApprovalStatus.PendingReevaluation,
+
+                        IsFinal =
+                            false
+                    };
+
+                _context.Approvals.Add(
+                    approval);
+
+                // =================================================
+                // KEEP BATCH IN EVALUATING
+                // =================================================
+
+                batch.Status =
+                    BatchStatus.Evaluating;
+
+                batch.CompletedAt =
+                    null;
+
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                return approval.ApprovalId;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+
+                throw;
+            }
+        });
     }
 
 

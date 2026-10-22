@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SupplierSelectionDSS.Data.Entities;
 using SupplierSelectionDSS.Models;
@@ -20,13 +20,24 @@ public class ProductGroupController : Controller
     [HttpGet]
     public async Task<IActionResult> Index(
         string? keyword,
-        string status = "All")
+        string status = "All",
+        int page = 1,
+        int pageSize = 10)
     {
+        page = Math.Max(page, 1);
+        pageSize = Math.Max(pageSize, 1);
+
+        var paged = await _groupService.SearchAsync(keyword, status, page, pageSize);
+
         var model = new ProductGroupIndexViewModel
         {
             Keyword = keyword,
             Status = status,
-            ProductGroups = await _groupService.SearchAsync(keyword, status)
+            ProductGroups = paged.Items.ToList(),
+            PageNumber = paged.PageNumber,
+            PageSize = paged.PageSize,
+            TotalCount = paged.TotalCount,
+            TotalPages = paged.TotalPages
         };
 
         return View(model);

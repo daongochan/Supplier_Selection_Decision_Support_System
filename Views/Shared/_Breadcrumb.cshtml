@@ -1,0 +1,66 @@
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    if (string.Equals(controller, "Home", StringComparison.OrdinalIgnoreCase))
+    {
+        controller = "Dashboard";
+    }
+
+    var isDashboard = string.Equals(controller, "Dashboard", StringComparison.OrdinalIgnoreCase) && 
+                      (string.Equals(action, "Index", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(action));
+
+    var controllerNames = new Dictionary<string, (string Name, string Action, string Controller)>
+    {
+        { "Dashboard", ("Bàn làm việc", "Index", "Dashboard") },
+        { "Supplier", ("Nhà cung cấp", "Index", "Supplier") },
+        { "ProductGroup", ("Nhóm hàng", "Index", "ProductGroup") },
+        { "Criteria", ("Tiêu chí", "Index", "Criteria") },
+        { "EvaluationBatch", ("Đợt đánh giá", "Index", "EvaluationBatch") },
+        { "Evaluation", ("Chấm điểm", "Index", "EvaluationBatch") },
+        { "AHP", ("Trọng số AHP", "Index", "EvaluationBatch") },
+        { "TOPSIS", ("Xếp hạng TOPSIS", "Index", "EvaluationBatch") },
+        { "DecisionResult", ("Kết quả phê duyệt", "Index", "EvaluationBatch") },
+        { "Report", ("Báo cáo DSS", "Index", "EvaluationBatch") },
+        { "User", ("Người dùng", "Index", "User") },
+        { "AuditLog", ("Nhật ký hệ thống", "Index", "AuditLog") },
+    };
+
+    var currentControllerInfo = controller != null && controllerNames.ContainsKey(controller) 
+        ? controllerNames[controller] 
+        : (Name: controller ?? "Hệ thống", Action: "Index", Controller: controller ?? "Dashboard");
+
+    var customTitle = ViewData["BreadcrumbTitle"] as string ?? ViewData["Title"] as string;
+}
+
+@if (!isDashboard && controller != null)
+{
+    <nav class="dss-breadcrumb" aria-label="Breadcrumb">
+        <div class="dss-breadcrumb-trail">
+            <a asp-controller="Dashboard" asp-action="Index" class="dss-breadcrumb-link">
+                <i class="bi bi-house-door"></i>
+                <span>Trang chủ</span>
+            </a>
+
+            @if (string.Equals(action, "Index", StringComparison.OrdinalIgnoreCase))
+            {
+                <span class="dss-breadcrumb-separator" aria-hidden="true">
+                    <i class="bi bi-chevron-right"></i>
+                </span>
+                <span class="dss-breadcrumb-current" aria-current="page">@currentControllerInfo.Name</span>
+            }
+            else
+            {
+                <span class="dss-breadcrumb-separator" aria-hidden="true">
+                    <i class="bi bi-chevron-right"></i>
+                </span>
+                <a asp-controller="@currentControllerInfo.Controller" asp-action="@currentControllerInfo.Action" class="dss-breadcrumb-link">
+                    <span>@currentControllerInfo.Name</span>
+                </a>
+                <span class="dss-breadcrumb-separator" aria-hidden="true">
+                    <i class="bi bi-chevron-right"></i>
+                </span>
+                <span class="dss-breadcrumb-current" aria-current="page">@(customTitle ?? action)</span>
+            }
+        </div>
+    </nav>
+}

@@ -1,4 +1,4 @@
-﻿@model SupplierSelectionDSS.Models.UserIndexViewModel
+@model SupplierSelectionDSS.Models.UserIndexViewModel
 
 @{
     ViewData["Title"] = "Users";
@@ -39,31 +39,6 @@
 </div>
 
 
-<!-- =========================================================
-     ALERT
-     ========================================================= -->
-@if (
-    TempData["SuccessMessage"]
-    is string successMessage)
-{
-    <div class="alert-success">
-
-        @successMessage
-
-    </div>
-}
-
-
-@if (
-    TempData["ErrorMessage"]
-    is string errorMessage)
-{
-    <div class="alert-danger">
-
-        @errorMessage
-
-    </div>
-}
 
 
 <!-- =========================================================
@@ -407,6 +382,8 @@
             </table>
 
         </div>
+
+        <partial name="_Pagination" model="Model" />
     }
     else
     {

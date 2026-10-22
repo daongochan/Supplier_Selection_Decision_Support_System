@@ -1,4 +1,4 @@
-﻿@model SupplierSelectionDSS.Models.TOPSISViewModel
+@model SupplierSelectionDSS.Models.TOPSISViewModel
 
 @{
     ViewData["Title"] = "TOPSIS";
@@ -13,7 +13,7 @@
         </div>
 
         <h1 class="page-title">
-            Supplier ranking.
+            Supplier ranking
         </h1>
 
         <p class="page-description">
@@ -32,22 +32,6 @@
 </div>
 
 
-@if (TempData["SuccessMessage"] is string successMessage)
-{
-    <div class="alert-success">
-        @successMessage
-    </div>
-}
-
-
-@if (TempData["ErrorMessage"] is string errorMessage)
-{
-    <div class="alert-danger">
-        @errorMessage
-    </div>
-}
-
-
 <!-- =========================================================
      AHP STATUS
      ========================================================= -->
@@ -61,7 +45,7 @@
         </div>
 
         <h2>
-            Criteria weights.
+            Criteria weights
         </h2>
 
     </div>
@@ -161,7 +145,7 @@
             </div>
 
             <h2 class="section-title">
-                Raw evaluation values.
+                Raw evaluation values
             </h2>
 
         </div>
@@ -287,7 +271,7 @@
             </div>
 
             <h2>
-                Calculate supplier ranking.
+                Calculate supplier ranking
             </h2>
 
             <p>
@@ -300,7 +284,10 @@
 
 
         <button type="submit"
-                class="btn-primary">
+                class="btn-primary"
+                data-dss-confirm="Tính toán TOPSIS sẽ tính toán lại xếp hạng các nhà cung cấp dựa trên ma trận đánh giá và trọng số AHP. Bạn có muốn tiếp tục?"
+                data-dss-title="Xác nhận tính TOPSIS"
+                data-dss-btn-text="Tính toán">
 
             Calculate TOPSIS
 
@@ -317,7 +304,7 @@ else
         </div>
 
         <h2>
-            AHP must be consistent first.
+            AHP must be consistent first
         </h2>
 
         <p>
@@ -328,6 +315,129 @@ else
     </div>
 }
 
+<!-- =========================================================
+     NORMALIZED MATRIX (R)
+     ========================================================= -->
+@if (Model.NormalizedMatrix.Any())
+{
+    <div class="table-card topsis-matrix-card">
+        <div class="topsis-card-header">
+            <div>
+                <div class="page-eyebrow">
+                    STEP 1 · VECTOR NORMALIZATION
+                </div>
+                <h2 class="section-title">
+                    Ma trận chuẩn hóa (Vector Normalized Matrix R)
+                </h2>
+            </div>
+        </div>
+
+        <div class="topsis-table-wrapper">
+            <table class="topsis-table">
+                <thead>
+                    <tr>
+                        <th class="topsis-supplier-column">
+                            Nhà cung cấp
+                        </th>
+                        @foreach (var criterion in Model.Criteria)
+                        {
+                            <th>
+                                <span>@criterion.CriteriaCode</span>
+                                <small>@criterion.CriteriaType</small>
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model.NormalizedMatrix)
+                    {
+                        <tr>
+                            <td class="topsis-supplier-cell">
+                                <strong>@row.SupplierCode</strong>
+                                <span>@row.SupplierName</span>
+                            </td>
+                            @foreach (var criterion in Model.Criteria)
+                            {
+                                <td>
+                                    @if (row.Values.TryGetValue(criterion.CriteriaId, out var val))
+                                    {
+                                        <strong>@val.ToString("0.000000")</strong>
+                                    }
+                                    else
+                                    {
+                                        <span class="topsis-missing">—</span>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<!-- =========================================================
+     WEIGHTED NORMALIZED MATRIX (V)
+     ========================================================= -->
+@if (Model.WeightedMatrix.Any())
+{
+    <div class="table-card topsis-matrix-card">
+        <div class="topsis-card-header">
+            <div>
+                <div class="page-eyebrow">
+                    STEP 2 · WEIGHTED MATRIX
+                </div>
+                <h2 class="section-title">
+                    Ma trận chuẩn hóa có trọng số (V = [v<sub>ij</sub>])
+                </h2>
+            </div>
+        </div>
+
+        <div class="topsis-table-wrapper">
+            <table class="topsis-table">
+                <thead>
+                    <tr>
+                        <th class="topsis-supplier-column">
+                            Nhà cung cấp
+                        </th>
+                        @foreach (var criterion in Model.Criteria)
+                        {
+                            <th>
+                                <span>@criterion.CriteriaCode</span>
+                                <small>w = @(((double)criterion.Weight * 100).ToString("0.00"))%</small>
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model.WeightedMatrix)
+                    {
+                        <tr>
+                            <td class="topsis-supplier-cell">
+                                <strong>@row.SupplierCode</strong>
+                                <span>@row.SupplierName</span>
+                            </td>
+                            @foreach (var criterion in Model.Criteria)
+                            {
+                                <td>
+                                    @if (row.Values.TryGetValue(criterion.CriteriaId, out var val))
+                                    {
+                                        <strong>@val.ToString("0.000000")</strong>
+                                    }
+                                    else
+                                    {
+                                        <span class="topsis-missing">—</span>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
 
 <!-- =========================================================
      IDEAL SOLUTIONS
@@ -335,6 +445,7 @@ else
 @if (Model.IdealSolutions.Any())
 {
     <div class="table-card topsis-ideal-card">
+
 
         <div class="topsis-card-header">
 
@@ -345,7 +456,7 @@ else
                 </div>
 
                 <h2 class="section-title">
-                    PIS & NIS.
+                    PIS & NIS (Ideal Solutions)
                 </h2>
 
             </div>
@@ -435,6 +546,30 @@ else
      ========================================================= -->
 @if (Model.Ranking.Any())
 {
+    @if (Model.IsIndistinguishable)
+    {
+        <div class="alert alert-warning mb-3" style="border-radius: var(--radius-md); padding: 14px 18px; border: 1px solid rgba(234, 179, 8, 0.4); background: rgba(234, 179, 8, 0.1);">
+            <i class="bi bi-exclamation-triangle-fill me-2 text-warning"></i>
+            <strong>Không phân biệt được:</strong> Tất cả các nhà cung cấp có điểm đánh giá giống hệt nhau trên mọi tiêu chí. Khoảng cách D+ và D- đều bằng 0, không có sự khác biệt thứ hạng.
+        </div>
+    }
+
+    @if (Model.HasTies)
+    {
+        <div class="alert alert-info mb-3" style="border-radius: var(--radius-md); padding: 14px 18px; border: 1px solid rgba(59, 130, 246, 0.4); background: rgba(59, 130, 246, 0.1);">
+            <i class="bi bi-info-circle-fill me-2 text-primary"></i>
+            <strong>Ghi chú xếp hạng:</strong> Có nhà cung cấp đồng hạng (cùng điểm Closeness Coefficient). Hệ thống áp dụng chuẩn xếp hạng Standard Competition Ranking (1, 2, 2, 4).
+        </div>
+    }
+
+    @if (Model.ZeroVarianceCriteriaCodes.Any())
+    {
+        <div class="alert alert-warning mb-3" style="border-radius: var(--radius-md); padding: 14px 18px; border: 1px solid rgba(234, 179, 8, 0.4); background: rgba(234, 179, 8, 0.1);">
+            <i class="bi bi-exclamation-circle-fill me-2 text-warning"></i>
+            <strong>Tiêu chí không phân biệt:</strong> Tiêu chí [@string.Join(", ", Model.ZeroVarianceCriteriaCodes)] có giá trị bằng nhau hoặc bằng 0 ở mọi nhà cung cấp, đã được chuẩn hóa = 0 và không ảnh hưởng đến tỷ trọng phân biệt.
+        </div>
+    }
+
     <div class="table-card topsis-ranking-card">
 
         <div class="topsis-card-header">
@@ -446,7 +581,7 @@ else
                 </div>
 
                 <h2 class="section-title">
-                    Supplier ranking.
+                    Supplier ranking
                 </h2>
 
             </div>
@@ -479,7 +614,7 @@ else
                         </th>
 
                         <th>
-                            Closeness
+                            Closeness (Ci*)
                         </th>
 
                     </tr>
@@ -494,13 +629,18 @@ else
                             .OrderBy(
                                 x => x.RankNo))
                     {
-                        <tr class="@(ranking.RankNo == 1
-                                                            ? "topsis-winner-row"
-                                                            : "")">
+                        var isWinner = ranking.RankNo == 1;
+                        var pct = Math.Clamp((double)ranking.ClosenessCoefficient * 100, 0, 100);
+
+                        <tr class="@(isWinner ? "topsis-winner-row" : "")">
 
                             <td>
 
-                                <span class="topsis-rank">
+                                <span class="topsis-rank @(isWinner ? "topsis-rank-winner" : "")">
+                                    @if (isWinner)
+                                    {
+                                        <i class="bi bi-trophy-fill me-1"></i>
+                                    }
                                     @ranking.RankNo
                                 </span>
 
@@ -532,9 +672,14 @@ else
 
                             <td>
 
-                                <strong class="topsis-score">
-                                    @ranking.ClosenessCoefficient.ToString("0.000000")
-                                </strong>
+                                <div style="display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-width: 140px;">
+                                    <div style="flex: 1; height: 6px; background: var(--surface-muted); border-radius: 999px; overflow: hidden; min-width: 50px;">
+                                        <div style="height: 100%; width: @(pct)%; background: @(isWinner ? "#c67d29" : "var(--lavender-dark)"); border-radius: 999px;"></div>
+                                    </div>
+                                    <strong class="topsis-score" style="font-family: var(--font-sans); font-variant-numeric: tabular-nums;">
+                                        @ranking.ClosenessCoefficient.ToString("0.000000")
+                                    </strong>
+                                </div>
 
                             </td>
 
@@ -550,8 +695,101 @@ else
     </div>
 }
 
+<!-- =========================================================
+     SENSITIVITY ANALYSIS (ACADEMIC FEATURE)
+     ========================================================= -->
+@if (Model.SensitivityAnalysis != null && Model.SensitivityAnalysis.Scenarios.Any())
+{
+    <div class="table-card topsis-matrix-card">
+        <div class="topsis-card-header d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <div class="page-eyebrow">
+                    ACADEMIC FEATURE · PHÂN TÍCH ĐỘ NHẠY
+                </div>
+                <h2 class="section-title">
+                    Độ vững bền của thứ hạng (Sensitivity Analysis ±10%, ±20%)
+                </h2>
+                <p class="text-muted mt-1" style="font-size: 14px; max-width: 800px;">
+                    @Model.SensitivityAnalysis.SummaryMessage
+                </p>
+            </div>
+            <div>
+                @if (Model.SensitivityAnalysis.IsOverallRobust)
+                {
+                    <span class="topsis-readiness-badge topsis-badge-success">
+                        ✓ Quyết định vững bền (100% kịch bản giữ nguyên #1)
+                    </span>
+                }
+                else
+                {
+                    <span class="topsis-readiness-badge topsis-badge-error">
+                        ⚠️ Nhạy cảm với biến động (Độ vững bền: @Model.SensitivityAnalysis.RobustnessPercentage%)
+                    </span>
+                }
+            </div>
+        </div>
+
+        <div class="topsis-table-wrapper">
+            <table class="topsis-table">
+                <thead>
+                    <tr>
+                        <th>Tiêu chí biến thiên</th>
+                        <th>Trọng số gốc</th>
+                        <th>Độ lệch (Delta)</th>
+                        <th>Trọng số mới</th>
+                        <th>Nhà cung cấp #1 mới</th>
+                        <th>Điểm Closeness</th>
+                        <th>Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var scenario in Model.SensitivityAnalysis.Scenarios)
+                    {
+                        @foreach (var run in scenario.Runs)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@scenario.CriteriaCode</strong>
+                                    <span>@scenario.CriteriaName</span>
+                                </td>
+                                <td>@scenario.BaseWeight.ToString("0.0000")</td>
+                                <td>
+                                    <strong>@(run.DeltaPercent > 0 ? "+" : "")@run.DeltaPercent%</strong>
+                                </td>
+                                <td>@run.NewWeight.ToString("0.0000")</td>
+                                <td>
+                                    <strong>@run.TopSupplierCode</strong>
+                                    <span>@run.TopSupplierName</span>
+                                </td>
+                                <td>
+                                    <strong>@run.TopSupplierCloseness.ToString("0.000000")</strong>
+                                </td>
+                                <td>
+                                    @if (run.IsStable)
+                                    {
+                                        <span class="badge" style="background: var(--sage-soft); color: var(--sage-dark); font-weight: 600; padding: 4px 8px; border-radius: 999px;">
+                                            ✓ Ổn định
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge" style="background: var(--danger-soft); color: var(--danger-dark); font-weight: 600; padding: 4px 8px; border-radius: 999px;">
+                                            ⚠️ Thay đổi #1
+                                        </span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
 @if (Model.Ranking != null &&
      Model.Ranking.Any())
+
 {
     <div class="topsis-next-step">
 
@@ -561,9 +799,9 @@ else
                 NEXT STEP
             </div>
 
-            <h3>
+            <h2>
                 TOPSIS calculation completed.
-            </h3>
+            </h2>
 
             <p>
                 Kết quả xếp hạng nhà cung cấp đã được lưu.

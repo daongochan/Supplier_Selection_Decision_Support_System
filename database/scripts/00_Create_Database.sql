@@ -1,0 +1,18 @@
+USE master;
+GO
+
+IF DB_ID(N'SupplierSelectionDSS') IS NOT NULL
+BEGIN
+    ALTER DATABASE SupplierSelectionDSS SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE SupplierSelectionDSS;
+END
+GO
+
+CREATE DATABASE SupplierSelectionDSS
+COLLATE Vietnamese_CI_AS;
+GO
+
+ALTER DATABASE SupplierSelectionDSS SET RECOVERY SIMPLE;
+GO
+
+USE SupplierSelectionDSS;

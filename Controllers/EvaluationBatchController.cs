@@ -1,10 +1,11 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SupplierSelectionDSS.Models;
 using SupplierSelectionDSS.Services;
 using SupplierSelectionDSS.Constants;
+using SupplierSelectionDSS.Web.Extensions;
 
 namespace SupplierSelectionDSS.Controllers;
 
@@ -37,8 +38,19 @@ public class EvaluationBatchController : Controller
     [HttpGet]
     public async Task<IActionResult> Index(
         string? keyword,
-        string status = "All")
+        string status = "All",
+        int page = 1,
+        int pageSize = 10)
     {
+        page = Math.Max(page, 1);
+        pageSize = Math.Max(pageSize, 1);
+
+        var paged = await _batchService.SearchAsync(
+            keyword,
+            status,
+            page,
+            pageSize);
+
         var model =
             new EvaluationBatchIndexViewModel
             {
@@ -49,11 +61,21 @@ public class EvaluationBatchController : Controller
                     status,
 
                 Batches =
-                    await _batchService.SearchAsync(
-                        keyword,
-                        status)
-            };
+                    paged.Items
+                        .ToList(),
 
+                PageNumber =
+                    paged.PageNumber,
+
+                PageSize =
+                    paged.PageSize,
+
+                TotalCount =
+                    paged.TotalCount,
+
+                TotalPages =
+                    paged.TotalPages
+            };
 
         return View(model);
     }
@@ -143,19 +165,12 @@ public class EvaluationBatchController : Controller
         // CURRENT USER
         // =====================================================
 
-        var userIdClaim =
-            User.FindFirst(
-                ClaimTypes.NameIdentifier);
-
-
-        if (
-            userIdClaim == null ||
-            !int.TryParse(
-                userIdClaim.Value,
-                out var createdBy))
+        var userId = User.GetUserId();
+        if (!userId.HasValue)
         {
             return Unauthorized();
         }
+        var createdBy = userId.Value;
 
 
         try
@@ -353,19 +368,12 @@ public class EvaluationBatchController : Controller
             // AUDIT USER
             // =================================================
 
-            var userIdClaim =
-                User.FindFirst(
-                    ClaimTypes.NameIdentifier);
-
-
-            if (
-                userIdClaim == null ||
-                !int.TryParse(
-                    userIdClaim.Value,
-                    out var startedBy))
+            var userId = User.GetUserId();
+            if (!userId.HasValue)
             {
                 return Unauthorized();
             }
+            var startedBy = userId.Value;
 
 
             // =================================================
@@ -463,6 +471,88 @@ public class EvaluationBatchController : Controller
                 {
                     id
                 });
+        }
+    }
+
+
+    // =========================================================
+    // CANCEL
+    // =========================================================
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(
+        Roles =
+            UserRole.Administrator + "," + UserRole.Manager)]
+    public async Task<IActionResult> Cancel(
+        int id,
+        string? reason)
+    {
+        if (id <= 0)
+        {
+            return NotFound();
+        }
+
+        var userId = User.GetUserId();
+        if (!userId.HasValue)
+        {
+            return Unauthorized();
+        }
+        var cancelledBy = userId.Value;
+
+        try
+        {
+            var batch = await _batchService.GetDetailAsync(id);
+            if (batch == null)
+            {
+                return NotFound();
+            }
+
+            var oldValue = JsonSerializer.Serialize(new
+            {
+                BatchId = batch.BatchId,
+                BatchCode = batch.BatchCode,
+                Status = batch.Status
+            });
+
+            await _batchService.CancelAsync(id, reason);
+
+            var newValue = JsonSerializer.Serialize(new
+            {
+                BatchId = batch.BatchId,
+                BatchCode = batch.BatchCode,
+                Status = BatchStatus.Cancelled,
+                Reason = reason
+            });
+
+            try
+            {
+                await _auditLogService.LogAsync(
+                    cancelledBy,
+                    AuditActions.CancelBatch,
+                    "EvaluationBatches",
+                    id,
+                    oldValue,
+                    newValue,
+                    $"Hủy đợt đánh giá '{batch.BatchCode}'. Lý do: {reason ?? "Không có"}");
+            }
+            catch
+            {
+                // Audit log không được làm hỏng workflow
+            }
+
+            TempData["SuccessMessage"] = $"Đợt đánh giá '{batch.BatchCode}' đã được hủy thành công.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+            return RedirectToAction(nameof(Details), new { id });
+        }
+        catch (Exception)
+        {
+            TempData["ErrorMessage"] = "Có lỗi xảy ra khi hủy đợt đánh giá.";
+            return RedirectToAction(nameof(Details), new { id });
         }
     }
 

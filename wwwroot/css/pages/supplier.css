@@ -1,4 +1,4 @@
-﻿/* =========================================================
+/* =========================================================
    SUPPLIER FILTER
    ========================================================= */
 
@@ -152,6 +152,10 @@
     .supplier-filter {
         grid-template-columns: 1fr 1fr;
     }
+
+    .supplier-filter .filter-actions {
+        grid-column: span 2;
+    }
 }
 
 
@@ -161,9 +165,10 @@
         grid-template-columns: 1fr;
     }
 
-        .supplier-filter .filter-actions {
-            height: auto;
-        }
+    .supplier-filter .filter-actions {
+        grid-column: auto;
+        height: auto;
+    }
 
     .supplier-selection-grid {
         grid-template-columns: 1fr;

@@ -1,4 +1,4 @@
-﻿/* =========================================================
+/* =========================================================
    TOPSIS READINESS
    ========================================================= */
 
@@ -130,7 +130,7 @@
     min-width: 900px;
     border-collapse: separate;
     border-spacing: 0;
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
 }
 
     .topsis-table th,
@@ -269,7 +269,7 @@
    ========================================================= */
 
 .topsis-winner-row td {
-    background: var(--sage-soft);
+    background: rgba(198, 125, 41, 0.08) !important;
 }
 
 .topsis-rank {
@@ -281,22 +281,31 @@
     border-radius: 50%;
     background: var(--surface-muted);
     color: var(--muted);
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
 }
 
-.topsis-winner-row .topsis-rank {
-    background: var(--sage-dark);
-    color: var(--surface);
+.topsis-winner-row .topsis-rank,
+.topsis-rank-winner {
+    background: #c67d29 !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(198, 125, 41, 0.35);
+    border-radius: var(--radius-pill);
+    padding: 0 10px;
+    width: auto;
+    min-width: 34px;
 }
 
 .topsis-score {
     color: var(--lavender-dark);
-    font-size: 17px !important;
+    font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums;
+    font-size: 16px !important;
 }
 
 
+/* =========================================================
    TOPSIS - NEXT STEP
    ========================================================= */
 
@@ -304,10 +313,10 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 28px;
-    margin-top: 16px;
+    gap: 30px;
+    margin-top: 24px;
     margin-bottom: 40px;
-    padding: 22px 26px;
+    padding: 24px 28px;
     background: var(--canvas-soft);
     border: 1px solid var(--border);
     border-radius: var(--radius-xl);
@@ -321,6 +330,7 @@
 }
 
 
+    .topsis-next-step-content h2,
     .topsis-next-step-content h3 {
         margin: 0;
         color: var(--ink);
@@ -332,7 +342,7 @@
 
 
     .topsis-next-step-content p {
-        margin: 7px 0 0;
+        margin: 8px 0 0;
         color: var(--body);
         font-size: 13px;
         line-height: 1.55;
@@ -344,22 +354,30 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 8px 18px;
-    margin-top: 12px;
+    margin-top: 13px;
     color: var(--muted);
-    font-size: 10px;
+    font-size: 13px;
 }
 
 
     .topsis-next-step-meta span {
         display: inline-flex;
         align-items: center;
-        gap: 5px;
+        gap: 6px;
     }
 
 
     .topsis-next-step-meta i {
+        font-size: 13px;
+        line-height: 1;
+    }
+
+    .topsis-next-step-meta i.bi-check-circle-fill {
         color: var(--sage-dark);
-        font-size: 11px;
+    }
+
+    .topsis-next-step-meta i.bi-trophy-fill {
+        color: #c67d29;
     }
 
 
@@ -373,9 +391,38 @@
 .topsis-next-step-actions {
     display: flex;
     align-items: center;
-    gap: 9px;
+    gap: 12px;
     flex: 0 0 auto;
 }
+
+    .topsis-next-step-actions a,
+    .topsis-next-step-actions .btn-outline,
+    .topsis-next-step-actions .btn-primary {
+        height: 42px !important;
+        min-height: 42px !important;
+        max-height: 42px !important;
+        padding: 0 22px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+        font-family: var(--font-serif) !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        line-height: 1 !important;
+        border-radius: var(--radius-pill) !important;
+        text-decoration: none !important;
+        white-space: nowrap !important;
+        gap: 8px !important;
+    }
+
+    .topsis-next-step-actions a i {
+        font-size: 14px !important;
+        line-height: 1 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        margin: 0 !important;
+    }
 
 
 @media (max-width: 800px) {

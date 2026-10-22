@@ -4,6 +4,9 @@ using QuestPDF.Infrastructure;
 using SupplierSelectionDSS.Data;
 using SupplierSelectionDSS.Services;
 
+using SupplierSelectionDSS.Constants;
+using SupplierSelectionDSS.Web.Authorization;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // =========================================================
@@ -16,9 +19,39 @@ QuestPDF.Settings.License = LicenseType.Community;
 // MVC
 // =========================================================
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add(new Microsoft.AspNetCore.Mvc.AutoValidateAntiforgeryTokenAttribute());
+});
 
-builder.Services.AddAuthorization();
+builder.Services.AddHealthChecks();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(PolicyNames.ManageUsers, policy =>
+        policy.RequireRole(UserRole.Administrator));
+
+    options.AddPolicy(PolicyNames.ManageBatches, policy =>
+        policy.RequireRole(UserRole.Administrator, UserRole.PurchasingStaff, UserRole.Manager));
+
+    options.AddPolicy(PolicyNames.EvaluateSuppliers, policy =>
+        policy.RequireRole(UserRole.Administrator, UserRole.PurchasingStaff, UserRole.Expert));
+
+    options.AddPolicy(PolicyNames.PerformAHP, policy =>
+        policy.RequireRole(UserRole.Administrator, UserRole.Expert));
+
+    options.AddPolicy(PolicyNames.PerformTOPSIS, policy =>
+        policy.RequireRole(UserRole.Administrator, UserRole.Expert));
+
+    options.AddPolicy(PolicyNames.ApproveDecision, policy =>
+        policy.RequireRole(UserRole.Administrator, UserRole.Manager));
+
+    options.AddPolicy(PolicyNames.ViewReports, policy =>
+        policy.RequireRole(UserRole.Administrator, UserRole.Manager));
+
+    options.AddPolicy(PolicyNames.ExportReports, policy =>
+        policy.RequireRole(UserRole.Administrator, UserRole.Manager));
+});
 
 builder.Services.AddHsts(options =>
 {
@@ -82,6 +115,7 @@ builder.Services.AddScoped<AHPService>();
 
 builder.Services.AddScoped<TOPSISCalculationService>();
 builder.Services.AddScoped<TOPSISService>();
+builder.Services.AddScoped<SensitivityAnalysisService>();
 
 // =========================================================
 // DECISION & REPORTING
@@ -173,7 +207,28 @@ else
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+
+// Security Headers Middleware
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-Frame-Options", "SAMEORIGIN");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    await next();
+});
+
+// Chặn tuyệt đối mọi truy cập trực tiếp tới file báo cáo qua static webroot
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        if (ctx.Context.Request.Path.StartsWithSegments("/reports"))
+        {
+            ctx.Context.Response.StatusCode = StatusCodes.Status404NotFound;
+            ctx.Context.Response.Body = Stream.Null;
+        }
+    }
+});
 
 app.UseRouting();
 
@@ -181,8 +236,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // =========================================================
-// ROUTING
+// ROUTING & ENDPOINTS
 // =========================================================
+
+app.MapHealthChecks("/health");
 
 app.MapControllerRoute(
     name: "default",
