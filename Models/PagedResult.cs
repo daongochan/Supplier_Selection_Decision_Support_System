@@ -27,7 +27,7 @@ public class PagedResult<T> : IPagedResult
     public static async Task<PagedResult<T>> CreateAsync(IQueryable<T> query, int pageNumber, int pageSize)
     {
         pageNumber = Math.Max(pageNumber, 1);
-        pageSize = Math.Max(pageSize, 1);
+        pageSize = Math.Clamp(pageSize, 1, 100);
 
         var totalCount = await query.CountAsync();
         var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);

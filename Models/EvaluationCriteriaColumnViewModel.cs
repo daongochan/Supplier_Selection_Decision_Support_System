@@ -19,10 +19,7 @@ public class EvaluationCriteriaColumnViewModel
     // =========================================================
 
     public bool IsRating =>
-        string.Equals(
-            Unit?.Trim(),
-            "Điểm",
-            StringComparison.OrdinalIgnoreCase);
+        SupplierSelectionDSS.Constants.CriteriaUnits.IsRatingScale(Unit);
 
     public string InputType =>
         IsRating

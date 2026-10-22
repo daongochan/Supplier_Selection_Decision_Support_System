@@ -377,10 +377,7 @@ public class EvaluationService
         // Rating Criteria
         // -----------------------------------------------------
 
-        if (string.Equals(
-            unit,
-            "Điểm",
-            StringComparison.OrdinalIgnoreCase))
+        if (CriteriaUnits.IsRatingScale(unit))
         {
             if (score < 0m ||
                 score > 10m)

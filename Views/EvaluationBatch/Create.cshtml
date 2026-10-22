@@ -1,7 +1,7 @@
-﻿@model SupplierSelectionDSS.Models.EvaluationBatchCreateViewModel
+@model SupplierSelectionDSS.Models.EvaluationBatchCreateViewModel
 
 @{
-    ViewData["Title"] = "New Evaluation Batch";
+    ViewData["Title"] = "Tạo đợt đánh giá";
 
     var productGroups =
         ViewBag.ProductGroups
@@ -34,12 +34,8 @@
 
     <div>
 
-        <div class="page-eyebrow">
-            EVALUATION
-        </div>
-
         <h1 class="page-title">
-            New evaluation
+            Tạo đợt đánh giá
         </h1>
 
         <p class="page-description">
@@ -52,9 +48,8 @@
 
     <a asp-action="Index"
        class="btn-outline">
-
-        Back to batches
-
+        <i class="bi bi-arrow-left"></i>
+        <span>Quay lại</span>
     </a>
 
 </div>
@@ -478,9 +473,9 @@
                                     in suppliers)
                                 {
                                     var isChecked =
-                                        Model.SelectedSupplierIds
+                                        Model.SelectedSupplierIds?
                                             .Contains(
-                                                supplier.SupplierId);
+                                                supplier.SupplierId) == true;
 
 
                                     <label class="selection-card @(isChecked ? "selected" : "")">
@@ -603,9 +598,9 @@
                                 in criteria)
                             {
                                 var isChecked =
-                                    Model.SelectedCriteriaIds
+                                    Model.SelectedCriteriaIds?
                                         .Contains(
-                                            criterion.CriteriaId);
+                                            criterion.CriteriaId) == true;
 
 
                                 <label class="selection-card @(isChecked ? "selected" : "")">
