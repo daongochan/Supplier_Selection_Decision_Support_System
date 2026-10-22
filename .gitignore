@@ -1,0 +1,53 @@
+## Visual Studio / VS Code
+.vs/
+.vscode/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.sln.docstates
+
+## Build Results
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+
+## .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+*.intermediate.manifest
+
+## Test Results & Coverage
+TestResults/
+[Tt]est[Rr]esult*/
+coverage/
+*.cobertura.xml
+*.opencover.xml
+coverage.json
+
+## Generated Reports & Local Storage
+wwwroot/reports/*
+!wwwroot/reports/.gitkeep
+App_Data/reports/*
+!App_Data/reports/.gitkeep
+
+## Local Secrets, Certificates & Runtime artifacts
+appsettings*.local.json
+appsettings.Production.json
+cookies.txt
+*.pfx
+*.certificate
+
+## OS generated
+.DS_Store
+Thumbs.db
+ehthumbs.db
