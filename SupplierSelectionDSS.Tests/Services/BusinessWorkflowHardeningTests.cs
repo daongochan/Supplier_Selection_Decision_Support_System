@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging.Abstractions;
 using SupplierSelectionDSS.Constants;
 using SupplierSelectionDSS.Data;
@@ -22,6 +23,7 @@ public class BusinessWorkflowHardeningTests : IDisposable
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(databaseName: "WorkflowHardening_" + Guid.NewGuid())
+            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
             .Options;
 
         _context = new ApplicationDbContext(options);
@@ -322,5 +324,107 @@ public class BusinessWorkflowHardeningTests : IDisposable
 
         var topsis = await _context.TopsisResults.Where(x => x.BatchId == 201).ToListAsync();
         topsis.Should().BeEmpty();
+    }
+
+    // =========================================================
+    // C1: BATCH ROUND SNAPSHOTS (FINAL APPROVAL & REEVALUATION)
+    // =========================================================
+
+    [Fact]
+    public async Task ApproveAsync_FinalApproval_CreatesBatchRoundSnapshot()
+    {
+        // Arrange
+        var batch = new EvaluationBatch
+        {
+            BatchId = 301,
+            BatchCode = "B301",
+            BatchName = "Đợt snapshot phê duyệt",
+            Status = BatchStatus.Evaluating
+        };
+
+        var sup1 = new Supplier { SupplierId = 41, SupplierCode = "S41", SupplierName = "Nhà cung cấp 41", Status = EntityStatus.Active };
+        var sup2 = new Supplier { SupplierId = 42, SupplierCode = "S42", SupplierName = "Nhà cung cấp 42", Status = EntityStatus.Active };
+        batch.Suppliers.Add(sup1);
+        batch.Suppliers.Add(sup2);
+
+        _context.EvaluationBatches.Add(batch);
+        _context.TopsisResults.AddRange(
+            new TopsisResult { BatchId = 301, SupplierId = 41, RankNo = 1, ClosenessCoefficient = 0.95m },
+            new TopsisResult { BatchId = 301, SupplierId = 42, RankNo = 2, ClosenessCoefficient = 0.65m }
+        );
+        _context.AhpcriteriaWeights.Add(
+            new AhpcriteriaWeight { BatchId = 301, CriteriaId = 1, WeightValue = 1.0m }
+        );
+        await _context.SaveChangesAsync();
+
+        var service = CreateDecisionResultService();
+
+        // Act: Approve rank 1 supplier
+        var approvalId = await service.ApproveAsync(301, 41, 1, "Chọn nhà cung cấp tốt nhất");
+
+        // Assert
+        approvalId.Should().BeGreaterThan(0);
+        var snapshot = await _context.BatchRoundSnapshots
+            .FirstOrDefaultAsync(s => s.BatchId == 301 && s.SnapshotType == "FinalApproval");
+
+        snapshot.Should().NotBeNull();
+        snapshot!.SnapshotData.Should().Contain("41");
+        snapshot.SnapshotData.Should().Contain("0.95");
+    }
+
+    [Fact]
+    public async Task RequestReevaluationAsync_CreatesSnapshotBeforeClearingOldData()
+    {
+        // Arrange
+        var batch = new EvaluationBatch
+        {
+            BatchId = 302,
+            BatchCode = "B302",
+            BatchName = "Đợt đánh giá lại",
+            Status = BatchStatus.Evaluating
+        };
+
+        var sup1 = new Supplier { SupplierId = 51, SupplierCode = "S51", SupplierName = "Nhà cung cấp 51", Status = EntityStatus.Active };
+        batch.Suppliers.Add(sup1);
+
+        _context.EvaluationBatches.Add(batch);
+        _context.EvaluationScores.Add(new EvaluationScore
+        {
+            BatchId = 302,
+            SupplierId = 51,
+            CriteriaId = 1,
+            ScoreValue = 100m
+        });
+        _context.TopsisResults.Add(new TopsisResult
+        {
+            BatchId = 302,
+            SupplierId = 51,
+            RankNo = 1,
+            ClosenessCoefficient = 0.88m
+        });
+        await _context.SaveChangesAsync();
+
+        var service = CreateDecisionResultService();
+
+        // Act: Request re-evaluation
+        var approvalId = await service.RequestReevaluationAsync(302, "Cần khảo sát lại giá", 1);
+
+        // Assert
+        approvalId.Should().BeGreaterThan(0);
+
+        // Active scores and topsis should be cleared for fresh round
+        var activeScores = await _context.EvaluationScores.Where(x => x.BatchId == 302).ToListAsync();
+        activeScores.Should().BeEmpty();
+        var activeTopsis = await _context.TopsisResults.Where(x => x.BatchId == 302).ToListAsync();
+        activeTopsis.Should().BeEmpty();
+
+        // Snapshot must exist and preserve the old round data
+        var snapshot = await _context.BatchRoundSnapshots
+            .FirstOrDefaultAsync(s => s.BatchId == 302 && s.SnapshotType == "Reevaluation");
+
+        snapshot.Should().NotBeNull();
+        snapshot!.SnapshotData.Should().Contain("100");
+        snapshot.SnapshotData.Should().Contain("0.88");
+        snapshot.SnapshotData.Should().Contain("Cần khảo sát lại giá");
     }
 }

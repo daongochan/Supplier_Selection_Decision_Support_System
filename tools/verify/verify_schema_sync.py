@@ -89,9 +89,9 @@ def main() -> int:
         else:
             print(f"  + {category.capitalize()}: {len(s_set)} đối tượng (khớp 100%)")
 
-    # Kiểm tra số lượng chuẩn: 17 bảng, 7 triggers, 2 views
-    if len(schema_objs["tables"]) < 17:
-        all_errors.append(f"Số bảng ({len(schema_objs['tables'])}) chưa đủ 17 bảng chuẩn")
+    # Kiểm tra số lượng chuẩn: 18 bảng, 7 triggers, 2 views
+    if len(schema_objs["tables"]) < 18:
+        all_errors.append(f"Số bảng ({len(schema_objs['tables'])}) chưa đủ 18 bảng chuẩn")
     if len(schema_objs["triggers"]) != 7:
         all_errors.append(f"Số triggers ({len(schema_objs['triggers'])}) chưa đủ 7 triggers chuẩn")
     if len(schema_objs["views"]) != 2:
@@ -131,7 +131,7 @@ def main() -> int:
             print(f"  [X] {err}")
         return 1
     else:
-        print("SUCCESS: CSDL đồng bộ 100%, đầy đủ 17 bảng, 7 triggers, 2 views và có Safety Guard bảo vệ dữ liệu.")
+        print("SUCCESS: CSDL đồng bộ 100%, đầy đủ 18 bảng, 7 triggers, 2 views và có Safety Guard bảo vệ dữ liệu.")
         return 0
 
 

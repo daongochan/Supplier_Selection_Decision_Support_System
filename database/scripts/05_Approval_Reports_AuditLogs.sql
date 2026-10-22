@@ -50,3 +50,17 @@ CREATE TABLE AuditLogs (
     CONSTRAINT FK_AuditLog_User FOREIGN KEY (UserID) REFERENCES Users(UserID)
 );
 GO
+
+-- 5.4. Lưu vết ảnh chụp nhanh đợt đánh giá (Batch Round Snapshot)
+CREATE TABLE BatchRoundSnapshots (
+    SnapshotID          INT IDENTITY(1,1) NOT NULL,
+    BatchID             INT            NOT NULL,
+    SnapshotType        NVARCHAR(50)   NOT NULL,
+    SnapshotData        NVARCHAR(MAX)  NOT NULL,
+    CreatedAt           DATETIME2      NOT NULL CONSTRAINT DF_BatchRoundSnapshots_CreatedAt DEFAULT (SYSDATETIME()),
+    CreatedBy           INT            NULL,
+    CONSTRAINT PK_BatchRoundSnapshots PRIMARY KEY (SnapshotID),
+    CONSTRAINT FK_BatchRoundSnapshots_Batch FOREIGN KEY (BatchID) REFERENCES EvaluationBatches(BatchID),
+    CONSTRAINT FK_BatchRoundSnapshots_User FOREIGN KEY (CreatedBy) REFERENCES Users(UserID)
+);
+GO

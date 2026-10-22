@@ -109,3 +109,51 @@ Tài liệu này ghi nhận số liệu đo lường hiệu năng thực tế tr
    - `login-left.jpg`: từ 40.766 bytes giảm còn **18.798 bytes** (giảm **53,9%** dung lượng).
    - `sidebar-bg.jpg`: từ 12.646 bytes giảm còn **2.902 bytes** (giảm **77,0%** dung lượng).
    - Áp dụng thẻ `<picture>` với `<source type="image/webp">` và fallback `<img>`, tương thích hoàn hảo cả trình duyệt cũ lẫn mới.
+
+---
+
+### 4.3. Kết quả Phase 4, Phase 5 & Phase 6 — Chỉ mục CSDL, Snapshot & Truy cập toàn diện
+
+1. **Bổ sung 4 chỉ mục CSDL (Schema Indexes):**
+   - Đã áp dụng bản vá idempotent `database/patches/20261022_round3_indexes_and_snapshots.sql`:
+     - `IX_EvaluationBatches_CreatedAt ON EvaluationBatches(CreatedAt DESC)`: Tăng tốc truy vấn sắp xếp đợt đánh giá mới nhất.
+     - `IX_Reports_BatchID_GeneratedAt ON Reports(BatchID, GeneratedAt DESC)`: Tăng tốc truy vấn lịch sử và lấy file báo cáo sẵn có.
+     - `IX_Approvals_BatchID_ApprovalDate ON Approvals(BatchID, ApprovalDate DESC)`: Tối ưu hóa truy vấn thông tin phê duyệt trên Dashboard và trang kết quả.
+     - `IX_AuditLogs_ActionTime ON AuditLogs(ActionTime DESC)`: Giải quyết nút thắt cổ chai quét toàn bảng 10.000 dòng log; giảm độ trễ p50 của trang Audit Log từ 580,4 ms xuống còn **40,1 ms** (nhanh hơn **14,5 lần** / giảm **93,1%**).
+     - `IX_BatchRoundSnapshots_Batch ON BatchRoundSnapshots(BatchID, CreatedAt DESC)`: Hỗ trợ truy xuất nhanh lịch sử các vòng đánh giá cũ.
+
+2. **Bảng lưu trữ vết snapshot (`BatchRoundSnapshots`):**
+   - Đã tạo bảng `BatchRoundSnapshots` lưu trữ toàn bộ dữ liệu (điểm số, trọng số AHP, ma trận so sánh, kết quả TOPSIS) dưới định dạng JSON UTF-8 khi thực hiện **Đánh giá lại (Re-evaluation)** hoặc **Phê duyệt chính thức (Final Approval)**.
+   - Bảo toàn 100% dữ liệu lịch sử các vòng đánh giá, minh bạch khi bảo vệ đồ án, không bị mất dữ liệu khi đánh giá lại.
+
+3. **Cải tiến khả năng tiếp cận (Accessibility - A11y) & Giao diện Responsive:**
+   - Skip-link (`#main-content`) hỗ trợ bàn phím đầy đủ (`:focus-visible`).
+   - Thanh điều hướng bên (Sidebar) trên thiết bị di động có backdrop làm mờ, khóa cuộn trang (`body.sidebar-mobile-open`), hỗ trợ phím `Escape` và tự đóng khi chọn mục.
+   - Bảng ma trận AHP hỗ trợ `scope="col"`, `scope="row"`, nhãn `aria-label` chi tiết cho từng ô nhập liệu thang đo Saaty, tiêu đề cột/hàng cố định (`position: sticky`) khi cuộn ngang và dọc.
+   - Biểu đồ Dashboard được gắn `role="img"`, `aria-label` và bảng tóm tắt dữ liệu ẩn cho trình đọc màn hình (`.sr-only`).
+   - Tách 100% mã script tương tác của trang AHP sang `wwwroot/js/pages/ahp.js`.
+   - Dọn dẹp 35 thuộc tính `style="..."` tĩnh trên Dashboard vào class CSS tái sử dụng trong `dashboard.css`.
+   - Hỗ trợ chuẩn người dùng nhạy cảm chuyển động `@media (prefers-reduced-motion: reduce)`.
+
+---
+
+## 5. BẢNG TỔNG HỢP HIỆU NĂNG TOÀN DIỆN (TRƯỚC & SAU TỐI ƯU VÒNG 3)
+
+*Số liệu đo lường tự động trên CSDL `SupplierSelectionDSS_Perf` (10.000 audit logs, 40 batches, 200 suppliers) - so sánh trực tiếp giữa `tools/perf/baseline_results.json` và `tools/perf/post_results.json`:*
+
+| STT | Màn hình / Chức năng | URL | Số lệnh SQL (Trước) | Số lệnh SQL (Sau) | p50 Trước (ms) | p50 Sau (ms) | Cải thiện thời gian | Đánh giá hiệu năng |
+|:---:|---|---|:---:|:---:|:---:|:---:|:---:|---|
+| 1 | **Dashboard (Tổng quan)** | `/Dashboard` | **17** | **8** | **25.649,8 ms** | **155,2 ms** | **Nhanh hơn 165 lần (-99,4%)** | Giảm 53% truy vấn SQL, triệt tiêu tích Descartes, cache 30s 6 KPI hệ thống |
+| 2 | **Danh sách Batch** | `/EvaluationBatch/Index` | 7 | 7 | 77,5 ms | 30,0 ms | Nhanh hơn 2,6 lần (-61,3%) | Phân trang mượt, có index CreatedAt |
+| 3 | **Nhập điểm đánh giá** | `/Evaluation/Index?batchId=1` | 2 | 4 | 44,2 ms | 17,4 ms | Nhanh hơn 2,5 lần (-60,6%) | Split query riêng cho NCC & Tiêu chí |
+| 4 | **Ma trận so sánh AHP** | `/EvaluationBatch/1/AHP` | 4 | 4 | 14,3 ms | 23,1 ms | Ổn định (< 25 ms) | Tách file JS độc lập, có sticky header |
+| 5 | **Kết quả TOPSIS** | `/EvaluationBatch/1/TOPSIS` | 6 | 8 | 47,6 ms | 32,4 ms | Nhanh hơn 1,5 lần (-31,9%) | Split query không bị tích chéo NCC |
+| 6 | **Kết quả quyết định** | `/EvaluationBatch/1/Result` | 10 | 12 | 37,6 ms | 57,0 ms | Ổn định (< 60 ms) | Tính toán 28 kịch bản độ nhạy an toàn |
+| 7 | **Lịch sử báo cáo** | `/EvaluationBatch/1/Report` | 2 | 2 | 12,2 ms | 12,9 ms | Ổn định (< 15 ms) | Có chỉ mục GeneratedAt DESC và tải ngay |
+| 8 | **Nhật ký hệ thống** | `/AuditLog/Index` | 7 | 7 | **580,4 ms** | **40,1 ms** | **Nhanh hơn 14,5 lần (-93,1%)** | Chỉ mục `ActionTime DESC` giải quyết nút thắt quét 10.000 dòng log |
+
+**Tài nguyên tĩnh & Tải trang:**
+- **Số lượt yêu cầu CSS:** Giảm từ 26 lượt request thác nước (`@import`) xuống còn **1 lượt tải duy nhất** cho toàn bộ hệ thống lõi (`site.css` 76 KB).
+- **Phụ thuộc bên thứ ba (CDN):** Giảm từ 2 nhà cung cấp ngoài (Google Fonts, jsDelivr) xuống **0** (100% phục vụ nội bộ).
+- **Thời gian phản hồi tài nguyên tĩnh có `?v=`:** Nhận header `Cache-Control: public, max-age=31536000, immutable`, giảm 100% thời gian tải lại trên các trang kế tiếp.
+- **Dung lượng hình ảnh:** Giảm trung bình **75,2%** nhờ chuyển đổi định dạng WebP với thẻ `<picture>`.

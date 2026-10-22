@@ -15,6 +15,11 @@ public class DecisionResultService
     private readonly TOPSISService _topsisService;
     private readonly ILogger<DecisionResultService> _logger;
 
+    private static readonly System.Text.Json.JsonSerializerOptions SnapshotJsonOptions = new()
+    {
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
     public DecisionResultService(
         ApplicationDbContext context,
         TOPSISService topsisService,
@@ -355,13 +360,6 @@ public class DecisionResultService
                                 batchId)
                         .ToListAsync();
 
-                if (topsisResults.Any())
-                {
-                    _context.TopsisResults
-                        .RemoveRange(
-                            topsisResults);
-                }
-
                 // =================================================
                 // TOPSIS IDEAL SOLUTIONS
                 // =================================================
@@ -374,13 +372,6 @@ public class DecisionResultService
                                 batchId)
                         .ToListAsync();
 
-                if (idealSolutions.Any())
-                {
-                    _context.TopsisIdealSolutions
-                        .RemoveRange(
-                            idealSolutions);
-                }
-
                 // =================================================
                 // AHP RESULT
                 // =================================================
@@ -391,12 +382,6 @@ public class DecisionResultService
                             x =>
                                 x.BatchId ==
                                 batchId);
-
-                if (ahpResult != null)
-                {
-                    _context.Ahpresults.Remove(
-                        ahpResult);
-                }
 
                 // =================================================
                 // AHP WEIGHTS
@@ -410,13 +395,6 @@ public class DecisionResultService
                                 batchId)
                         .ToListAsync();
 
-                if (ahpWeights.Any())
-                {
-                    _context.AhpcriteriaWeights
-                        .RemoveRange(
-                            ahpWeights);
-                }
-
                 // =================================================
                 // AHP PAIRWISE COMPARISONS
                 // =================================================
@@ -428,13 +406,6 @@ public class DecisionResultService
                                 x.BatchId ==
                                 batchId)
                         .ToListAsync();
-
-                if (ahpComparisons.Any())
-                {
-                    _context.AhppairwiseComparisons
-                        .RemoveRange(
-                            ahpComparisons);
-                }
 
                 // =================================================
                 // EVALUATION SCORES
@@ -448,10 +419,63 @@ public class DecisionResultService
                                 batchId)
                         .ToListAsync();
 
+                // =================================================
+                // SAVE BATCH ROUND SNAPSHOT (PRESERVE OLD ROUND DATA)
+                // =================================================
+
+                var snapshotPayload = new
+                {
+                    BatchId = batchId,
+                    BatchCode = batch.BatchCode,
+                    BatchName = batch.BatchName,
+                    RequestedBy = approvedBy,
+                    RequestedAt = DateTime.UtcNow,
+                    Notes = notes,
+                    TopsisResults = topsisResults.Select(r => new { r.SupplierId, r.ClosenessCoefficient, r.RankNo }).ToList(),
+                    TopsisIdeals = idealSolutions.Select(i => new { i.CriteriaId, i.Pisvalue, i.Nisvalue }).ToList(),
+                    AhpResult = ahpResult == null ? null : new { ahpResult.LambdaMax, ahpResult.Civalue, ahpResult.Crvalue, ahpResult.IsConsistent },
+                    AhpWeights = ahpWeights.Select(w => new { w.CriteriaId, w.WeightValue }).ToList(),
+                    AhpComparisons = ahpComparisons.Select(c => new { c.CriteriaRowId, c.CriteriaColId, c.ComparisonValue }).ToList(),
+                    EvaluationScores = evaluationScores.Select(s => new { s.SupplierId, s.CriteriaId, s.ScoreValue }).ToList()
+                };
+
+                _context.BatchRoundSnapshots.Add(new BatchRoundSnapshot
+                {
+                    BatchId = batchId,
+                    SnapshotType = "Reevaluation",
+                    SnapshotData = System.Text.Json.JsonSerializer.Serialize(snapshotPayload, SnapshotJsonOptions),
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedBy = approvedBy
+                });
+
+                if (topsisResults.Any())
+                {
+                    _context.TopsisResults.RemoveRange(topsisResults);
+                }
+
+                if (idealSolutions.Any())
+                {
+                    _context.TopsisIdealSolutions.RemoveRange(idealSolutions);
+                }
+
+                if (ahpResult != null)
+                {
+                    _context.Ahpresults.Remove(ahpResult);
+                }
+
+                if (ahpWeights.Any())
+                {
+                    _context.AhpcriteriaWeights.RemoveRange(ahpWeights);
+                }
+
+                if (ahpComparisons.Any())
+                {
+                    _context.AhppairwiseComparisons.RemoveRange(ahpComparisons);
+                }
+
                 if (evaluationScores.Any())
                 {
-                    _context.EvaluationScores.RemoveRange(
-                        evaluationScores);
+                    _context.EvaluationScores.RemoveRange(evaluationScores);
                 }
 
                 // =================================================
@@ -721,6 +745,38 @@ public class DecisionResultService
 
             batch.CompletedAt =
                 DateTime.UtcNow;
+
+            var finalTopsisResults = await _context.TopsisResults
+                .Where(x => x.BatchId == batchId)
+                .Select(r => new { r.SupplierId, r.ClosenessCoefficient, r.RankNo })
+                .ToListAsync();
+
+            var finalWeights = await _context.AhpcriteriaWeights
+                .Where(x => x.BatchId == batchId)
+                .Select(w => new { w.CriteriaId, w.WeightValue })
+                .ToListAsync();
+
+            var finalSnapshotPayload = new
+            {
+                BatchId = batchId,
+                BatchCode = batch.BatchCode,
+                BatchName = batch.BatchName,
+                SelectedSupplierId = supplierId,
+                ApprovedBy = approvedBy,
+                ApprovedAt = DateTime.UtcNow,
+                Notes = notes,
+                TopsisResults = finalTopsisResults,
+                AhpWeights = finalWeights
+            };
+
+            _context.BatchRoundSnapshots.Add(new BatchRoundSnapshot
+            {
+                BatchId = batchId,
+                SnapshotType = "FinalApproval",
+                SnapshotData = System.Text.Json.JsonSerializer.Serialize(finalSnapshotPayload, SnapshotJsonOptions),
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = approvedBy
+            });
         }
 
 

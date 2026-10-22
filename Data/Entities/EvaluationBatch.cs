@@ -72,6 +72,9 @@ public partial class EvaluationBatch
     public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
 
     [InverseProperty("Batch")]
+    public virtual ICollection<BatchRoundSnapshot> BatchRoundSnapshots { get; set; } = new List<BatchRoundSnapshot>();
+
+    [InverseProperty("Batch")]
     public virtual ICollection<TopsisIdealSolution> TopsisIdealSolutions { get; set; } = new List<TopsisIdealSolution>();
 
     [InverseProperty("Batch")]

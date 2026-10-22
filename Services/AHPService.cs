@@ -384,6 +384,12 @@ public class AHPService
                     model.BatchId,
                     evaluatedBy);
             }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogWarning(ex, "Xung đột đồng thời khi lưu ma trận so sánh cặp AHP cho đợt {BatchId}.", model.BatchId);
+                throw new BusinessRuleException("Dữ liệu đợt đánh giá vừa được người khác thay đổi, vui lòng tải lại trang.");
+            }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
@@ -687,6 +693,12 @@ public class AHPService
                                     })
                             .ToList()
                 };
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogWarning(ex, "Xung đột đồng thời khi tính toán và lưu trọng số AHP cho đợt {BatchId}.", batchId);
+                throw new BusinessRuleException("Dữ liệu đợt đánh giá vừa được người khác thay đổi, vui lòng tải lại trang.");
             }
             catch (Exception ex)
             {

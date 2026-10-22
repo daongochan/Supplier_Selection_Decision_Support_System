@@ -198,6 +198,144 @@ public class PerfBenchmarkRunner
             _output.WriteLine($"Không thể lưu file json kết quả: {ex.Message}");
         }
     }
+
+    [Fact]
+    public async Task RunPostOptimizationBenchmark_OnPerfDatabase()
+    {
+        if (!IsPerfDbAvailable())
+        {
+            _output.WriteLine("Cơ sở dữ liệu SupplierSelectionDSS_Perf không khả dụng hoặc chưa nạp dữ liệu. Bỏ qua đo benchmark trên môi trường này (CI/máy không có SQL Server).");
+            return;
+        }
+
+        _output.WriteLine("================================================================================");
+        _output.WriteLine("BẮT ĐẦU ĐO HIỆU NĂNG SAU TỐI ƯU TRÊN SupplierSelectionDSS_Perf");
+        _output.WriteLine("================================================================================");
+
+        var interceptor = new CommandCountingInterceptor();
+        using var factory = new PerfTestWebApplicationFactory(interceptor, PerfConnectionString);
+        var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false
+        });
+        client.Timeout = TimeSpan.FromMinutes(5);
+
+        var endpoints = new List<(string Name, string Url)>
+        {
+            ("Dashboard (Tổng quan)", "/Dashboard"),
+            ("Danh sách Batch", "/EvaluationBatch/Index"),
+            ("Nhập điểm đánh giá (Batch 1)", "/Evaluation/Index?batchId=1"),
+            ("Ma trận so sánh AHP (Batch 1)", "/EvaluationBatch/1/AHP"),
+            ("Kết quả TOPSIS (Batch 1)", "/EvaluationBatch/1/TOPSIS"),
+            ("Kết quả quyết định (Batch 1)", "/EvaluationBatch/1/Result"),
+            ("Lịch sử báo cáo (Batch 1)", "/EvaluationBatch/1/Report"),
+            ("Nhật ký hệ thống (Audit Log)", "/AuditLog/Index")
+        };
+
+        var results = new List<BenchmarkResultDto>();
+
+        foreach (var (name, url) in endpoints)
+        {
+            _output.WriteLine($"\n[ĐO] {name} [{url}]");
+
+            // Warm-up (1 lượt)
+            var warmRes = await client.GetAsync(url);
+            if (warmRes.StatusCode != HttpStatusCode.OK)
+            {
+                _output.WriteLine($"    [CẢNH BÁO] Warmup trả về HTTP {(int)warmRes.StatusCode} ({warmRes.StatusCode})");
+            }
+
+            int iterations = 3;
+            var durations = new List<double>();
+            long totalSqlCount = 0;
+            int htmlBytes = 0;
+            int cssCount = 0;
+            int jsCount = 0;
+            int imgCount = 0;
+
+            for (int i = 0; i < iterations; i++)
+            {
+                interceptor.Reset();
+                var sw = Stopwatch.StartNew();
+                var response = await client.GetAsync(url);
+                sw.Stop();
+
+                if (response.StatusCode != HttpStatusCode.OK)
+                {
+                    _output.WriteLine($"    [LỖI] Lượt {i + 1} thất bại với HTTP {response.StatusCode}");
+                    break;
+                }
+
+                durations.Add(sw.Elapsed.TotalMilliseconds);
+                totalSqlCount += interceptor.CommandCount;
+
+                if (i == 0)
+                {
+                    var html = await response.Content.ReadAsStringAsync();
+                    htmlBytes = html.Length;
+                    cssCount = Regex.Matches(html, @"<link[^>]+rel=[""']stylesheet[""']", RegexOptions.IgnoreCase).Count;
+                    jsCount = Regex.Matches(html, @"<script[^>]+src=", RegexOptions.IgnoreCase).Count;
+                    imgCount = Regex.Matches(html, @"<img\s+", RegexOptions.IgnoreCase).Count;
+                    var titleMatch = Regex.Match(html, @"<title>(.*?)</title>", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+                    var title = titleMatch.Success ? titleMatch.Groups[1].Value.Trim() : "No title";
+                    _output.WriteLine($"    [TIÊU ĐỀ TRANG] {title}");
+                }
+            }
+
+            if (durations.Count == 0)
+            {
+                _output.WriteLine("    [THẤT BẠI] Không có lượt đo thành công nào.");
+                continue;
+            }
+
+            durations.Sort();
+            double p50 = durations[(int)(durations.Count * 0.50)];
+            double p95 = durations[(int)(durations.Count * 0.95)];
+            long avgSql = (long)Math.Round((double)totalSqlCount / durations.Count);
+
+            var dto = new BenchmarkResultDto
+            {
+                PageName = name,
+                Url = url,
+                SqlCommands = avgSql,
+                ResponseTimeP50 = Math.Round(p50, 1),
+                ResponseTimeP95 = Math.Round(p95, 1),
+                HtmlSizeBytes = htmlBytes,
+                CssRequests = cssCount,
+                JsRequests = jsCount,
+                ImgRequests = imgCount
+            };
+
+            results.Add(dto);
+
+            _output.WriteLine($"    -> Lệnh SQL: {avgSql} | p50: {p50:F1} ms | p95: {p95:F1} ms | HTML: {htmlBytes:N0} bytes | CSS: {cssCount} | JS: {jsCount}");
+        }
+
+        _output.WriteLine("\n\n================================================================================");
+        _output.WriteLine("BẢNG KẾT QUẢ SAU TỐI ƯU (DOCS/PERFORMANCE.MD)");
+        _output.WriteLine("================================================================================");
+        _output.WriteLine("| Trang | URL | Số lệnh SQL | p50 (ms) | p95 (ms) | HTML (bytes) | CSS req | JS req |");
+        _output.WriteLine("|---|---|---|---|---|---|---|---|");
+        foreach (var r in results)
+        {
+            _output.WriteLine($"| {r.PageName} | `{r.Url}` | **{r.SqlCommands}** | {r.ResponseTimeP50:F1} | {r.ResponseTimeP95:F1} | {r.HtmlSizeBytes:N0} | {r.CssRequests} | {r.JsRequests} |");
+        }
+        _output.WriteLine("================================================================================");
+
+        try
+        {
+            var projectDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+            var outDir = Path.Combine(projectDir, "tools", "perf");
+            Directory.CreateDirectory(outDir);
+            var jsonPath = Path.Combine(outDir, "post_results.json");
+            File.WriteAllText(jsonPath, JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true }));
+            _output.WriteLine($"Đã lưu kết quả đo sau tối ưu vào {jsonPath}");
+        }
+        catch (Exception ex)
+        {
+            _output.WriteLine($"Không thể lưu file json kết quả: {ex.Message}");
+        }
+    }
 }
 
 public class BenchmarkResultDto
