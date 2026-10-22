@@ -7,7 +7,6 @@ using SupplierSelectionDSS.Data;
 using SupplierSelectionDSS.Services;
 
 using SupplierSelectionDSS.Constants;
-using SupplierSelectionDSS.Web.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,32 +51,7 @@ builder.Services.AddControllersWithViews(options =>
 
 builder.Services.AddHealthChecks();
 
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy(PolicyNames.ManageUsers, policy =>
-        policy.RequireRole(UserRole.Administrator));
-
-    options.AddPolicy(PolicyNames.ManageBatches, policy =>
-        policy.RequireRole(UserRole.Administrator, UserRole.PurchasingStaff, UserRole.Manager));
-
-    options.AddPolicy(PolicyNames.EvaluateSuppliers, policy =>
-        policy.RequireRole(UserRole.Administrator, UserRole.PurchasingStaff, UserRole.Expert));
-
-    options.AddPolicy(PolicyNames.PerformAHP, policy =>
-        policy.RequireRole(UserRole.Administrator, UserRole.Expert));
-
-    options.AddPolicy(PolicyNames.PerformTOPSIS, policy =>
-        policy.RequireRole(UserRole.Administrator, UserRole.Expert));
-
-    options.AddPolicy(PolicyNames.ApproveDecision, policy =>
-        policy.RequireRole(UserRole.Administrator, UserRole.Manager));
-
-    options.AddPolicy(PolicyNames.ViewReports, policy =>
-        policy.RequireRole(UserRole.Administrator, UserRole.Manager));
-
-    options.AddPolicy(PolicyNames.ExportReports, policy =>
-        policy.RequireRole(UserRole.Administrator, UserRole.Manager));
-});
+builder.Services.AddAuthorization();
 
 builder.Services.AddHsts(options =>
 {

@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using SupplierSelectionDSS.Models;
 
 namespace SupplierSelectionDSS.Services;
@@ -9,15 +11,19 @@ namespace SupplierSelectionDSS.Services;
 public class SensitivityAnalysisService
 {
     private readonly TOPSISCalculationService _calculationService;
+    private readonly ILogger<SensitivityAnalysisService> _logger;
 
     /// <summary>
     /// Các mức độ biến thiên trọng số tiêu chí (%).
     /// </summary>
     public static readonly int[] DeltaPercentages = [-20, -10, 10, 20];
 
-    public SensitivityAnalysisService(TOPSISCalculationService calculationService)
+    public SensitivityAnalysisService(
+        TOPSISCalculationService calculationService,
+        ILogger<SensitivityAnalysisService>? logger = null)
     {
         _calculationService = calculationService;
+        _logger = logger ?? NullLogger<SensitivityAnalysisService>.Instance;
     }
 
     /// <summary>
@@ -53,9 +59,17 @@ public class SensitivityAnalysisService
             BaseTopSupplierCloseness = baseTopSupplierCloseness
         };
 
+        _logger.LogInformation(
+            "Bắt đầu phân tích độ nhạy cho đợt {BatchCode} (ID: {BatchId}) với {CriteriaCount} tiêu chí và {SupplierCount} nhà cung cấp.",
+            batchCode,
+            batchId,
+            criteriaCount,
+            supplierCount);
+
         if (criteriaCount < 2 || supplierCount < 2 || string.IsNullOrWhiteSpace(baseTopSupplierCode))
         {
             result.SummaryMessage = "Không đủ điều kiện tối thiểu để thực hiện phân tích độ nhạy.";
+            _logger.LogWarning("Không đủ điều kiện tối thiểu để thực hiện phân tích độ nhạy cho đợt {BatchCode}.", batchCode);
             return result;
         }
 
@@ -166,6 +180,12 @@ public class SensitivityAnalysisService
             var sensitiveList = string.Join(", ", sensitiveCriteria);
             result.SummaryMessage = $"Xếp hạng có độ vững bền {result.RobustnessPercentage:0.0}%. Vị trí #1 có sự dịch chuyển khi biến thiên trọng số tại các tiêu chí: {sensitiveList}. Cần lưu ý đánh giá kỹ các tiêu chí này trước khi phê duyệt quyết định.";
         }
+
+        _logger.LogInformation(
+            "Hoàn tất phân tích độ nhạy cho đợt {BatchCode}: Độ vững bền = {Robustness:0.0}%, Tổng kịch bản = {TotalRuns}.",
+            batchCode,
+            result.RobustnessPercentage,
+            totalRuns);
 
         return result;
     }

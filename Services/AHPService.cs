@@ -1,7 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using SupplierSelectionDSS.Constants;
 using SupplierSelectionDSS.Data;
 using SupplierSelectionDSS.Data.Entities;
+using SupplierSelectionDSS.Exceptions;
 using SupplierSelectionDSS.Models;
 
 namespace SupplierSelectionDSS.Services;
@@ -10,6 +13,7 @@ public class AHPService
 {
     private readonly ApplicationDbContext _context;
     private readonly AHPCalculationService _calculationService;
+    private readonly ILogger<AHPService> _logger;
 
     // =========================================================
     // CONSTANTS
@@ -50,10 +54,12 @@ public class AHPService
 
     public AHPService(
         ApplicationDbContext context,
-        AHPCalculationService calculationService)
+        AHPCalculationService calculationService,
+        ILogger<AHPService>? logger = null)
     {
         _context = context;
         _calculationService = calculationService;
+        _logger = logger ?? NullLogger<AHPService>.Instance;
     }
 
     // =========================================================
@@ -147,7 +153,7 @@ public class AHPService
 
         if (evaluatedBy <= 0)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Người đánh giá không hợp lệ.");
         }
 
@@ -159,7 +165,7 @@ public class AHPService
 
         if (batch == null)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Evaluation Batch không tồn tại.");
         }
 
@@ -175,7 +181,7 @@ public class AHPService
         if (model.Comparisons == null ||
             model.Comparisons.Count == 0)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Danh sách cặp so sánh AHP không được để trống.");
         }
 
@@ -363,10 +369,19 @@ public class AHPService
                 await _context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
+
+                _logger.LogInformation(
+                    "Lưu ma trận so sánh cặp AHP thành công cho đợt đánh giá ID {BatchId} bởi người dùng ID {UserId}.",
+                    model.BatchId,
+                    evaluatedBy);
             }
-            catch
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
+                _logger.LogError(
+                    ex,
+                    "Lỗi khi lưu ma trận so sánh cặp AHP cho đợt đánh giá ID {BatchId}.",
+                    model.BatchId);
                 throw;
             }
         });
@@ -389,7 +404,7 @@ public class AHPService
 
         if (batch == null)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Evaluation Batch không tồn tại.");
         }
 
@@ -418,7 +433,7 @@ public class AHPService
 
         if (comparisons.Count != expectedCount)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 $"Ma trận AHP chưa đầy đủ. " +
                 $"Cần {expectedCount} giá trị nhưng hiện có {comparisons.Count}.");
         }
@@ -445,7 +460,7 @@ public class AHPService
                         (rowId, colId),
                         out var value))
                 {
-                    throw new InvalidOperationException(
+                    throw new BusinessRuleException(
                         $"Thiếu giá trị AHP cho " +
                         $"{criteria[i].CriteriaCode} / " +
                         $"{criteria[j].CriteriaCode}.");
@@ -595,6 +610,13 @@ public class AHPService
 
                 await transaction.CommitAsync();
 
+                _logger.LogInformation(
+                    "Tính toán trọng số AHP thành công cho đợt đánh giá ID {BatchId}: LambdaMax = {LambdaMax:F4}, CR = {CR:F4}, Nhất quán = {IsConsistent}.",
+                    batchId,
+                    calculation.LambdaMax,
+                    calculation.CRValue,
+                    calculation.IsConsistent);
+
                 // -------------------------------------------------
                 // Return ViewModel
                 // -------------------------------------------------
@@ -648,9 +670,13 @@ public class AHPService
                             .ToList()
                 };
             }
-            catch
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
+                _logger.LogError(
+                    ex,
+                    "Lỗi khi tính toán AHP cho đợt đánh giá ID {BatchId}.",
+                    batchId);
                 throw;
             }
         });
@@ -757,7 +783,7 @@ public class AHPService
 
         if (comparisons.Count != expectedPairCount)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 $"Cần nhập đủ {expectedPairCount} cặp so sánh.");
         }
 
@@ -772,13 +798,13 @@ public class AHPService
             if (!criteriaIds.Contains(item.CriteriaRowId) ||
                 !criteriaIds.Contains(item.CriteriaColId))
             {
-                throw new InvalidOperationException(
+                throw new BusinessRuleException(
                     "Criteria không thuộc Evaluation Batch.");
             }
 
             if (item.CriteriaRowId == item.CriteriaColId)
             {
-                throw new InvalidOperationException(
+                throw new BusinessRuleException(
                     "Không cần nhập so sánh Criteria với chính nó.");
             }
 
@@ -788,7 +814,7 @@ public class AHPService
                     (item.CriteriaRowId,
                      item.CriteriaColId)))
             {
-                throw new InvalidOperationException(
+                throw new BusinessRuleException(
                     "Ma trận chứa cặp tiêu chí bị trùng.");
             }
 
@@ -805,7 +831,7 @@ public class AHPService
             if (!unorderedPairs.Add(
                     (minId, maxId)))
             {
-                throw new InvalidOperationException(
+                throw new BusinessRuleException(
                     "Mỗi cặp Criteria chỉ được nhập một lần.");
             }
         }
@@ -826,7 +852,7 @@ public class AHPService
 
         if (!AllowedSaatyValues.Contains(rounded))
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Giá trị AHP phải thuộc thang Saaty " +
                 "1–9 hoặc nghịch đảo tương ứng.");
         }
@@ -841,7 +867,7 @@ public class AHPService
     {
         if (criteriaCount < MinimumCriteriaCount)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Evaluation Batch phải có ít nhất 2 tiêu chí để thực hiện AHP.");
         }
     }
@@ -858,7 +884,7 @@ public class AHPService
                 BatchStatus.Evaluating.ToString(),
                 StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Chỉ Evaluation Batch đang ở trạng thái Evaluating " +
                 "mới được phép thực hiện AHP.");
         }
@@ -876,14 +902,14 @@ public class AHPService
 
         if (calculation.N != criteriaCount)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Kích thước kết quả AHP không khớp số lượng Criteria.");
         }
 
         if (calculation.Weights == null ||
             calculation.Weights.Length != criteriaCount)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Số lượng trọng số AHP không khớp số lượng Criteria.");
         }
 
@@ -897,7 +923,7 @@ public class AHPService
             if (!double.IsFinite(weight) ||
                 weight <= 0)
             {
-                throw new InvalidOperationException(
+                throw new BusinessRuleException(
                     $"Trọng số AHP tại vị trí {i + 1} không hợp lệ.");
             }
         }
@@ -907,7 +933,7 @@ public class AHPService
             !double.IsFinite(calculation.RIValue) ||
             !double.IsFinite(calculation.CRValue))
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Kết quả tính toán AHP chứa giá trị không hợp lệ.");
         }
     }
@@ -921,7 +947,7 @@ public class AHPService
     {
         if (!double.IsFinite(value))
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Không thể lưu giá trị AHP không hữu hạn.");
         }
 

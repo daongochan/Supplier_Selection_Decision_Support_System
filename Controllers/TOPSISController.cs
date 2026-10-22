@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using SupplierSelectionDSS.Constants;
+using SupplierSelectionDSS.Exceptions;
 using SupplierSelectionDSS.Models;
 using SupplierSelectionDSS.Services;
+using SupplierSelectionDSS.Web.Extensions;
 using System.Security.Claims;
 using System.Text.Json;
-using SupplierSelectionDSS.Constants;
-using SupplierSelectionDSS.Web.Extensions;
 
 namespace SupplierSelectionDSS.Controllers;
 
@@ -13,19 +16,17 @@ namespace SupplierSelectionDSS.Controllers;
 public class TOPSISController : Controller
 {
     private readonly TOPSISService _topsisService;
-
     private readonly AuditLogService _auditLogService;
-
+    private readonly ILogger<TOPSISController> _logger;
 
     public TOPSISController(
         TOPSISService topsisService,
-        AuditLogService auditLogService)
+        AuditLogService auditLogService,
+        ILogger<TOPSISController>? logger = null)
     {
-        _topsisService =
-            topsisService;
-
-        _auditLogService =
-            auditLogService;
+        _topsisService = topsisService;
+        _auditLogService = auditLogService;
+        _logger = logger ?? NullLogger<TOPSISController>.Instance;
     }
 
 
@@ -216,15 +217,24 @@ public class TOPSISController : Controller
             TempData["SuccessMessage"] =
                 "TOPSIS đã được tính toán và xếp hạng nhà cung cấp thành công.";
         }
+        catch (BusinessRuleException ex)
+        {
+            TempData["ErrorMessage"] =
+                ex.Message;
+        }
         catch (ArgumentException ex)
         {
             TempData["ErrorMessage"] =
                 ex.Message;
         }
-        catch (InvalidOperationException ex)
+        catch (Exception ex)
         {
+            _logger.LogError(
+                ex,
+                "Lỗi khi tính toán TOPSIS cho đợt {BatchId}.",
+                batchId);
             TempData["ErrorMessage"] =
-                ex.Message;
+                "Có lỗi xảy ra trong quá trình tính toán TOPSIS. Vui lòng thử lại sau.";
         }
 
 

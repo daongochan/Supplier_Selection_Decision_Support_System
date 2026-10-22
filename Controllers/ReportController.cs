@@ -2,8 +2,11 @@ using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using SupplierSelectionDSS.Services;
 using SupplierSelectionDSS.Constants;
+using SupplierSelectionDSS.Exceptions;
 using SupplierSelectionDSS.Web.Extensions;
 
 namespace SupplierSelectionDSS.Controllers;
@@ -14,19 +17,17 @@ namespace SupplierSelectionDSS.Controllers;
 public class ReportController : Controller
 {
     private readonly ReportService _reportService;
-
     private readonly AuditLogService _auditLogService;
-
+    private readonly ILogger<ReportController> _logger;
 
     public ReportController(
         ReportService reportService,
-        AuditLogService auditLogService)
+        AuditLogService auditLogService,
+        ILogger<ReportController>? logger = null)
     {
-        _reportService =
-            reportService;
-
-        _auditLogService =
-            auditLogService;
+        _reportService = reportService;
+        _auditLogService = auditLogService;
+        _logger = logger ?? NullLogger<ReportController>.Instance;
     }
 
 
@@ -77,7 +78,7 @@ public class ReportController : Controller
     {
         return await GenerateReport(
             batchId,
-            "PDF");
+            ReportTypes.Pdf);
     }
 
 
@@ -95,7 +96,7 @@ public class ReportController : Controller
     {
         return await GenerateReport(
             batchId,
-            "Excel");
+            ReportTypes.Excel);
     }
 
 
@@ -154,14 +155,14 @@ public class ReportController : Controller
             var reportType =
                 string.Equals(
                     file.ReportType,
-                    "PDF",
+                    ReportTypes.Pdf,
                     StringComparison.OrdinalIgnoreCase)
-                    ? "PDF"
-                    : "Excel";
+                    ? ReportTypes.Pdf
+                    : ReportTypes.Excel;
 
 
             var actionType =
-                reportType == "PDF"
+                reportType == ReportTypes.Pdf
                     ? AuditActions.DownloadPdf
                     : AuditActions.DownloadExcel;
 
@@ -191,7 +192,7 @@ public class ReportController : Controller
 
 
             var description =
-                reportType == "PDF"
+                reportType == ReportTypes.Pdf
                     ? $"Tải báo cáo PDF '{file.DownloadName}'."
                     : $"Tải báo cáo Excel '{file.DownloadName}'.";
 
@@ -264,7 +265,7 @@ public class ReportController : Controller
             if (
                 string.Equals(
                     reportType,
-                    "PDF",
+                    ReportTypes.Pdf,
                     StringComparison.OrdinalIgnoreCase))
             {
                 result =
@@ -295,6 +296,20 @@ public class ReportController : Controller
                 });
         }
         catch (
+            BusinessRuleException ex)
+        {
+            TempData["ErrorMessage"] =
+                ex.Message;
+
+
+            return RedirectToAction(
+                nameof(Index),
+                new
+                {
+                    batchId
+                });
+        }
+        catch (
             InvalidOperationException ex)
         {
             TempData["ErrorMessage"] =
@@ -308,10 +323,15 @@ public class ReportController : Controller
                     batchId
                 });
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(
+                ex,
+                "Lỗi không xác định khi tạo báo cáo cho đợt {BatchId}.",
+                batchId);
+
             TempData["ErrorMessage"] =
-                "Không thể tạo báo cáo.";
+                "Không thể tạo báo cáo. Vui lòng thử lại sau.";
 
 
             return RedirectToAction(

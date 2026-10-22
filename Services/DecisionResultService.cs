@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using SupplierSelectionDSS.Data;
 using SupplierSelectionDSS.Data.Entities;
+using SupplierSelectionDSS.Exceptions;
 using SupplierSelectionDSS.Models;
 using SupplierSelectionDSS.Constants;
 
@@ -10,13 +13,16 @@ public class DecisionResultService
 {
     private readonly ApplicationDbContext _context;
     private readonly TOPSISService _topsisService;
+    private readonly ILogger<DecisionResultService> _logger;
 
     public DecisionResultService(
         ApplicationDbContext context,
-        TOPSISService topsisService)
+        TOPSISService topsisService,
+        ILogger<DecisionResultService>? logger = null)
     {
         _context = context;
         _topsisService = topsisService;
+        _logger = logger ?? NullLogger<DecisionResultService>.Instance;
     }
 
 
@@ -237,6 +243,12 @@ public class DecisionResultService
         int approvedBy,
         string? notes)
     {
+        _logger.LogInformation(
+            "Phê duyệt kết quả đánh giá cho đợt ID {BatchId} bởi User {UserId}, chọn nhà cung cấp ID {SupplierId}.",
+            batchId,
+            approvedBy,
+            supplierId);
+
         return await CreateApprovalAsync(
             batchId,
             supplierId,
@@ -256,6 +268,12 @@ public class DecisionResultService
         string? notes,
         int approvedBy)
     {
+        _logger.LogInformation(
+            "Từ chối kết quả đánh giá cho đợt ID {BatchId} bởi User {UserId} (Ghi chú: {Notes}).",
+            batchId,
+            approvedBy,
+            notes);
+
         return await CreateApprovalAsync(
             batchId,
             null,
@@ -275,6 +293,11 @@ public class DecisionResultService
         string? notes,
         int approvedBy)
     {
+        _logger.LogInformation(
+            "Yêu cầu đánh giá lại cho đợt ID {BatchId} bởi User {UserId}.",
+            batchId,
+            approvedBy);
+
         var strategy = _context.Database.CreateExecutionStrategy();
 
         return await strategy.ExecuteAsync(async () =>
@@ -298,25 +321,25 @@ public class DecisionResultService
 
                 if (batch == null)
                 {
-                    throw new InvalidOperationException(
+                    throw new BusinessRuleException(
                         "Evaluation Batch không tồn tại.");
                 }
 
                 if (batch.Status == BatchStatus.Cancelled)
                 {
-                    throw new InvalidOperationException(
+                    throw new BusinessRuleException(
                         "Batch đã bị huỷ và không thể yêu cầu đánh giá lại.");
                 }
 
                 if (batch.Status == BatchStatus.Completed)
                 {
-                    throw new InvalidOperationException(
+                    throw new BusinessRuleException(
                         "Batch đã hoàn tất và không thể yêu cầu đánh giá lại.");
                 }
 
                 if (batch.Status != BatchStatus.Evaluating)
                 {
-                    throw new InvalidOperationException(
+                    throw new BusinessRuleException(
                         "Batch chưa ở trạng thái Evaluating.");
                 }
 
@@ -482,10 +505,13 @@ public class DecisionResultService
 
                 return approval.ApprovalId;
             }
-            catch
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-
+                _logger.LogError(
+                    ex,
+                    "Lỗi khi yêu cầu đánh giá lại cho đợt ID {BatchId}.",
+                    batchId);
                 throw;
             }
         });
@@ -521,7 +547,7 @@ public class DecisionResultService
 
         if (batch == null)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Evaluation Batch không tồn tại.");
         }
 
@@ -532,21 +558,21 @@ public class DecisionResultService
 
         if (batch.Status == BatchStatus.Cancelled)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Batch đã bị huỷ và không thể xử lý kết quả.");
         }
 
 
         if (batch.Status == BatchStatus.Completed)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Batch đã hoàn tất và không thể tạo quyết định mới.");
         }
 
 
         if (batch.Status != BatchStatus.Evaluating)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Batch chưa ở trạng thái đánh giá và chưa thể xử lý kết quả.");
         }
 
@@ -556,7 +582,7 @@ public class DecisionResultService
             status != ApprovalStatus.Rejected &&
             status != ApprovalStatus.PendingReevaluation)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Trạng thái Approval không hợp lệ.");
         }
 
@@ -598,7 +624,7 @@ public class DecisionResultService
 
             if (!supplierInBatch)
             {
-                throw new InvalidOperationException(
+                throw new BusinessRuleException(
                     "Nhà cung cấp không thuộc Evaluation Batch này.");
             }
 
@@ -621,14 +647,14 @@ public class DecisionResultService
 
             if (topsisResult == null)
             {
-                throw new InvalidOperationException(
+                throw new BusinessRuleException(
                     "Nhà cung cấp không có kết quả TOPSIS trong Batch.");
             }
 
 
             if (topsisResult.RankNo <= 0)
             {
-                throw new InvalidOperationException(
+                throw new BusinessRuleException(
                     "Kết quả TOPSIS của nhà cung cấp không hợp lệ.");
             }
         }
@@ -688,6 +714,11 @@ public class DecisionResultService
 
         await _context.SaveChangesAsync();
 
+        _logger.LogInformation(
+            "Đã ghi nhận quyết định phê duyệt ID {ApprovalId} cho đợt {BatchId} với trạng thái {Status}.",
+            approval.ApprovalId,
+            batchId,
+            status);
 
         return approval.ApprovalId;
     }
@@ -712,7 +743,7 @@ public class DecisionResultService
 
         if (supplierIds.Count < 2)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Batch phải có ít nhất 2 nhà cung cấp.");
         }
 
@@ -741,7 +772,7 @@ public class DecisionResultService
             !supplierIds.SetEquals(
                 topsisSet))
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 $"Không thể {GetDecisionVerb(action)} " +
                 "vì kết quả TOPSIS chưa hoàn tất " +
                 "cho toàn bộ nhà cung cấp trong Batch.");
@@ -762,7 +793,7 @@ public class DecisionResultService
 
         if (invalidRank)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Kết quả TOPSIS chứa thứ hạng không hợp lệ.");
         }
     }

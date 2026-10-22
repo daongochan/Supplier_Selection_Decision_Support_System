@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using SupplierSelectionDSS.Data;
 using SupplierSelectionDSS.Data.Entities;
+using SupplierSelectionDSS.Exceptions;
 using SupplierSelectionDSS.Models;
 using SupplierSelectionDSS.Constants;
 using SupplierSelectionDSS.Domain.Rules;
@@ -10,11 +13,14 @@ namespace SupplierSelectionDSS.Services;
 public class EvaluationBatchService
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<EvaluationBatchService> _logger;
 
     public EvaluationBatchService(
-        ApplicationDbContext context)
+        ApplicationDbContext context,
+        ILogger<EvaluationBatchService>? logger = null)
     {
         _context = context;
+        _logger = logger ?? NullLogger<EvaluationBatchService>.Instance;
     }
 
 
@@ -253,7 +259,7 @@ public class EvaluationBatchService
 
         if (group == null)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Product Group không tồn tại hoặc không hoạt động.");
         }
 
@@ -278,7 +284,7 @@ public class EvaluationBatchService
 
         if (selectedSupplierIds.Count < 2)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Phải chọn ít nhất 2 nhà cung cấp.");
         }
 
@@ -288,7 +294,7 @@ public class EvaluationBatchService
                 x =>
                     !eligibleSupplierIds.Contains(x)))
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Có nhà cung cấp không thuộc Product Group đã chọn.");
         }
 
@@ -301,7 +307,7 @@ public class EvaluationBatchService
 
         if (selectedCriteriaIds.Count < 2)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Phải chọn ít nhất 2 tiêu chí.");
         }
 
@@ -325,7 +331,7 @@ public class EvaluationBatchService
             activeCriteriaIds.Count !=
             selectedCriteriaIds.Count)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Danh sách tiêu chí không hợp lệ.");
         }
 
@@ -335,7 +341,7 @@ public class EvaluationBatchService
             model.EndDate.HasValue &&
             model.EndDate < model.StartDate)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.");
         }
 
@@ -347,7 +353,7 @@ public class EvaluationBatchService
             model.EndDate.HasValue &&
             model.EndDate.Value < effectiveStartDate)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu đánh giá.");
         }
 
@@ -406,7 +412,7 @@ public class EvaluationBatchService
 
                 if (selectedSuppliers.Count != selectedSupplierIds.Count)
                 {
-                    throw new InvalidOperationException(
+                    throw new BusinessRuleException(
                         "Danh sách nhà cung cấp không hợp lệ.");
                 }
 
@@ -435,12 +441,21 @@ public class EvaluationBatchService
 
                 await transaction.CommitAsync();
 
+                _logger.LogInformation(
+                    "Tạo đợt đánh giá thành công: ID {BatchId}, Mã {BatchCode}, Tên {BatchName}.",
+                    batch.BatchId,
+                    batch.BatchCode,
+                    batch.BatchName);
+
                 return batch.BatchId;
             }
-            catch
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-
+                _logger.LogError(
+                    ex,
+                    "Lỗi khi tạo đợt đánh giá mới với mã {BatchCode}.",
+                    model.BatchCode);
                 throw;
             }
         });
@@ -478,7 +493,7 @@ public class EvaluationBatchService
 
         if (batch == null)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Evaluation Batch không tồn tại.");
         }
 
@@ -500,14 +515,14 @@ public class EvaluationBatchService
 
         if (batch.Group == null)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Batch chưa có Product Group.");
         }
 
 
         if (batch.Group.Status != EntityStatus.Active)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 $"Product Group " +
                 $"{batch.Group.GroupCode} " +
                 "không còn Active.");
@@ -520,7 +535,7 @@ public class EvaluationBatchService
 
         if (batch.Suppliers.Count < 2)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Batch phải có ít nhất 2 nhà cung cấp " +
                 "trước khi bắt đầu Evaluation.");
         }
@@ -535,7 +550,7 @@ public class EvaluationBatchService
 
         if (inactiveSupplier != null)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 $"Nhà cung cấp " +
                 $"{inactiveSupplier.SupplierCode} " +
                 "không còn Active.");
@@ -575,7 +590,7 @@ public class EvaluationBatchService
 
         if (invalidSupplier != null)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 $"Nhà cung cấp " +
                 $"{invalidSupplier.SupplierCode} " +
                 "không thuộc Product Group của Batch.");
@@ -588,7 +603,7 @@ public class EvaluationBatchService
 
         if (batch.Criteria.Count < 2)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Batch phải có ít nhất 2 tiêu chí " +
                 "trước khi bắt đầu Evaluation.");
         }
@@ -603,7 +618,7 @@ public class EvaluationBatchService
 
         if (inactiveCriterion != null)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 $"Tiêu chí " +
                 $"{inactiveCriterion.CriteriaCode} " +
                 "không còn Active.");
@@ -622,7 +637,7 @@ public class EvaluationBatchService
             batch.EndDate.HasValue &&
             batch.EndDate.Value < effectiveStartDate)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu đánh giá.");
         }
 
@@ -636,6 +651,11 @@ public class EvaluationBatchService
         }
 
         await _context.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Bắt đầu đánh giá cho đợt {BatchCode} (ID: {BatchId}).",
+            batch.BatchCode,
+            batch.BatchId);
     }
 
 
@@ -652,7 +672,7 @@ public class EvaluationBatchService
 
         if (batch == null)
         {
-            throw new InvalidOperationException(
+            throw new BusinessRuleException(
                 "Evaluation Batch không tồn tại.");
         }
 
@@ -670,6 +690,12 @@ public class EvaluationBatchService
         }
 
         await _context.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Hủy đợt đánh giá {BatchCode} (ID: {BatchId}). Lý do: {Reason}",
+            batch.BatchCode,
+            batch.BatchId,
+            reason ?? "N/A");
     }
 
 

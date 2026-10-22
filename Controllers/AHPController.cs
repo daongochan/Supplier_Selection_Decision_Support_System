@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using SupplierSelectionDSS.Constants;
+using SupplierSelectionDSS.Exceptions;
 using SupplierSelectionDSS.Models;
 using SupplierSelectionDSS.Services;
 using SupplierSelectionDSS.Web.Extensions;
@@ -14,19 +17,17 @@ namespace SupplierSelectionDSS.Controllers;
 public class AHPController : Controller
 {
     private readonly AHPService _ahpService;
-
     private readonly AuditLogService _auditLogService;
-
+    private readonly ILogger<AHPController> _logger;
 
     public AHPController(
         AHPService ahpService,
-        AuditLogService auditLogService)
+        AuditLogService auditLogService,
+        ILogger<AHPController>? logger = null)
     {
-        _ahpService =
-            ahpService;
-
-        _auditLogService =
-            auditLogService;
+        _ahpService = ahpService;
+        _auditLogService = auditLogService;
+        _logger = logger ?? NullLogger<AHPController>.Instance;
     }
 
 
@@ -228,16 +229,25 @@ public class AHPController : Controller
             }
         }
         catch (
-            ArgumentException ex)
+            BusinessRuleException ex)
         {
             TempData["ErrorMessage"] =
                 ex.Message;
         }
         catch (
-            InvalidOperationException ex)
+            ArgumentException ex)
         {
             TempData["ErrorMessage"] =
                 ex.Message;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Lỗi khi lưu ma trận AHP cho đợt {BatchId}.",
+                batchId);
+            TempData["ErrorMessage"] =
+                "Có lỗi xảy ra trong quá trình lưu ma trận AHP. Vui lòng thử lại sau.";
         }
 
 
@@ -359,16 +369,25 @@ public class AHPController : Controller
             }
         }
         catch (
-            ArgumentException ex)
+            BusinessRuleException ex)
         {
             TempData["ErrorMessage"] =
                 ex.Message;
         }
         catch (
-            InvalidOperationException ex)
+            ArgumentException ex)
         {
             TempData["ErrorMessage"] =
                 ex.Message;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Lỗi khi tính toán AHP cho đợt {BatchId}.",
+                batchId);
+            TempData["ErrorMessage"] =
+                "Có lỗi xảy ra trong quá trình tính toán AHP. Vui lòng thử lại sau.";
         }
 
 
