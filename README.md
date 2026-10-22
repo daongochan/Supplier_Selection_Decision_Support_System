@@ -142,4 +142,4 @@ SupplierSelectionDSS/
 
 ## 8. Giấy phép mã nguồn (License)
 
-Dự án được phân phối dưới giấy phép **[MIT License](file:///D:/DEAN/Projects/SupplierSelectionDSS/LICENSE)**.
+Dự án được phân phối dưới giấy phép **[MIT License](LICENSE)**.
