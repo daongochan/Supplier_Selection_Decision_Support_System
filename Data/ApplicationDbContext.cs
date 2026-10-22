@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using SupplierSelectionDSS.Data.Entities;
@@ -131,6 +131,7 @@ public partial class ApplicationDbContext : DbContext
         {
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysdatetime())", "DF_Batch_CreatedAt");
             entity.Property(e => e.Status).HasDefaultValue("Draft", "DF_Batch_Status");
+            entity.Property(e => e.RowVersion).IsRowVersion();
 
             entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.EvaluationBatches)
                 .OnDelete(DeleteBehavior.NoAction)

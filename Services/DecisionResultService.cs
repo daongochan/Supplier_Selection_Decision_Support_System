@@ -505,6 +505,12 @@ public class DecisionResultService
 
                 return approval.ApprovalId;
             }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogWarning(ex, "Xung đột đồng thời khi yêu cầu đánh giá lại cho đợt ID {BatchId}.", batchId);
+                throw new BusinessRuleException("Dữ liệu đợt đánh giá vừa được người khác thay đổi, vui lòng tải lại trang.");
+            }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
@@ -712,7 +718,15 @@ public class DecisionResultService
         }
 
 
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            _logger.LogWarning(ex, "Xung đột đồng thời khi cập nhật quyết định phê duyệt cho đợt {BatchId}.", batchId);
+            throw new BusinessRuleException("Dữ liệu đợt đánh giá vừa được người khác thay đổi, vui lòng tải lại trang.");
+        }
 
         _logger.LogInformation(
             "Đã ghi nhận quyết định phê duyệt ID {ApprovalId} cho đợt {BatchId} với trạng thái {Status}.",

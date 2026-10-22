@@ -650,7 +650,15 @@ public class EvaluationBatchService
                 effectiveStartDate;
         }
 
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            _logger.LogWarning(ex, "Xung đột đồng thời khi bắt đầu đợt đánh giá {BatchId}.", batchId);
+            throw new BusinessRuleException("Dữ liệu đợt đánh giá vừa được người khác thay đổi, vui lòng tải lại trang.");
+        }
 
         _logger.LogInformation(
             "Bắt đầu đánh giá cho đợt {BatchCode} (ID: {BatchId}).",
@@ -689,7 +697,15 @@ public class EvaluationBatchService
                 : $"{batch.Description}\n{note}";
         }
 
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            _logger.LogWarning(ex, "Xung đột đồng thời khi hủy đợt đánh giá {BatchId}.", batchId);
+            throw new BusinessRuleException("Dữ liệu đợt đánh giá vừa được người khác thay đổi, vui lòng tải lại trang.");
+        }
 
         _logger.LogInformation(
             "Hủy đợt đánh giá {BatchCode} (ID: {BatchId}). Lý do: {Reason}",

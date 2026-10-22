@@ -16,6 +16,7 @@ CREATE TABLE EvaluationBatches (
     CreatedAt    DATETIME2      NOT NULL CONSTRAINT DF_Batch_CreatedAt DEFAULT (SYSDATETIME()),
     CompletedAt  DATETIME2      NULL,
     CancelledAt  DATETIME2      NULL,
+    RowVersion   ROWVERSION     NOT NULL,
     CONSTRAINT PK_EvaluationBatches PRIMARY KEY (BatchID),
     CONSTRAINT UQ_Batch_Code UNIQUE (BatchCode),
     CONSTRAINT FK_Batch_Group FOREIGN KEY (GroupID)   REFERENCES ProductGroups(GroupID),

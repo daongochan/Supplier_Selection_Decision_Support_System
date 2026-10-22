@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -41,6 +41,9 @@ public partial class EvaluationBatch
     public DateTime? CompletedAt { get; set; }
 
     public DateTime? CancelledAt { get; set; }
+
+    [Timestamp]
+    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 
     [InverseProperty("Batch")]
     public virtual ICollection<AhpcriteriaWeight> AhpcriteriaWeights { get; set; } = new List<AhpcriteriaWeight>();
