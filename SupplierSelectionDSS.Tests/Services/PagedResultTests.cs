@@ -91,4 +91,31 @@ public class PagedResultTests
         var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
         totalPages.Should().Be(expectedTotalPages);
     }
+
+    [Fact]
+    public void PagedResult_ExtremePageAndSize_DoesNotOverflowInt()
+    {
+        var result = new PagedResult<string>
+        {
+            Items = new List<string>(),
+            PageNumber = int.MaxValue,
+            PageSize = int.MaxValue,
+            TotalCount = 25,
+            TotalPages = 3
+        };
+
+        result.StartItemNumber.Should().Be(0);
+        result.EndItemNumber.Should().Be(0);
+
+        var vm = new AuditLogIndexViewModel
+        {
+            PageNumber = int.MaxValue,
+            PageSize = int.MaxValue,
+            TotalCount = 25,
+            TotalPages = 2
+        };
+
+        vm.StartItemNumber.Should().Be(0);
+        vm.EndItemNumber.Should().Be(0);
+    }
 }

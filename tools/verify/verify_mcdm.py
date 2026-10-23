@@ -2,13 +2,15 @@
 Independent Mathematical Verification Script for AHP and TOPSIS Algorithms.
 Supplier Selection Decision Support System (DSS)
 
-This script computes reference benchmarks using Python & NumPy:
+This script computes reference benchmarks using Python (NumPy if available,
+or pure-Python power iteration / linear algebra fallback):
 1. Exact Principal Eigenvector and Geometric Mean for AHP
 2. Standard Vector TOPSIS with Benefit & Cost criteria
 3. Invariant properties (scale invariance, permutation invariance)
 4. Standard Competition Ranking (1, 2, 2, 4)
 
 Usage:
+    python tools/verify/verify_mcdm.py
     uv run --with numpy python tools/verify/verify_mcdm.py
 """
 
@@ -16,7 +18,13 @@ import json
 import math
 import sys
 from pathlib import Path
-import numpy as np
+
+try:
+    import numpy as np
+    HAS_NUMPY = True
+except ImportError:
+    np = None
+    HAS_NUMPY = False
 
 # Random Index (RI) table according to Saaty
 SAATY_RI = {
@@ -38,44 +46,80 @@ SAATY_RI = {
 }
 
 
-def calculate_ahp(matrix: np.ndarray):
+def _to_2d_list(matrix):
+    if HAS_NUMPY and isinstance(matrix, np.ndarray):
+        return matrix.tolist()
+    return [[float(v) for v in row] for row in matrix]
+
+
+def _to_1d_list(vec):
+    if HAS_NUMPY and isinstance(vec, np.ndarray):
+        return [float(v) for v in vec.tolist()]
+    return [float(v) for v in vec]
+
+
+def _principal_eigenvector_power_method(matrix_rows: list[list[float]], max_iter: int = 10000, tol: float = 1e-14):
+    """
+    Computes the Perron-Frobenius principal eigenvector and dominant eigenvalue
+    for a positive reciprocal matrix using power iteration.
+    """
+    n = len(matrix_rows)
+    v = [1.0 / n] * n
+    for _ in range(max_iter):
+        av = [sum(matrix_rows[i][j] * v[j] for j in range(n)) for i in range(n)]
+        s = sum(av)
+        v_next = [x / s for x in av]
+        diff = max(abs(v_next[i] - v[i]) for i in range(n))
+        v = v_next
+        if diff < tol:
+            break
+    av = [sum(matrix_rows[i][j] * v[j] for j in range(n)) for i in range(n)]
+    lambda_max = sum(av[i] / v[i] for i in range(n)) / n
+    return lambda_max, v
+
+
+def calculate_ahp(matrix):
     """
     Computes AHP using both:
     1. Geometric Mean Method (Row Geometric Mean) - used in C# service
-    2. Exact Principal Eigenvector Method (NumPy eig)
+    2. Exact Principal Eigenvector Method (NumPy eig or Power Method)
     """
-    n = matrix.shape[0]
-    assert matrix.shape[0] == matrix.shape[1], "Matrix must be square"
+    rows = _to_2d_list(matrix)
+    n = len(rows)
+    assert all(len(r) == n for r in rows), "Matrix must be square"
 
     # --- 1. Row Geometric Mean Method ---
-    log_matrix = np.log(matrix)
-    gm = np.exp(np.mean(log_matrix, axis=1))
-    weights_gm = gm / np.sum(gm)
+    gm = [math.exp(sum(math.log(rows[i][j]) for j in range(n)) / n) for i in range(n)]
+    gm_sum = sum(gm)
+    weights_gm = [g / gm_sum for g in gm]
 
     # Weighted sum vector & consistency vector
-    weighted_sum = np.dot(matrix, weights_gm)
-    consistency_vector = weighted_sum / weights_gm
-    lambda_max_gm = float(np.mean(consistency_vector))
+    weighted_sum = [sum(rows[i][j] * weights_gm[j] for j in range(n)) for i in range(n)]
+    consistency_vector = [weighted_sum[i] / weights_gm[i] for i in range(n)]
+    lambda_max_gm = sum(consistency_vector) / n
 
     ci_gm = 0.0 if n <= 1 else (lambda_max_gm - n) / (n - 1)
     ri = SAATY_RI.get(n, 0.0)
     cr_gm = 0.0 if (n <= 2 or ri == 0.0) else ci_gm / ri
 
     # --- 2. Principal Eigenvector Method (Ground Truth) ---
-    eig_vals, eig_vecs = np.linalg.eig(matrix)
-    max_idx = np.argmax(np.real(eig_vals))
-    lambda_max_exact = float(np.real(eig_vals[max_idx]))
-    principal_vec = np.real(eig_vecs[:, max_idx])
-    weights_exact = principal_vec / np.sum(principal_vec)
-
-    # If principal vector happened to be negative, invert
-    if weights_exact[0] < 0:
-        weights_exact = -weights_exact
+    if HAS_NUMPY:
+        np_mat = np.array(rows, dtype=float)
+        eig_vals, eig_vecs = np.linalg.eig(np_mat)
+        max_idx = int(np.argmax(np.real(eig_vals)))
+        lambda_max_exact = float(np.real(eig_vals[max_idx]))
+        principal_vec = np.real(eig_vecs[:, max_idx])
+        weights_exact_arr = principal_vec / np.sum(principal_vec)
+        if weights_exact_arr[0] < 0:
+            weights_exact_arr = -weights_exact_arr
+        weights_exact = [float(w) for w in weights_exact_arr]
+    else:
+        lambda_max_exact, weights_exact = _principal_eigenvector_power_method(rows)
 
     ci_exact = 0.0 if n <= 1 else (lambda_max_exact - n) / (n - 1)
     cr_exact = 0.0 if (n <= 2 or ri == 0.0) else ci_exact / ri
 
-    max_weight_diff = float(np.max(np.abs(weights_gm - weights_exact)))
+    max_weight_diff = max(abs(weights_gm[i] - weights_exact[i]) for i in range(n))
 
     return {
         "n": n,
@@ -93,7 +137,7 @@ def calculate_ahp(matrix: np.ndarray):
     }
 
 
-def calculate_topsis(decision_matrix: np.ndarray, weights: np.ndarray, criteria_types: list[str]):
+def calculate_topsis(decision_matrix, weights, criteria_types: list[str]):
     """
     Standard Vector TOPSIS:
     - Normalization: r_ij = x_ij / sqrt(sum_k x_kj^2)
@@ -104,52 +148,55 @@ def calculate_topsis(decision_matrix: np.ndarray, weights: np.ndarray, criteria_
     - CC = D- / (D+ + D-)
     - Standard Competition Ranking (1, 2, 2, 4)
     """
-    m, n = decision_matrix.shape
-    assert len(weights) == n, "Weights length must match criteria count"
+    dm = _to_2d_list(decision_matrix)
+    w = _to_1d_list(weights)
+    m = len(dm)
+    n = len(dm[0])
+    assert len(w) == n, "Weights length must match criteria count"
     assert len(criteria_types) == n, "CriteriaTypes length must match criteria count"
 
     # Step 1: Vector normalization
-    norm_matrix = np.zeros_like(decision_matrix, dtype=float)
+    norm_matrix = [[0.0] * n for _ in range(m)]
     zero_columns = []
 
     for j in range(n):
-        col = decision_matrix[:, j]
-        sq_sum = np.sum(col ** 2)
+        sq_sum = sum(dm[i][j] ** 2 for i in range(m))
         if sq_sum <= 1e-12:
-            norm_matrix[:, j] = 0.0
+            for i in range(m):
+                norm_matrix[i][j] = 0.0
             zero_columns.append(j)
         else:
-            norm_matrix[:, j] = col / np.sqrt(sq_sum)
+            denom = math.sqrt(sq_sum)
+            for i in range(m):
+                norm_matrix[i][j] = dm[i][j] / denom
 
     # Step 2: Weighted normalized matrix
-    weighted_matrix = np.zeros_like(norm_matrix, dtype=float)
-    for j in range(n):
-        weighted_matrix[:, j] = norm_matrix[:, j] * weights[j]
+    weighted_matrix = [[norm_matrix[i][j] * w[j] for j in range(n)] for i in range(m)]
 
     # Step 3: PIS and NIS
-    pis = np.zeros(n, dtype=float)
-    nis = np.zeros(n, dtype=float)
+    pis = [0.0] * n
+    nis = [0.0] * n
 
     for j in range(n):
         ctype = criteria_types[j].strip().lower()
-        col = weighted_matrix[:, j]
+        col = [weighted_matrix[i][j] for i in range(m)]
         if ctype == "benefit":
-            pis[j] = np.max(col)
-            nis[j] = np.min(col)
+            pis[j] = max(col)
+            nis[j] = min(col)
         elif ctype == "cost":
-            pis[j] = np.min(col)
-            nis[j] = np.max(col)
+            pis[j] = min(col)
+            nis[j] = max(col)
         else:
             raise ValueError(f"Unknown criteria type: {criteria_types[j]}")
 
     # Step 4: Distances to PIS and NIS
-    d_plus = np.zeros(m, dtype=float)
-    d_minus = np.zeros(m, dtype=float)
-    cc = np.zeros(m, dtype=float)
+    d_plus = [0.0] * m
+    d_minus = [0.0] * m
+    cc = [0.0] * m
 
     for i in range(m):
-        d_plus[i] = np.sqrt(np.sum((weighted_matrix[i, :] - pis) ** 2))
-        d_minus[i] = np.sqrt(np.sum((weighted_matrix[i, :] - nis) ** 2))
+        d_plus[i] = math.sqrt(sum((weighted_matrix[i][j] - pis[j]) ** 2 for j in range(n)))
+        d_minus[i] = math.sqrt(sum((weighted_matrix[i][j] - nis[j]) ** 2 for j in range(n)))
 
         denom = d_plus[i] + d_minus[i]
         if denom <= 1e-12:
@@ -196,23 +243,23 @@ def main():
     print("===============================================================")
 
     # AHP Benchmark 1: Consistent 3x3
-    m1 = np.array([
+    m1 = [
         [1.0, 2.0, 4.0],
         [0.5, 1.0, 2.0],
         [0.25, 0.5, 1.0]
-    ])
+    ]
     r1 = calculate_ahp(m1)
     benchmarks["ahp_consistent_3x3"] = r1
     print(f"AHP 3x3 Consistent: CR = {r1['cr_gm']}, Weights = {r1['weights_geometric_mean']}")
     print(f"  GM vs Exact Diff: {r1['max_weight_diff_gm_vs_exact']} (< 1e-4)")
 
     # AHP Benchmark 2: Standard Saaty 4x4
-    m2 = np.array([
+    m2 = [
         [1.0, 3.0, 5.0, 7.0],
         [1.0 / 3.0, 1.0, 3.0, 5.0],
         [1.0 / 5.0, 1.0 / 3.0, 1.0, 3.0],
         [1.0 / 7.0, 1.0 / 5.0, 1.0 / 3.0, 1.0]
-    ])
+    ]
     r2 = calculate_ahp(m2)
     benchmarks["ahp_saaty_4x4"] = r2
     print(f"AHP 4x4 Saaty: CR = {r2['cr_gm']} (Expected < 0.10: {r2['is_consistent_gm']})")
@@ -221,20 +268,20 @@ def main():
     print(f"  GM vs Exact Diff: {r2['max_weight_diff_gm_vs_exact']}")
 
     # AHP Benchmark 3: Inconsistent 3x3 (CR > 0.10)
-    m3 = np.array([
+    m3 = [
         [1.0, 9.0, 1.0],
         [1.0 / 9.0, 1.0, 9.0],
         [1.0, 1.0 / 9.0, 1.0]
-    ])
+    ]
     r3 = calculate_ahp(m3)
     benchmarks["ahp_inconsistent_3x3"] = r3
     print(f"AHP 3x3 Inconsistent: CR = {r3['cr_gm']} (Expected > 0.10: not {r3['is_consistent_gm']})")
 
     # AHP Benchmark 4: 2x2
-    m4 = np.array([
+    m4 = [
         [1.0, 3.0],
         [1.0 / 3.0, 1.0]
-    ])
+    ]
     r4 = calculate_ahp(m4)
     benchmarks["ahp_2x2"] = r4
     print(f"AHP 2x2: CR = {r4['cr_gm']}, Weights = {r4['weights_geometric_mean']}")
@@ -248,12 +295,12 @@ def main():
     # C2 (Benefit): Quality Score
     # C3 (Cost): Delivery Lead Time
     # C4 (Benefit): Supply Capacity
-    dm1 = np.array([
+    dm1 = [
         [250.0, 8.5, 14.0, 9.0],   # Supplier 1 (SUP01)
         [200.0, 7.0, 21.0, 8.0],   # Supplier 2 (SUP02)
         [300.0, 9.5, 7.0,  7.5]    # Supplier 3 (SUP03)
-    ])
-    w1 = np.array([0.35, 0.30, 0.20, 0.15])
+    ]
+    w1 = [0.35, 0.30, 0.20, 0.15]
     types1 = ["Cost", "Benefit", "Cost", "Benefit"]
 
     t1 = calculate_topsis(dm1, w1, types1)
@@ -265,13 +312,13 @@ def main():
         print(f"  Supplier {idx+1}: D+={dp:.6f}, D-={dm:.6f}, CC={cc:.6f}, Rank={r}")
 
     # TOPSIS Benchmark 2: Standard Competition Ranking Ties (1, 2, 2, 4)
-    dm_tie = np.array([
+    dm_tie = [
         [10.0, 100.0],  # Supplier 1 (Best)
         [8.0,  150.0],  # Supplier 2 (Tied)
         [8.0,  150.0],  # Supplier 3 (Tied with 2)
         [5.0,  250.0]   # Supplier 4 (Worst)
-    ])
-    w_tie = np.array([0.5, 0.5])
+    ]
+    w_tie = [0.5, 0.5]
     types_tie = ["Benefit", "Cost"]
     t_tie = calculate_topsis(dm_tie, w_tie, types_tie)
     benchmarks["topsis_tie_1224"] = t_tie
@@ -280,12 +327,12 @@ def main():
     print(f"  Ranks: {t_tie['ranks']} (Expected: [1, 2, 2, 4])")
 
     # TOPSIS Benchmark 3: Zero-variance Column (All-zero in one criterion)
-    dm_zero = np.array([
+    dm_zero = [
         [0.0, 8.0, 15.0],
         [0.0, 6.0, 20.0],
         [0.0, 9.0, 10.0]
-    ])
-    w_zero = np.array([0.2, 0.4, 0.4])
+    ]
+    w_zero = [0.2, 0.4, 0.4]
     types_zero = ["Cost", "Benefit", "Cost"]
     t_zero = calculate_topsis(dm_zero, w_zero, types_zero)
     benchmarks["topsis_zero_column"] = t_zero
@@ -295,12 +342,12 @@ def main():
     print(f"  CCs: {t_zero['closeness_coefficients']}")
 
     # TOPSIS Benchmark 4: All suppliers identical (D+ + D- = 0)
-    dm_identical = np.array([
+    dm_identical = [
         [10.0, 100.0],
         [10.0, 100.0],
         [10.0, 100.0]
-    ])
-    t_ident = calculate_topsis(dm_identical, np.array([0.5, 0.5]), ["Benefit", "Cost"])
+    ]
+    t_ident = calculate_topsis(dm_identical, [0.5, 0.5], ["Benefit", "Cost"])
     benchmarks["topsis_identical_suppliers"] = t_ident
     print(f"\nTOPSIS Identical Suppliers (All equal):")
     print(f"  CCs: {t_ident['closeness_coefficients']} (All 0.0)")

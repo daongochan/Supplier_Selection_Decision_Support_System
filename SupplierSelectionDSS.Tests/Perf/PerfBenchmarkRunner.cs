@@ -39,6 +39,20 @@ public class PerfBenchmarkRunner
         _output = output;
     }
 
+    private static bool IsPerfBenchmarkEnabled()
+    {
+        var flag = Environment.GetEnvironmentVariable("DSS_RUN_PERF");
+        return string.Equals(flag, "1", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(flag, "true", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool ShouldWritePerfFiles()
+    {
+        var flag = Environment.GetEnvironmentVariable("DSS_WRITE_PERF_FILES");
+        return string.Equals(flag, "1", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(flag, "true", StringComparison.OrdinalIgnoreCase);
+    }
+
     private static bool IsPerfDbAvailable()
     {
         try
@@ -56,160 +70,85 @@ public class PerfBenchmarkRunner
         }
     }
 
-    [Fact]
-    public async Task RunBaselineBenchmark_OnPerfDatabase()
+    public static double CalculatePercentile(IReadOnlyList<double> sortedValues, double percentile)
     {
-        if (!IsPerfDbAvailable())
+        if (sortedValues == null || sortedValues.Count == 0)
         {
-            _output.WriteLine("Cơ sở dữ liệu SupplierSelectionDSS_Perf không khả dụng hoặc chưa nạp dữ liệu. Bỏ qua đo benchmark trên môi trường này (CI/máy không có SQL Server).");
-            return;
+            throw new ArgumentException("Sample list cannot be empty.", nameof(sortedValues));
         }
 
-        _output.WriteLine("================================================================================");
-        _output.WriteLine("BẮT ĐẦU ĐO HIỆU NĂNG BASELINE TRÊN SupplierSelectionDSS_Perf");
-        _output.WriteLine("================================================================================");
-
-        var interceptor = new CommandCountingInterceptor();
-        using var factory = new PerfTestWebApplicationFactory(interceptor, PerfConnectionString);
-        var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        if (sortedValues.Count == 1)
         {
-            AllowAutoRedirect = false
-        });
-        client.Timeout = TimeSpan.FromMinutes(5);
-
-        var endpoints = new List<(string Name, string Url)>
-        {
-            ("Dashboard (Tổng quan)", "/Dashboard"),
-            ("Danh sách Batch", "/EvaluationBatch/Index"),
-            ("Nhập điểm đánh giá (Batch 1)", "/Evaluation/Index?batchId=1"),
-            ("Ma trận so sánh AHP (Batch 1)", "/EvaluationBatch/1/AHP"),
-            ("Kết quả TOPSIS (Batch 1)", "/EvaluationBatch/1/TOPSIS"),
-            ("Kết quả quyết định (Batch 1)", "/EvaluationBatch/1/Result"),
-            ("Lịch sử báo cáo (Batch 1)", "/EvaluationBatch/1/Report"),
-            ("Nhật ký hệ thống (Audit Log)", "/AuditLog/Index")
-        };
-
-        var results = new List<BenchmarkResultDto>();
-
-        foreach (var (name, url) in endpoints)
-        {
-            _output.WriteLine($"\n[ĐO] {name} [{url}]");
-
-            // Warm-up (1 lượt; bỏ qua cho AuditLog)
-            if (!url.Contains("AuditLog"))
-            {
-                var warmRes = await client.GetAsync(url);
-                if (warmRes.StatusCode != HttpStatusCode.OK)
-                {
-                    _output.WriteLine($"    [CẢNH BÁO] Warmup trả về HTTP {(int)warmRes.StatusCode} ({warmRes.StatusCode})");
-                }
-            }
-
-            // Benchmark (3 lượt; riêng AuditLog 1 lượt do thời gian quét không index ~100s)
-            int iterations = url.Contains("AuditLog") ? 1 : 3;
-            var durations = new List<double>();
-            long totalSqlCount = 0;
-            int htmlBytes = 0;
-            int cssCount = 0;
-            int jsCount = 0;
-            int imgCount = 0;
-
-            for (int i = 0; i < iterations; i++)
-            {
-                interceptor.Reset();
-                var sw = Stopwatch.StartNew();
-                var response = await client.GetAsync(url);
-                sw.Stop();
-
-                if (response.StatusCode != HttpStatusCode.OK)
-                {
-                    _output.WriteLine($"    [LỖI] Lượt {i + 1} thất bại với HTTP {response.StatusCode}");
-                    break;
-                }
-
-                durations.Add(sw.Elapsed.TotalMilliseconds);
-                totalSqlCount += interceptor.CommandCount;
-
-                if (i == 0)
-                {
-                    var html = await response.Content.ReadAsStringAsync();
-                    htmlBytes = html.Length;
-                    cssCount = Regex.Matches(html, @"<link[^>]+rel=[""']stylesheet[""']", RegexOptions.IgnoreCase).Count;
-                    jsCount = Regex.Matches(html, @"<script[^>]+src=", RegexOptions.IgnoreCase).Count;
-                    imgCount = Regex.Matches(html, @"<img\s+", RegexOptions.IgnoreCase).Count;
-                    var titleMatch = Regex.Match(html, @"<title>(.*?)</title>", RegexOptions.IgnoreCase | RegexOptions.Singleline);
-                    var title = titleMatch.Success ? titleMatch.Groups[1].Value.Trim() : "No title";
-                    _output.WriteLine($"    [TIÊU ĐỀ TRANG] {title}");
-                }
-            }
-
-            if (durations.Count == 0)
-            {
-                _output.WriteLine("    [THẤT BẠI] Không có lượt đo thành công nào.");
-                continue;
-            }
-
-            durations.Sort();
-            double p50 = durations[(int)(durations.Count * 0.50)];
-            double p95 = durations[(int)(durations.Count * 0.95)];
-            long avgSql = (long)Math.Round((double)totalSqlCount / durations.Count);
-
-            var dto = new BenchmarkResultDto
-            {
-                PageName = name,
-                Url = url,
-                SqlCommands = avgSql,
-                ResponseTimeP50 = Math.Round(p50, 1),
-                ResponseTimeP95 = Math.Round(p95, 1),
-                HtmlSizeBytes = htmlBytes,
-                CssRequests = cssCount,
-                JsRequests = jsCount,
-                ImgRequests = imgCount
-            };
-
-            results.Add(dto);
-
-            _output.WriteLine($"    -> Lệnh SQL: {avgSql} | p50: {p50:F1} ms | p95: {p95:F1} ms | HTML: {htmlBytes:N0} bytes | CSS: {cssCount} | JS: {jsCount}");
+            return sortedValues[0];
         }
 
-        _output.WriteLine("\n\n================================================================================");
-        _output.WriteLine("BẢNG KẾT QUẢ BASELINE (DOCS/PERFORMANCE.MD)");
-        _output.WriteLine("================================================================================");
-        _output.WriteLine("| Trang | URL | Số lệnh SQL | p50 (ms) | p95 (ms) | HTML (bytes) | CSS req | JS req |");
-        _output.WriteLine("|---|---|---|---|---|---|---|---|");
-        foreach (var r in results)
+        var clamped = Math.Clamp(percentile, 0.0, 1.0);
+        var position = clamped * (sortedValues.Count - 1);
+        var lowerIndex = (int)Math.Floor(position);
+        var upperIndex = (int)Math.Ceiling(position);
+        if (lowerIndex == upperIndex)
         {
-            _output.WriteLine($"| {r.PageName} | `{r.Url}` | **{r.SqlCommands}** | {r.ResponseTimeP50:F1} | {r.ResponseTimeP95:F1} | {r.HtmlSizeBytes:N0} | {r.CssRequests} | {r.JsRequests} |");
+            return sortedValues[lowerIndex];
         }
-        _output.WriteLine("================================================================================");
 
-        // Lưu kết quả JSON vào tools/perf/baseline_results.json
-        try
-        {
-            var projectDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
-            var outDir = Path.Combine(projectDir, "tools", "perf");
-            Directory.CreateDirectory(outDir);
-            var jsonPath = Path.Combine(outDir, "baseline_results.json");
-            File.WriteAllText(jsonPath, JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true }));
-            _output.WriteLine($"Đã lưu kết quả đo vào {jsonPath}");
-        }
-        catch (Exception ex)
-        {
-            _output.WriteLine($"Không thể lưu file json kết quả: {ex.Message}");
-        }
+        var weight = position - lowerIndex;
+        return sortedValues[lowerIndex] + (sortedValues[upperIndex] - sortedValues[lowerIndex]) * weight;
     }
 
     [Fact]
-    public async Task RunPostOptimizationBenchmark_OnPerfDatabase()
+    [Trait("Category", "Performance")]
+    public void CalculatePercentile_ComputesLinearInterpolatedPercentiles()
     {
-        if (!IsPerfDbAvailable())
+        var samples = new List<double> { 10.0, 20.0, 30.0, 40.0, 100.0 };
+        samples.Sort();
+
+        Assert.Equal(30.0, CalculatePercentile(samples, 0.50), 4);
+        Assert.Equal(88.0, CalculatePercentile(samples, 0.95), 4);
+        Assert.Equal(42.0, CalculatePercentile(new[] { 42.0 }, 0.95), 4);
+    }
+
+    [Fact]
+    [Trait("Category", "Performance")]
+    public async Task RunBaselineBenchmark_OnPerfDatabase()
+    {
+        if (!IsPerfBenchmarkEnabled())
         {
-            _output.WriteLine("Cơ sở dữ liệu SupplierSelectionDSS_Perf không khả dụng hoặc chưa nạp dữ liệu. Bỏ qua đo benchmark trên môi trường này (CI/máy không có SQL Server).");
+            _output.WriteLine("Perf benchmark execution is disabled by default during unit tests. Set DSS_RUN_PERF=1 to run against SupplierSelectionDSS_Perf.");
             return;
         }
 
+        if (!IsPerfDbAvailable())
+        {
+            throw new InvalidOperationException("DSS_RUN_PERF=1 was specified, but database SupplierSelectionDSS_Perf is unavailable or empty.");
+        }
+
+        var results = await ExecuteBenchmarkSuiteAsync("BASELINE", "baseline_results.json");
+        Assert.Equal(8, results.Count);
+    }
+
+    [Fact]
+    [Trait("Category", "Performance")]
+    public async Task RunPostOptimizationBenchmark_OnPerfDatabase()
+    {
+        if (!IsPerfBenchmarkEnabled())
+        {
+            _output.WriteLine("Perf benchmark execution is disabled by default during unit tests. Set DSS_RUN_PERF=1 to run against SupplierSelectionDSS_Perf.");
+            return;
+        }
+
+        if (!IsPerfDbAvailable())
+        {
+            throw new InvalidOperationException("DSS_RUN_PERF=1 was specified, but database SupplierSelectionDSS_Perf is unavailable or empty.");
+        }
+
+        var results = await ExecuteBenchmarkSuiteAsync("POST-OPTIMIZATION", "post_results.json");
+        Assert.Equal(8, results.Count);
+    }
+
+    private async Task<List<BenchmarkResultDto>> ExecuteBenchmarkSuiteAsync(string label, string outputFileName)
+    {
         _output.WriteLine("================================================================================");
-        _output.WriteLine("BẮT ĐẦU ĐO HIỆU NĂNG SAU TỐI ƯU TRÊN SupplierSelectionDSS_Perf");
+        _output.WriteLine($"STARTING {label} BENCHMARK ON SupplierSelectionDSS_Perf");
         _output.WriteLine("================================================================================");
 
         var interceptor = new CommandCountingInterceptor();
@@ -222,31 +161,28 @@ public class PerfBenchmarkRunner
 
         var endpoints = new List<(string Name, string Url)>
         {
-            ("Dashboard (Tổng quan)", "/Dashboard"),
-            ("Danh sách Batch", "/EvaluationBatch/Index"),
-            ("Nhập điểm đánh giá (Batch 1)", "/Evaluation/Index?batchId=1"),
-            ("Ma trận so sánh AHP (Batch 1)", "/EvaluationBatch/1/AHP"),
-            ("Kết quả TOPSIS (Batch 1)", "/EvaluationBatch/1/TOPSIS"),
-            ("Kết quả quyết định (Batch 1)", "/EvaluationBatch/1/Result"),
-            ("Lịch sử báo cáo (Batch 1)", "/EvaluationBatch/1/Report"),
-            ("Nhật ký hệ thống (Audit Log)", "/AuditLog/Index")
+            ("Dashboard", "/Dashboard"),
+            ("Batch List", "/EvaluationBatch/Index"),
+            ("Score Entry (Batch 1)", "/Evaluation/Index?batchId=1"),
+            ("AHP Comparison Matrix (Batch 1)", "/EvaluationBatch/1/AHP"),
+            ("TOPSIS Ranking (Batch 1)", "/EvaluationBatch/1/TOPSIS"),
+            ("Decision Result (Batch 1)", "/EvaluationBatch/1/Result"),
+            ("Report History (Batch 1)", "/EvaluationBatch/1/Report"),
+            ("Audit Log", "/AuditLog/Index")
         };
 
         var results = new List<BenchmarkResultDto>();
 
         foreach (var (name, url) in endpoints)
         {
-            _output.WriteLine($"\n[ĐO] {name} [{url}]");
+            _output.WriteLine($"\n[MEASURE] {name} [{url}]");
 
-            // Warm-up (1 lượt)
+            // Consistent warm-up across ALL endpoints (including AuditLog)
             var warmRes = await client.GetAsync(url);
-            if (warmRes.StatusCode != HttpStatusCode.OK)
-            {
-                _output.WriteLine($"    [CẢNH BÁO] Warmup trả về HTTP {(int)warmRes.StatusCode} ({warmRes.StatusCode})");
-            }
+            Assert.Equal(HttpStatusCode.OK, warmRes.StatusCode);
 
-            int iterations = 3;
-            var durations = new List<double>();
+            const int iterations = 5;
+            var durations = new List<double>(iterations);
             long totalSqlCount = 0;
             int htmlBytes = 0;
             int cssCount = 0;
@@ -260,11 +196,7 @@ public class PerfBenchmarkRunner
                 var response = await client.GetAsync(url);
                 sw.Stop();
 
-                if (response.StatusCode != HttpStatusCode.OK)
-                {
-                    _output.WriteLine($"    [LỖI] Lượt {i + 1} thất bại với HTTP {response.StatusCode}");
-                    break;
-                }
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
                 durations.Add(sw.Elapsed.TotalMilliseconds);
                 totalSqlCount += interceptor.CommandCount;
@@ -278,19 +210,13 @@ public class PerfBenchmarkRunner
                     imgCount = Regex.Matches(html, @"<img\s+", RegexOptions.IgnoreCase).Count;
                     var titleMatch = Regex.Match(html, @"<title>(.*?)</title>", RegexOptions.IgnoreCase | RegexOptions.Singleline);
                     var title = titleMatch.Success ? titleMatch.Groups[1].Value.Trim() : "No title";
-                    _output.WriteLine($"    [TIÊU ĐỀ TRANG] {title}");
+                    _output.WriteLine($"    [PAGE TITLE] {title}");
                 }
             }
 
-            if (durations.Count == 0)
-            {
-                _output.WriteLine("    [THẤT BẠI] Không có lượt đo thành công nào.");
-                continue;
-            }
-
             durations.Sort();
-            double p50 = durations[(int)(durations.Count * 0.50)];
-            double p95 = durations[(int)(durations.Count * 0.95)];
+            double p50 = CalculatePercentile(durations, 0.50);
+            double p95 = CalculatePercentile(durations, 0.95);
             long avgSql = (long)Math.Round((double)totalSqlCount / durations.Count);
 
             var dto = new BenchmarkResultDto
@@ -308,13 +234,13 @@ public class PerfBenchmarkRunner
 
             results.Add(dto);
 
-            _output.WriteLine($"    -> Lệnh SQL: {avgSql} | p50: {p50:F1} ms | p95: {p95:F1} ms | HTML: {htmlBytes:N0} bytes | CSS: {cssCount} | JS: {jsCount}");
+            _output.WriteLine($"    -> SQL Commands: {avgSql} | p50: {p50:F1} ms | p95: {p95:F1} ms | HTML: {htmlBytes:N0} bytes | CSS: {cssCount} | JS: {jsCount}");
         }
 
         _output.WriteLine("\n\n================================================================================");
-        _output.WriteLine("BẢNG KẾT QUẢ SAU TỐI ƯU (DOCS/PERFORMANCE.MD)");
+        _output.WriteLine($"{label} RESULTS TABLE");
         _output.WriteLine("================================================================================");
-        _output.WriteLine("| Trang | URL | Số lệnh SQL | p50 (ms) | p95 (ms) | HTML (bytes) | CSS req | JS req |");
+        _output.WriteLine("| Page | URL | SQL Commands | p50 (ms) | p95 (ms) | HTML (bytes) | CSS req | JS req |");
         _output.WriteLine("|---|---|---|---|---|---|---|---|");
         foreach (var r in results)
         {
@@ -322,19 +248,21 @@ public class PerfBenchmarkRunner
         }
         _output.WriteLine("================================================================================");
 
-        try
+        if (ShouldWritePerfFiles())
         {
             var projectDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
             var outDir = Path.Combine(projectDir, "tools", "perf");
             Directory.CreateDirectory(outDir);
-            var jsonPath = Path.Combine(outDir, "post_results.json");
+            var jsonPath = Path.Combine(outDir, outputFileName);
             File.WriteAllText(jsonPath, JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true }));
-            _output.WriteLine($"Đã lưu kết quả đo sau tối ưu vào {jsonPath}");
+            _output.WriteLine($"Saved benchmark results to {jsonPath}");
         }
-        catch (Exception ex)
+        else
         {
-            _output.WriteLine($"Không thể lưu file json kết quả: {ex.Message}");
+            _output.WriteLine("Skipped writing JSON to tools/perf (set DSS_WRITE_PERF_FILES=1 to persist results).");
         }
+
+        return results;
     }
 }
 
