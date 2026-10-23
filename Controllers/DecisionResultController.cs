@@ -36,12 +36,15 @@ public class DecisionResultController : Controller
 
     [HttpGet]
     [Route("EvaluationBatch/{batchId:int}/Result")]
+    [Route("DecisionResult")]
+    [Route("DecisionResult/Index")]
     public async Task<IActionResult> Index(
         int batchId)
     {
         if (batchId <= 0)
         {
-            return NotFound();
+            TempData["WarningMessage"] = "Vui lòng chọn một đợt đánh giá để xem kết quả quyết định và phê duyệt.";
+            return RedirectToAction("Index", "EvaluationBatch");
         }
 
 
@@ -53,7 +56,8 @@ public class DecisionResultController : Controller
 
         if (model == null)
         {
-            return NotFound();
+            TempData["WarningMessage"] = $"Không tìm thấy đợt đánh giá với ID = {batchId}.";
+            return RedirectToAction("Index", "EvaluationBatch");
         }
 
 

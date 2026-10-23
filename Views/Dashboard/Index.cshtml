@@ -793,7 +793,7 @@ else
                 </p>
                 @if (Model.SelectedBatchId.HasValue && User.IsInRole("Manager"))
                 {
-                    <a asp-controller="Approval" asp-action="Approve" asp-route-batchId="@Model.SelectedBatchId.Value" class="btn-outline btn-mt-auto">
+                    <a asp-controller="DecisionResult" asp-action="Index" asp-route-batchId="@Model.SelectedBatchId.Value" class="btn-outline btn-mt-auto">
                         <span>Submit for Approval</span>
                     </a>
                 }

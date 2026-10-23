@@ -1,25 +1,66 @@
-﻿@model ErrorViewModel
+@model SupplierSelectionDSS.Models.ErrorViewModel
 @{
-    ViewData["Title"] = "Error";
+    ViewData["Title"] = Model.Title ?? "Thông báo lỗi";
+    var iconClass = Model.StatusCode switch
+    {
+        404 => "bi-search",
+        403 => "bi-shield-lock-fill",
+        400 => "bi-exclamation-octagon-fill",
+        429 => "bi-hourglass-split",
+        _ => "bi-exclamation-triangle-fill"
+    };
+
+    var badgeColor = Model.StatusCode switch
+    {
+        404 => "var(--sky-dark, #0284c7)",
+        403 => "var(--danger-dark, #dc2626)",
+        400 => "var(--amber-dark, #d97706)",
+        429 => "var(--lavender-dark, #4f46e5)",
+        _ => "var(--danger, #dc2626)"
+    };
 }
 
-<h1 class="text-danger">Error.</h1>
-<h2 class="text-danger">An error occurred while processing your request.</h2>
+<div class="error-page-container" style="display: flex; align-items: center; justify-content: center; min-height: 70vh; padding: var(--space-6, 24px);">
+    <div class="card" style="max-width: 680px; width: 100%; border-radius: var(--radius-lg, 16px); box-shadow: var(--shadow-modal, 0 20px 50px rgba(15, 23, 42, 0.16)); border: 1px solid var(--border, #e2e8f0); background: var(--surface, #ffffff); overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #0d1726 0%, #1e293b 100%); padding: 32px; color: #ffffff; text-align: center; border-bottom: 2px solid var(--terracotta, #1d4ed8);">
+            <div style="display: inline-flex; align-items: center; justify-content: center; width: 68px; height: 68px; border-radius: 50%; background: rgba(255, 255, 255, 0.1); margin-bottom: 16px;">
+                <i class="bi @iconClass" style="font-size: 32px; color: #f8fafc;"></i>
+            </div>
+            <div style="display: inline-block; padding: 4px 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.15); font-size: 13px; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 8px;">
+                MÃ PHẢN HỒI: @Model.StatusCode
+            </div>
+            <h1 style="font-size: 22px; font-weight: 700; margin: 0; color: #ffffff;">@Model.Title</h1>
+        </div>
 
-@if (Model.ShowRequestId)
-{
-    <p>
-        <strong>Request ID:</strong> <code>@Model.RequestId</code>
-    </p>
-}
+        <div style="padding: 32px;">
+            <div style="background: var(--canvas, #f4f8fc); border-radius: var(--radius-md, 12px); padding: 18px 20px; margin-bottom: 24px; border-left: 4px solid @badgeColor;">
+                <p style="font-size: 15px; font-weight: 600; color: var(--ink, #0f172a); margin-bottom: 6px;">
+                    @Model.Message
+                </p>
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <p style="font-size: 13px; color: var(--muted, #64748b); margin: 0; line-height: 1.5;">
+                        @Model.Description
+                    </p>
+                }
+            </div>
 
-<h3>Development Mode</h3>
-<p>
-    Swapping to <strong>Development</strong> environment will display more detailed information about the error that occurred.
-</p>
-<p>
-    <strong>The Development environment shouldn't be enabled for deployed applications.</strong>
-    It can result in displaying sensitive information from exceptions to end users.
-    For local debugging, enable the <strong>Development</strong> environment by setting the <strong>ASPNETCORE_ENVIRONMENT</strong> environment variable to <strong>Development</strong>
-    and restarting the app.
-</p>
+            @if (Model.ShowRequestId)
+            {
+                <div style="margin-bottom: 24px; padding: 10px 14px; background: var(--canvas-soft, #f8fafc); border-radius: var(--radius-sm, 8px); border: 1px dashed var(--border-strong, #cbd5e1); font-size: 12px; color: var(--muted, #64748b); display: flex; align-items: center; justify-content: space-between;">
+                    <span>Mã định danh yêu cầu (Request ID):</span>
+                    <code style="font-weight: 600; color: var(--ink-soft, #1e293b); background: var(--surface, #ffffff); padding: 2px 6px; border-radius: 4px;">@Model.RequestId</code>
+                </div>
+            }
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end; flex-wrap: wrap;">
+                <button type="button" onclick="window.history.length > 1 ? window.history.back() : window.location.href='/'" class="btn" style="padding: 10px 20px; border-radius: var(--radius-md, 12px); border: 1px solid var(--border-strong, #cbd5e1); background: var(--surface, #ffffff); color: var(--body, #334155); font-weight: 600; font-size: 14px; cursor: pointer;">
+                    <i class="bi bi-arrow-left"></i> Quay lại
+                </button>
+                <a href="@Url.Action("Index", "Dashboard")" class="btn btn-primary" style="padding: 10px 22px; border-radius: var(--radius-md, 12px); background: var(--terracotta, #1d4ed8); color: #ffffff; font-weight: 600; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="bi bi-house-door-fill"></i> Về bảng điều khiển
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

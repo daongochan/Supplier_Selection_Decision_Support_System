@@ -37,14 +37,15 @@ public class ReportController : Controller
     // =========================================================
 
     [HttpGet]
-    [Route(
-        "EvaluationBatch/{batchId:int}/Report")]
+    [Route("EvaluationBatch/{batchId:int}/Report")]
+    [Route("Report")]
     public async Task<IActionResult> Index(
         int batchId)
     {
         if (batchId <= 0)
         {
-            return NotFound();
+            TempData["WarningMessage"] = "Vui lòng chọn một đợt đánh giá để xem báo cáo.";
+            return RedirectToAction("Index", "EvaluationBatch");
         }
 
 
@@ -56,7 +57,8 @@ public class ReportController : Controller
 
         if (model == null)
         {
-            return NotFound();
+            TempData["WarningMessage"] = $"Không tìm thấy đợt đánh giá với ID = {batchId}.";
+            return RedirectToAction("Index", "EvaluationBatch");
         }
 
 

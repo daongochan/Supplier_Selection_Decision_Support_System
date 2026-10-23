@@ -289,6 +289,22 @@ else
     app.UseHsts();
 }
 
+// Cấu hình Localization: Hỗ trợ tiếng Việt với dấu phân cách thập phân chuẩn để model binder luôn đọc đúng số
+var defaultCulture = new System.Globalization.CultureInfo("vi-VN");
+defaultCulture.NumberFormat.NumberDecimalSeparator = ".";
+defaultCulture.NumberFormat.NumberGroupSeparator = ",";
+
+var supportedCultures = new[] { defaultCulture, System.Globalization.CultureInfo.InvariantCulture, new System.Globalization.CultureInfo("en-US") };
+
+var localizationOptions = new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture(defaultCulture),
+    SupportedCultures = supportedCultures,
+    SupportedUICultures = supportedCultures
+};
+
+app.UseRequestLocalization(localizationOptions);
+
 app.UseHttpsRedirection();
 
 // Security Headers Middleware
@@ -302,6 +318,24 @@ app.Use(async (context, next) =>
 
 // Response Compression (Brotli/Gzip)
 app.UseResponseCompression();
+
+// Bắt và chuyển hướng toàn bộ các HTTP status code không có body (400-599) sang Error view, chống màn hình trắng
+app.UseStatusCodePagesWithReExecute("/Home/Error", "?statusCode={0}");
+
+// Chỉ áp dụng StatusCodePages cho GET và HEAD để render giao diện chống màn hình trắng.
+// Các request POST/PUT/DELETE bị lỗi (như CSRF 400) giữ nguyên response code gốc mà không re-execute view.
+app.Use(async (context, next) =>
+{
+    if (!HttpMethods.IsGet(context.Request.Method) && !HttpMethods.IsHead(context.Request.Method))
+    {
+        var feature = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IStatusCodePagesFeature>();
+        if (feature != null)
+        {
+            feature.Enabled = false;
+        }
+    }
+    await next();
+});
 
 // Chặn tuyệt đối mọi truy cập trực tiếp tới file báo cáo qua static webroot TRƯỚC UseStaticFiles
 app.Use(async (context, next) =>
