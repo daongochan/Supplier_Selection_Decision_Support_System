@@ -37,13 +37,15 @@ public class TOPSISController : Controller
 
     [HttpGet]
     [Route("EvaluationBatch/{batchId:int}/TOPSIS")]
+    [Route("TOPSIS")]
+    [Route("TOPSIS/Index")]
     public async Task<IActionResult> Index(
         int batchId)
     {
         if (batchId <= 0)
         {
-            return BadRequest(
-                "Batch ID không hợp lệ.");
+            TempData["WarningMessage"] = "Vui lòng chọn một đợt đánh giá để xem kết quả xếp hạng TOPSIS.";
+            return RedirectToAction("Index", "EvaluationBatch");
         }
 
 
@@ -55,8 +57,8 @@ public class TOPSISController : Controller
 
         if (model == null)
         {
-            return NotFound(
-                $"Không tìm thấy Evaluation Batch với ID = {batchId}.");
+            TempData["WarningMessage"] = $"Không tìm thấy đợt đánh giá với ID = {batchId}.";
+            return RedirectToAction("Index", "EvaluationBatch");
         }
 
 

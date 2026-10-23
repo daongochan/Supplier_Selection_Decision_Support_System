@@ -4,6 +4,35 @@ Toàn bộ các thay đổi quan trọng về kiến trúc, thuật toán, bảo
 
 ---
 
+## [1.5.0] - 2026-10-24
+
+### Full-Sweep QA Audit & Blank Screen (P0) Remediation
+
+- **Tiệt trừ triệt để 100% lỗi Màn hình trắng (Blank Screen - P0):**
+  - **Tái hiện thực nghiệm:** Quét tự động 230 route × role combinations, phát hiện và lập danh mục chính xác 73 trường hợp trả về HTTP 404 với 0 byte body rỗng (`Content-Length: 0`).
+  - **Cấu hình Pipeline:** Kích hoạt `app.UseStatusCodePagesWithReExecute("/Home/Error", "?statusCode={0}")` bắt toàn bộ HTTP status code 400-599 rỗng body cho các truy vấn GET/HEAD, đảm bảo 100% route bị lỗi đều hiển thị trang HTML hợp lệ, có cấu trúc `#main-content`, logo và điều hướng.
+  - **Bảo vệ Endpoint POST:** Bổ sung middleware giới hạn `StatusCodePages` chỉ áp dụng cho GET/HEAD để bảo toàn status code gốc cho các form POST bị từ chối CSRF (HTTP 400 Bad Request).
+- **Thiết kế lại Giao diện Trang Lỗi (`Views/Shared/Error.cshtml`):**
+  - Thiết kế card giao diện theo phong cách Executive Navy+Gold sang trọng, đồng bộ với hệ thống Design System.
+  - Bản địa hóa thông điệp lỗi tiếng Việt thân thiện, rõ ràng theo từng mã phản hồi: 404 (Không tìm thấy trang), 403 (Truy cập bị từ chối), 400 (Yêu cầu không hợp lệ / CSRF hết hạn), 429 (Quá nhiều yêu cầu), 500 (Lỗi máy chủ nội bộ).
+  - Tích hợp nút thao tác nhanh: "Quay lại", "Về bảng điều khiển", cùng hiển thị mã `RequestId` tra cứu log.
+- **Sửa Broken Link trên Dashboard (P0):**
+  - Sửa liên kết `ApprovalController` không tồn tại tại `Views/Dashboard/Index.cshtml:796` thành `DecisionResultController.Index` với `batchId`, đưa người quản lý đến đúng màn hình phê duyệt đợt đánh giá.
+- **Graceful Routing cho MCDM Controllers (AHP, TOPSIS, DecisionResult, Evaluation, Report):**
+  - Bổ sung route mặc định không truyền `batchId` (`/AHP`, `/TOPSIS`, `/DecisionResult`, `/Evaluation`, `/Report`).
+  - Thay thế hành vi `NotFound()` bằng `RedirectToAction("Index", "EvaluationBatch")` kèm thông báo `TempData["WarningMessage"]` hướng dẫn người dùng chọn đợt đánh giá.
+- **Bổ sung CSS Design Tokens & Dark Theme Palette (`tokens.css`):**
+  - Bổ sung 5 tokens CSS còn thiếu: `--brand-primary`, `--primary`, `--muted-dark`, `--shadow-elevated`, `--shadow-sm`.
+  - Bổ sung toàn bộ biến `[data-theme="dark"]` / `[data-bs-theme="dark"]` với độ tương phản cao, triệt tiêu nguy cơ chữ trắng trên nền trắng khi trình duyệt bật dark mode.
+- **Cấu hình Request Localization:**
+  - Thiết lập `vi-VN` với `NumberDecimalSeparator = "."` và `NumberGroupSeparator = ","` để model binder phân giải chính xác số thập phân từ cả input HTML5 và định dạng văn bản.
+- **Mở rộng Test Suite:**
+  - Bổ sung bộ test tích hợp `SupplierSelectionDSS.Tests/Integration/RouteSmokeAndBlankScreenSweepTests.cs`.
+  - Tăng tổng số test tự động từ 190 lên **199 tests**, 100% Passed.
+  - Quét lại crawler: **0 trường hợp màn hình trắng** trên toàn bộ 230 route × role combinations.
+
+---
+
 ## [1.4.2] - 2026-10-23
 
 ### AHP Reciprocal Input Overhaul & Workflow Hardening

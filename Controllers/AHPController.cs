@@ -37,14 +37,16 @@ public class AHPController : Controller
     // =========================================================
 
     [HttpGet]
-    [Route(
-        "EvaluationBatch/{batchId:int}/AHP")]
+    [Route("EvaluationBatch/{batchId:int}/AHP")]
+    [Route("AHP")]
+    [Route("AHP/Index")]
     public async Task<IActionResult> Index(
         int batchId)
     {
         if (batchId <= 0)
         {
-            return NotFound();
+            TempData["WarningMessage"] = "Vui lòng chọn một đợt đánh giá để thực hiện phân tích ma trận AHP.";
+            return RedirectToAction("Index", "EvaluationBatch");
         }
 
 
@@ -56,8 +58,8 @@ public class AHPController : Controller
 
         if (model == null)
         {
-            return NotFound(
-                $"Không tìm thấy Evaluation Batch với ID = {batchId}.");
+            TempData["WarningMessage"] = $"Không tìm thấy đợt đánh giá với ID = {batchId}.";
+            return RedirectToAction("Index", "EvaluationBatch");
         }
 
 
