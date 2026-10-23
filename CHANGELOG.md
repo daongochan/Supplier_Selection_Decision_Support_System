@@ -4,6 +4,36 @@ Toàn bộ các thay đổi quan trọng về kiến trúc, thuật toán, bảo
 
 ---
 
+## [1.4.2] - 2026-10-23
+
+### AHP Reciprocal Input Overhaul & Workflow Hardening
+
+- **AHP Pairwise Scale Centralization & Reciprocal Mapping (Priority 1):**
+  - Added `Constants/SaatyScale.cs` with the complete 17-point Saaty scale (`1/9` to `9`), providing bidirectional mapping, exact 4-decimal fractions (`0.3333m` <-> `3.0000m`, `0.1111m` <-> `9.0000m`), and automated reciprocal calculation.
+  - Replaced decimal inputs in `Views/AHP/Index.cshtml` with discrete dropdowns defaulting to `"Select..."`, featuring instant lower-triangle reciprocal mirroring and real-time natural language pair explanations.
+  - Resolved floating point reciprocal drift that previously caused `1 / 0.1111 = 9.0009m`, strictly satisfying database constraint `CK_AHPComp_Value (BETWEEN 0.1111 AND 9)`.
+  - Adjusted `AHPCalculationService.ReciprocityTolerance` to `0.01` to safely accommodate standard 4-decimal fraction representations.
+  - Replaced technical RowVersion warning with a user-friendly concurrency advisory banner.
+- **Criteria Creation Blank Screen Fix:**
+  - Added `@section Styles` referencing `criteria.css` in `Views/Criteria/Create.cshtml`.
+  - Loaded base jQuery in `Views/Shared/_ValidationScriptsPartial.cshtml` before unobtrusive validation to eliminate `ReferenceError: jQuery is not defined`.
+  - Added top header back navigation and standardized validation feedback messages in English.
+- **Report Route HTTP 404 Resolution:**
+  - Corrected report view link in `Views/Dashboard/Index.cshtml` to target `Index` with `batchId`.
+  - Added backward-compatible `[HttpGet] [Route("Report/ViewReport")]` and `[Route("Report/Index")]` endpoints in `ReportController` to smoothly redirect legacy link structures.
+- **Product Group Supplier Assignment Overhaul:**
+  - Replaced collapsed inline checkbox list with a modern 2-column responsive card grid in `Views/ProductGroup/Suppliers.cshtml` and `wwwroot/css/pages/product-group.css`.
+  - Added instant search text filtering, selected counter badge, bulk selection controls ("Select All Visible", "Clear All"), full-card clickability, and unsaved changes navigation warnings.
+  - Preserved already-assigned inactive suppliers with dedicated `(Inactive)` badges.
+- **Audit Log Sensitive Credential Masking & Diff Pre-formatting:**
+  - Added regex sanitization in `AuditLogService` redacting `PasswordHash`, `password`, `token`, and `secret` in both logging and search workflows.
+  - Formatted JSON diff views in `Views/AuditLog/Index.cshtml` with scrollable `<pre class="audit-change-pre">` containers.
+- **English UI Synchronization & Automated Test Suite Expansion:**
+  - Localized remaining Vietnamese UI strings across Criteria, Report, AHP, and Product Group screens into clean English.
+  - Expanded automated test suite from 164 to **190 passing xUnit tests** with `CriteriaWorkflowTests` and `SaatyScaleAndWorkflowHardeningTests`.
+
+---
+
 ## [1.4.1] - 2026-10-23
 
 ### UI Assets, Layout Consistency & English Workspace Synchronization
