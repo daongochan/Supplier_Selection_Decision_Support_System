@@ -66,7 +66,9 @@ public class EvaluationService
 
             GroupName = batch.Group.GroupName,
 
-            Status = batch.Status
+            Status = batch.Status,
+
+            RowVersion = BatchConcurrencyHelper.ToBase64(batch.RowVersion)
         };
 
 
@@ -218,6 +220,9 @@ public class EvaluationService
         var existingLookup = existingScores
             .ToDictionary(x => (x.SupplierId, x.CriteriaId));
 
+        BatchConcurrencyHelper.VerifyExpectedRowVersion(batch, model.RowVersion);
+
+        var anyScoreChanged = false;
 
         // =====================================================
         // VALIDATE + SAVE
@@ -235,54 +240,65 @@ public class EvaluationService
                     "Supplier không thuộc Evaluation Batch.");
             }
 
+            if (row.Scores != null)
+            {
+                foreach (var submittedCriteriaId in row.Scores.Keys)
+                {
+                    if (!criteriaIds.Contains(submittedCriteriaId))
+                    {
+                        throw new BusinessRuleException(
+                            $"Tiêu chí ID {submittedCriteriaId} không thuộc Evaluation Batch.");
+                    }
+                }
+            }
+
+            if (row.ClearedCriteriaIds != null)
+            {
+                foreach (var clearedCriteriaId in row.ClearedCriteriaIds)
+                {
+                    if (!criteriaIds.Contains(clearedCriteriaId))
+                    {
+                        throw new BusinessRuleException(
+                            $"Tiêu chí ID {clearedCriteriaId} không thuộc Evaluation Batch.");
+                    }
+                }
+            }
 
             foreach (var criterion in criteria)
             {
                 var criterionId =
                     criterion.CriteriaId;
 
+                decimal? score = null;
+                var hasScoreEntry =
+                    row.Scores != null &&
+                    row.Scores.TryGetValue(
+                        criterionId,
+                        out score);
 
-                // -------------------------------------------------
-                // Lấy score
-                // -------------------------------------------------
-
-                row.Scores.TryGetValue(
-                    criterionId,
-                    out var score);
-
-
-                // -------------------------------------------------
-                // Tìm record hiện tại
-                // -------------------------------------------------
+                var isExplicitlyCleared =
+                    (row.ClearedCriteriaIds != null && row.ClearedCriteriaIds.Contains(criterionId))
+                    || (hasScoreEntry && !score.HasValue)
+                    || (model.ReplaceAllSubmittedCells && (!hasScoreEntry || !score.HasValue));
 
                 existingLookup.TryGetValue(
                     (row.SupplierId, criterionId),
                     out var existing);
 
-
-                // -------------------------------------------------
-                // Không nhập giá trị
-                // -------------------------------------------------
-
-                if (!score.HasValue)
+                if (!hasScoreEntry || !score.HasValue)
                 {
-                    /*
-                     * Nếu trước đó đã có score nhưng người dùng
-                     * xóa ô nhập liệu thì xóa record.
-                     */
-
-                    if (existing != null)
+                    if (isExplicitlyCleared && existing != null)
                     {
                         _context.EvaluationScores
                             .Remove(existing);
 
                         existingLookup.Remove(
                             (row.SupplierId, criterionId));
+                        anyScoreChanged = true;
                     }
 
                     continue;
                 }
-
 
                 // -------------------------------------------------
                 // Validation theo loại Criteria
@@ -291,7 +307,6 @@ public class EvaluationService
                 ValidateScore(
                     criterion,
                     score.Value);
-
 
                 // -------------------------------------------------
                 // INSERT
@@ -326,14 +341,14 @@ public class EvaluationService
                         .Add(entity);
 
                     existingLookup[(row.SupplierId, criterionId)] = entity;
+                    anyScoreChanged = true;
                 }
-
 
                 // -------------------------------------------------
                 // UPDATE
                 // -------------------------------------------------
 
-                else
+                else if (existing.ScoreValue != score.Value)
                 {
                     existing.ScoreValue =
                         score.Value;
@@ -343,49 +358,62 @@ public class EvaluationService
 
                     existing.EvaluatedAt =
                         DateTime.UtcNow;
+
+                    anyScoreChanged = true;
                 }
             }
         }
 
-        // -------------------------------------------------
-        // Invalidate stale TOPSIS results & ideals (scores changed)
-        // -------------------------------------------------
-        var staleTopsisResults = await _context.TopsisResults
-            .Where(x => x.BatchId == model.BatchId)
-            .ToListAsync();
-        if (staleTopsisResults.Count > 0)
+        if (!anyScoreChanged)
         {
-            _context.TopsisResults.RemoveRange(staleTopsisResults);
+            return;
         }
 
-        var staleTopsisIdeals = await _context.TopsisIdealSolutions
-            .Where(x => x.BatchId == model.BatchId)
-            .ToListAsync();
-        if (staleTopsisIdeals.Count > 0)
+        var strategy = _context.Database.CreateExecutionStrategy();
+        await strategy.ExecuteAsync(async () =>
         {
-            _context.TopsisIdealSolutions.RemoveRange(staleTopsisIdeals);
-        }
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                await BatchConcurrencyHelper.BumpAndVerifyBatchVersionAsync(
+                    _context,
+                    batch,
+                    model.RowVersion);
 
-        // -------------------------------------------------
-        // Invalidate stale pending/unfinalized Approvals
-        // -------------------------------------------------
-        var staleApprovals = await _context.Approvals
-            .Where(x => x.BatchId == model.BatchId && !x.IsFinal)
-            .ToListAsync();
-        if (staleApprovals.Count > 0)
-        {
-            _context.Approvals.RemoveRange(staleApprovals);
-        }
+                // -------------------------------------------------
+                // Invalidate stale TOPSIS results & ideals (scores changed)
+                // -------------------------------------------------
+                var staleTopsisResults = await _context.TopsisResults
+                    .Where(x => x.BatchId == model.BatchId)
+                    .ToListAsync();
+                if (staleTopsisResults.Count > 0)
+                {
+                    _context.TopsisResults.RemoveRange(staleTopsisResults);
+                }
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException ex)
-        {
-            _logger.LogWarning(ex, "Xung đột đồng thời khi lưu điểm đợt đánh giá {BatchId}.", model.BatchId);
-            throw new BusinessRuleException("Dữ liệu đợt đánh giá vừa được người khác thay đổi, vui lòng tải lại trang.");
-        }
+                var staleTopsisIdeals = await _context.TopsisIdealSolutions
+                    .Where(x => x.BatchId == model.BatchId)
+                    .ToListAsync();
+                if (staleTopsisIdeals.Count > 0)
+                {
+                    _context.TopsisIdealSolutions.RemoveRange(staleTopsisIdeals);
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogWarning(ex, "Xung đột đồng thời khi lưu điểm đợt đánh giá {BatchId}.", model.BatchId);
+                throw new BusinessRuleException(BatchConcurrencyHelper.ConcurrencyConflictMessage);
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        });
 
         _logger.LogInformation(
             "Lưu bảng điểm đánh giá cho đợt ID {BatchId} bởi User {UserId} thành công ({RowCount} nhà cung cấp).",

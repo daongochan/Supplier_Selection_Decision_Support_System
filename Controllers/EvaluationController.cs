@@ -110,6 +110,39 @@ public class EvaluationController : Controller
             // làm hỏng thao tác Save Evaluation.
         }
 
+        if (!ModelState.IsValid)
+        {
+            return await RenderEvaluationWithValidationErrorsAsync(model, beforeModel);
+        }
+
+        if (Request?.HasFormContentType == true)
+        {
+            var form = Request.Form;
+            for (var rowIndex = 0; rowIndex < (model.Rows?.Count ?? 0); rowIndex++)
+            {
+                var row = model.Rows![rowIndex];
+                if (beforeModel != null)
+                {
+                    foreach (var criterion in beforeModel.Criteria)
+                    {
+                        var fieldName = $"Rows[{rowIndex}].Scores[{criterion.CriteriaId}]";
+                        if (form.TryGetValue(fieldName, out var rawValues))
+                        {
+                            var rawText = rawValues.ToString().Trim();
+                            if (string.IsNullOrEmpty(rawText))
+                            {
+                                row.ClearedCriteriaIds.Add(criterion.CriteriaId);
+                            }
+                        }
+                        else if (model.ReplaceAllSubmittedCells)
+                        {
+                            row.ClearedCriteriaIds.Add(criterion.CriteriaId);
+                        }
+                    }
+                }
+            }
+        }
+
 
         try
         {
@@ -202,14 +235,16 @@ public class EvaluationController : Controller
         catch (
             BusinessRuleException ex)
         {
-            TempData["ErrorMessage"] =
-                ex.Message;
+            ModelState.AddModelError(string.Empty, ex.Message);
+            ViewData["ErrorMessage"] = ex.Message;
+            return await RenderEvaluationWithValidationErrorsAsync(model, beforeModel);
         }
         catch (
             ArgumentException ex)
         {
-            TempData["ErrorMessage"] =
-                ex.Message;
+            ModelState.AddModelError(string.Empty, ex.Message);
+            ViewData["ErrorMessage"] = ex.Message;
+            return await RenderEvaluationWithValidationErrorsAsync(model, beforeModel);
         }
         catch (Exception ex)
         {
@@ -229,6 +264,79 @@ public class EvaluationController : Controller
                 batchId =
                     model.BatchId
             });
+    }
+
+    private async Task<IActionResult> RenderEvaluationWithValidationErrorsAsync(
+        EvaluationScoreInputViewModel submitted,
+        EvaluationViewModel? currentViewModel)
+    {
+        var viewModel = currentViewModel ?? await _evaluationService.GetEvaluationAsync(submitted.BatchId);
+        if (viewModel == null)
+        {
+            return NotFound();
+        }
+
+        if (!string.IsNullOrWhiteSpace(submitted.RowVersion))
+        {
+            viewModel.RowVersion = submitted.RowVersion;
+        }
+
+        var rowMap = (submitted.Rows ?? new List<EvaluationScoreInputRowViewModel>())
+            .Select((r, idx) => (Row: r, Index: idx))
+            .GroupBy(x => x.Row.SupplierId)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        var hasFieldError = false;
+        foreach (var supplierRow in viewModel.Suppliers)
+        {
+            if (!rowMap.TryGetValue(supplierRow.SupplierId, out var submittedEntry))
+            {
+                continue;
+            }
+
+            var rIdx = submittedEntry.Index;
+            var sRow = submittedEntry.Row;
+
+            foreach (var criterion in viewModel.Criteria)
+            {
+                var cId = criterion.CriteriaId;
+                var fieldKey = $"Rows[{rIdx}].Scores[{cId}]";
+                if (!supplierRow.Scores.TryGetValue(cId, out var cell))
+                {
+                    cell = new EvaluationCellViewModel();
+                    supplierRow.Scores[cId] = cell;
+                }
+
+                if (Request?.HasFormContentType == true && Request.Form.TryGetValue(fieldKey, out var rawVal))
+                {
+                    cell.RawInput = rawVal.ToString();
+                }
+                else if (sRow.Scores != null && sRow.Scores.TryGetValue(cId, out var parsedVal))
+                {
+                    cell.Score = parsedVal;
+                    cell.RawInput = parsedVal?.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                }
+
+                if (ModelState.TryGetValue(fieldKey, out var stateEntry) && stateEntry.Errors.Count > 0)
+                {
+                    hasFieldError = true;
+                    cell.ErrorMessage = $"Invalid numeric value for '{criterion.CriteriaName}'. Please enter a valid number.";
+                    if (string.IsNullOrWhiteSpace(cell.RawInput) && !string.IsNullOrWhiteSpace(stateEntry.AttemptedValue))
+                    {
+                        cell.RawInput = stateEntry.AttemptedValue;
+                    }
+                }
+            }
+        }
+
+        if (hasFieldError && ViewData["ErrorMessage"] == null)
+        {
+            var msg = "One or more score cells contain invalid numeric values. No scores were deleted or modified. Please correct the highlighted cells and try again.";
+            ModelState.AddModelError(string.Empty, msg);
+            ViewData["ErrorMessage"] = msg;
+        }
+
+        return View("Index", viewModel);
     }
 
 

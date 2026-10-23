@@ -36,22 +36,39 @@ public class AccountController : Controller
 
     // GET: /Account/Login
     [HttpGet]
-    public IActionResult Login()
+    public IActionResult Login(string? returnUrl = null)
     {
         if (User.Identity?.IsAuthenticated == true)
         {
+            if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return LocalRedirect(returnUrl);
+            }
+
             return RedirectToAction("Index", "Dashboard");
         }
 
-        return View();
+        return View(new LoginViewModel
+        {
+            ReturnUrl = !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
+                ? returnUrl
+                : null
+        });
     }
 
     // POST: /Account/Login
     [HttpPost]
     [ValidateAntiForgeryToken]
     [EnableRateLimiting("LoginLimiter")]
-    public async Task<IActionResult> Login(LoginViewModel model)
+    public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
     {
+        var effectiveReturnUrl = !string.IsNullOrWhiteSpace(model.ReturnUrl)
+            ? model.ReturnUrl
+            : returnUrl;
+        model.ReturnUrl = !string.IsNullOrWhiteSpace(effectiveReturnUrl) && Url.IsLocalUrl(effectiveReturnUrl)
+            ? effectiveReturnUrl
+            : null;
+
         if (!ModelState.IsValid)
         {
             return View(model);
@@ -140,7 +157,8 @@ public class AccountController : Controller
             new(ClaimTypes.NameIdentifier, user.UserId.ToString()),
             new(ClaimTypes.Name, user.Username),
             new(ClaimTypes.GivenName, user.FullName),
-            new(ClaimTypes.Role, user.Role)
+            new(ClaimTypes.Role, user.Role),
+            new(AuthClaimTypes.PasswordStamp, AuthClaimTypes.ComputePasswordStamp(user.PasswordHash))
         };
 
         var identity = new ClaimsIdentity(
@@ -173,6 +191,11 @@ public class AccountController : Controller
             description: $"Đăng nhập thành công với vai trò '{user.Role}'.");
 
         _logger.LogInformation("Người dùng {Username} (ID {UserId}, Role {Role}) đăng nhập thành công.", user.Username, user.UserId, user.Role);
+
+        if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
+        {
+            return LocalRedirect(model.ReturnUrl);
+        }
 
         return RedirectToAction("Index", "Dashboard");
     }

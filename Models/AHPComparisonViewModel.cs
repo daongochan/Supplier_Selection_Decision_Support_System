@@ -10,6 +10,8 @@ public class AHPComparisonViewModel
 
     public string Status { get; set; } = string.Empty;
 
+    public string RowVersion { get; set; } = string.Empty;
+
     public List<AHPComparisonCriteriaViewModel> Criteria { get; set; } = new();
 
     public Dictionary<string, decimal> Values { get; set; } = new();

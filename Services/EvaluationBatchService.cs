@@ -399,6 +399,11 @@ public class EvaluationBatchService
                             DateTime.UtcNow
                     };
 
+                if (!_context.Database.IsRelational())
+                {
+                    BatchConcurrencyHelper.EnsureInitializedForInMemory(batch);
+                }
+
                 _context.EvaluationBatches.Add(
                     batch);
 
@@ -467,7 +472,8 @@ public class EvaluationBatchService
     // =========================================================
 
     public async Task StartAsync(
-        int batchId)
+        int batchId,
+        string? expectedRowVersion = null)
     {
         var batch =
             await _context.EvaluationBatches
@@ -496,6 +502,8 @@ public class EvaluationBatchService
             throw new BusinessRuleException(
                 "Evaluation Batch không tồn tại.");
         }
+
+        BatchConcurrencyHelper.VerifyExpectedRowVersion(batch, expectedRowVersion);
 
 
         // =====================================================
@@ -652,12 +660,17 @@ public class EvaluationBatchService
 
         try
         {
+            await BatchConcurrencyHelper.BumpAndVerifyBatchVersionAsync(
+                _context,
+                batch,
+                expectedRowVersion,
+                newStatus: BatchStatus.Evaluating);
             await _context.SaveChangesAsync();
         }
         catch (DbUpdateConcurrencyException ex)
         {
             _logger.LogWarning(ex, "Xung đột đồng thời khi bắt đầu đợt đánh giá {BatchId}.", batchId);
-            throw new BusinessRuleException("Dữ liệu đợt đánh giá vừa được người khác thay đổi, vui lòng tải lại trang.");
+            throw new BusinessRuleException(BatchConcurrencyHelper.ConcurrencyConflictMessage);
         }
 
         _logger.LogInformation(
@@ -673,7 +686,8 @@ public class EvaluationBatchService
 
     public async Task CancelAsync(
         int batchId,
-        string? reason = null)
+        string? reason = null,
+        string? expectedRowVersion = null)
     {
         var batch = await _context.EvaluationBatches
             .FirstOrDefaultAsync(x => x.BatchId == batchId);
@@ -684,14 +698,16 @@ public class EvaluationBatchService
                 "Evaluation Batch không tồn tại.");
         }
 
+        BatchConcurrencyHelper.VerifyExpectedRowVersion(batch, expectedRowVersion);
         EvaluationBatchStateRules.EnsureCanCancel(batch.Status);
 
+        var cancelledAt = DateTime.UtcNow;
         batch.Status = BatchStatus.Cancelled;
-        batch.CancelledAt = DateTime.UtcNow;
+        batch.CancelledAt = cancelledAt;
 
         if (!string.IsNullOrWhiteSpace(reason))
         {
-            var note = $"[Lý do hủy]: {reason.Trim()}";
+            var note = $"[Cancellation Reason]: {reason.Trim()}";
             batch.Description = string.IsNullOrWhiteSpace(batch.Description)
                 ? note
                 : $"{batch.Description}\n{note}";
@@ -699,12 +715,18 @@ public class EvaluationBatchService
 
         try
         {
+            await BatchConcurrencyHelper.BumpAndVerifyBatchVersionAsync(
+                _context,
+                batch,
+                expectedRowVersion,
+                newStatus: BatchStatus.Cancelled,
+                cancelledAt: cancelledAt);
             await _context.SaveChangesAsync();
         }
         catch (DbUpdateConcurrencyException ex)
         {
             _logger.LogWarning(ex, "Xung đột đồng thời khi hủy đợt đánh giá {BatchId}.", batchId);
-            throw new BusinessRuleException("Dữ liệu đợt đánh giá vừa được người khác thay đổi, vui lòng tải lại trang.");
+            throw new BusinessRuleException(BatchConcurrencyHelper.ConcurrencyConflictMessage);
         }
 
         _logger.LogInformation(
@@ -766,6 +788,10 @@ public class EvaluationBatchService
             .Include(
                 x =>
                     x.Ahpresult)
+
+            .Include(
+                x =>
+                    x.AhpcriteriaWeights)
 
             .Include(
                 x =>

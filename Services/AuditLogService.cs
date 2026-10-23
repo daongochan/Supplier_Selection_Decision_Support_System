@@ -120,7 +120,7 @@ public class AuditLogService
             int pageSize = 15)
     {
         pageNumber = Math.Max(pageNumber, 1);
-        pageSize = Math.Max(pageSize, 1);
+        pageSize = Math.Clamp(pageSize, 1, 100);
 
         keyword =
             keyword?.Trim();
@@ -222,17 +222,29 @@ public class AuditLogService
         }
 
         var totalCount = await query.CountAsync();
-        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        var totalPages = totalCount == 0 ? 0 : (int)Math.Ceiling(totalCount / (double)pageSize);
+        if (totalPages > 0 && pageNumber > totalPages)
+        {
+            pageNumber = totalPages;
+        }
+        else if (totalPages == 0)
+        {
+            pageNumber = 1;
+        }
 
-        var logs =
-            await query
+        var skipLong = ((long)pageNumber - 1L) * pageSize;
+        var skip = (int)Math.Clamp(skipLong, 0L, int.MaxValue);
+
+        var logs = totalCount == 0
+            ? new List<AuditLogListItemViewModel>()
+            : await query
                 .OrderByDescending(
                     x =>
                         x.ActionTime)
                 .ThenByDescending(
                     x =>
                         x.LogId)
-                .Skip((pageNumber - 1) * pageSize)
+                .Skip(skip)
                 .Take(pageSize)
                 .Select(
                     x =>

@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using SupplierSelectionDSS.Data;
 using SupplierSelectionDSS.Data.Entities;
@@ -8,6 +9,7 @@ namespace SupplierSelectionDSS.Services;
 
 public class UserService
 {
+    private static readonly SemaphoreSlim AdminMutationGate = new(1, 1);
     private readonly ApplicationDbContext _context;
 
 
@@ -315,142 +317,147 @@ public class UserService
         ValidateRole(
             model.Role);
 
-
         ValidateStatus(
             model.Status);
 
+        var strategy = _context.Database.CreateExecutionStrategy();
 
-        var user =
-            await _context.Users
-                .FirstOrDefaultAsync(
-                    x =>
-                        x.UserId ==
-                        model.UserId);
-
-
-        if (user == null)
+        await strategy.ExecuteAsync(async () =>
         {
-            throw new KeyNotFoundException(
-                "Không tìm thấy người dùng.");
-        }
-
-
-        // =====================================================
-        // USERNAME
-        // =====================================================
-
-        var username =
-            model.Username.Trim();
-
-
-        if (
-            await UsernameExistsAsync(
-                username,
-                model.UserId))
-        {
-            throw new InvalidOperationException(
-                "Username đã tồn tại.");
-        }
-
-
-        // Username được giữ nguyên về mặt nghiệp vụ.
-        user.Username =
-            user.Username.Trim();
-
-
-        // =====================================================
-        // SELF STATUS PROTECTION
-        // =====================================================
-
-        if (
-            user.UserId ==
-            currentUserId &&
-            !string.Equals(
-                model.Status,
-                EntityStatus.Active,
-                StringComparison.OrdinalIgnoreCase))
-        {
-            throw new InvalidOperationException(
-                "Bạn không thể khóa hoặc vô hiệu hóa chính tài khoản đang đăng nhập.");
-        }
-
-
-        // =====================================================
-        // LAST ADMIN PROTECTION
-        // =====================================================
-
-        var isCurrentlyActiveAdmin =
-            string.Equals(user.Role, UserRole.Administrator, StringComparison.OrdinalIgnoreCase) &&
-            string.Equals(user.Status, EntityStatus.Active, StringComparison.OrdinalIgnoreCase);
-
-        var willRemainActiveAdmin =
-            string.Equals(model.Role, UserRole.Administrator, StringComparison.OrdinalIgnoreCase) &&
-            string.Equals(model.Status, EntityStatus.Active, StringComparison.OrdinalIgnoreCase);
-
-        if (isCurrentlyActiveAdmin && !willRemainActiveAdmin)
-        {
-            var activeAdminCount =
-                await _context.Users
-                    .CountAsync(
-                        x =>
-                            x.Role ==
-                                UserRole.Administrator
-                            &&
-                            x.Status ==
-                                EntityStatus.Active);
-
-
-            if (activeAdminCount <= 1)
+            await AdminMutationGate.WaitAsync();
+            try
             {
-                throw new InvalidOperationException(
-                    "Không thể vô hiệu hóa hoặc hạ quyền Administrator đang hoạt động cuối cùng của hệ thống.");
+                await using var transaction = _context.Database.IsRelational()
+                    ? await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable)
+                    : null;
+
+                try
+                {
+                    var user =
+                        await _context.Users
+                            .FirstOrDefaultAsync(
+                                x =>
+                                    x.UserId ==
+                                    model.UserId);
+
+                    if (user == null)
+                    {
+                        throw new KeyNotFoundException(
+                            "Không tìm thấy người dùng.");
+                    }
+
+                    var username =
+                        model.Username.Trim();
+
+                    if (
+                        await UsernameExistsAsync(
+                            username,
+                            model.UserId))
+                    {
+                        throw new InvalidOperationException(
+                            "Username đã tồn tại.");
+                    }
+
+                    user.Username =
+                        user.Username.Trim();
+
+                    if (
+                        user.UserId ==
+                        currentUserId &&
+                        !string.Equals(
+                            model.Status,
+                            EntityStatus.Active,
+                            StringComparison.OrdinalIgnoreCase))
+                    {
+                        throw new InvalidOperationException(
+                            "Bạn không thể khóa hoặc vô hiệu hóa chính tài khoản đang đăng nhập.");
+                    }
+
+                    var isCurrentlyActiveAdmin =
+                        string.Equals(user.Role, UserRole.Administrator, StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(user.Status, EntityStatus.Active, StringComparison.OrdinalIgnoreCase);
+
+                    var willRemainActiveAdmin =
+                        string.Equals(model.Role, UserRole.Administrator, StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(model.Status, EntityStatus.Active, StringComparison.OrdinalIgnoreCase);
+
+                    if (isCurrentlyActiveAdmin && !willRemainActiveAdmin)
+                    {
+                        var activeAdminCount =
+                            await _context.Users
+                                .CountAsync(
+                                    x =>
+                                        x.Role == UserRole.Administrator
+                                        && x.Status == EntityStatus.Active);
+
+                        if (activeAdminCount <= 1)
+                        {
+                            throw new InvalidOperationException(
+                                "Không thể vô hiệu hóa hoặc hạ quyền Administrator đang hoạt động cuối cùng của hệ thống.");
+                        }
+                    }
+
+                    user.FullName =
+                        model.FullName.Trim();
+
+                    user.Email =
+                        NormalizeNullable(
+                            model.Email);
+
+                    user.Phone =
+                        NormalizeNullable(
+                            model.Phone);
+
+                    user.Role =
+                        model.Role;
+
+                    user.Status =
+                        model.Status;
+
+                    if (
+                        !string.IsNullOrWhiteSpace(
+                            model.Password))
+                    {
+                        user.PasswordHash =
+                            BCrypt.Net.BCrypt.HashPassword(
+                                model.Password);
+                    }
+
+                    user.UpdatedAt =
+                        DateTime.UtcNow;
+
+                    await _context.SaveChangesAsync();
+
+                    if (isCurrentlyActiveAdmin && !willRemainActiveAdmin)
+                    {
+                        var remainingActiveAdmins = await _context.Users
+                            .CountAsync(x => x.Role == UserRole.Administrator && x.Status == EntityStatus.Active);
+                        if (remainingActiveAdmins < 1)
+                        {
+                            throw new InvalidOperationException(
+                                "Không thể vô hiệu hóa hoặc hạ quyền Administrator đang hoạt động cuối cùng của hệ thống.");
+                        }
+                    }
+
+                    if (transaction != null)
+                    {
+                        await transaction.CommitAsync();
+                    }
+                }
+                catch
+                {
+                    if (transaction != null)
+                    {
+                        await transaction.RollbackAsync();
+                    }
+                    throw;
+                }
             }
-        }
-
-
-        // =====================================================
-        // UPDATE
-        // =====================================================
-
-        user.FullName =
-            model.FullName.Trim();
-
-
-        user.Email =
-            NormalizeNullable(
-                model.Email);
-
-
-        user.Phone =
-            NormalizeNullable(
-                model.Phone);
-
-
-        user.Role =
-            model.Role;
-
-
-        user.Status =
-            model.Status;
-
-
-        // Password chỉ thay đổi khi người dùng nhập mới.
-
-        if (
-            !string.IsNullOrWhiteSpace(
-                model.Password))
-        {
-            user.PasswordHash =
-                BCrypt.Net.BCrypt.HashPassword(
-                    model.Password);
-        }
-
-
-        user.UpdatedAt =
-            DateTime.UtcNow;
-
-
-        await _context.SaveChangesAsync();
+            finally
+            {
+                AdminMutationGate.Release();
+            }
+        });
     }
 
 
@@ -475,42 +482,88 @@ public class UserService
 
     public async Task<User> ToggleStatusAsync(int id, int currentUserId)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(x => x.UserId == id);
-        if (user == null)
-        {
-            throw new KeyNotFoundException("Không tìm thấy người dùng.");
-        }
+        var strategy = _context.Database.CreateExecutionStrategy();
 
-        if (user.UserId == currentUserId)
+        return await strategy.ExecuteAsync(async () =>
         {
-            throw new InvalidOperationException("Bạn không thể thay đổi trạng thái của chính tài khoản đang đăng nhập.");
-        }
-
-        if (user.Role == UserRole.Administrator && user.Status == EntityStatus.Active)
-        {
-            var activeAdminCount = await _context.Users.CountAsync(x =>
-                x.Role == UserRole.Administrator &&
-                x.Status == EntityStatus.Active);
-
-            if (activeAdminCount <= 1)
+            await AdminMutationGate.WaitAsync();
+            try
             {
-                throw new InvalidOperationException("Không thể vô hiệu hóa Administrator cuối cùng của hệ thống.");
+                await using var transaction = _context.Database.IsRelational()
+                    ? await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable)
+                    : null;
+
+                try
+                {
+                    var user = await _context.Users.FirstOrDefaultAsync(x => x.UserId == id);
+                    if (user == null)
+                    {
+                        throw new KeyNotFoundException("Không tìm thấy người dùng.");
+                    }
+
+                    if (user.UserId == currentUserId)
+                    {
+                        throw new InvalidOperationException("Bạn không thể thay đổi trạng thái của chính tài khoản đang đăng nhập.");
+                    }
+
+                    var isDeactivatingActiveAdmin =
+                        string.Equals(user.Role, UserRole.Administrator, StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(user.Status, EntityStatus.Active, StringComparison.OrdinalIgnoreCase);
+
+                    if (isDeactivatingActiveAdmin)
+                    {
+                        var activeAdminCount = await _context.Users.CountAsync(x =>
+                            x.Role == UserRole.Administrator &&
+                            x.Status == EntityStatus.Active);
+
+                        if (activeAdminCount <= 1)
+                        {
+                            throw new InvalidOperationException("Không thể vô hiệu hóa Administrator cuối cùng của hệ thống.");
+                        }
+                    }
+
+                    if (user.Status == EntityStatus.Active)
+                    {
+                        user.Status = EntityStatus.Inactive;
+                    }
+                    else
+                    {
+                        user.Status = EntityStatus.Active;
+                    }
+
+                    user.UpdatedAt = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+
+                    if (isDeactivatingActiveAdmin)
+                    {
+                        var remainingActiveAdmins = await _context.Users
+                            .CountAsync(x => x.Role == UserRole.Administrator && x.Status == EntityStatus.Active);
+                        if (remainingActiveAdmins < 1)
+                        {
+                            throw new InvalidOperationException("Không thể vô hiệu hóa Administrator cuối cùng của hệ thống.");
+                        }
+                    }
+
+                    if (transaction != null)
+                    {
+                        await transaction.CommitAsync();
+                    }
+                    return user;
+                }
+                catch
+                {
+                    if (transaction != null)
+                    {
+                        await transaction.RollbackAsync();
+                    }
+                    throw;
+                }
             }
-        }
-
-        if (user.Status == EntityStatus.Active)
-        {
-            user.Status = EntityStatus.Inactive;
-        }
-        else
-        {
-            user.Status = EntityStatus.Active;
-        }
-
-        user.UpdatedAt = DateTime.UtcNow;
-        await _context.SaveChangesAsync();
-
-        return user;
+            finally
+            {
+                AdminMutationGate.Release();
+            }
+        });
     }
 
 

@@ -18,11 +18,11 @@ public class PagedResult<T> : IPagedResult
 
     public bool HasNextPage => PageNumber < TotalPages;
 
-    public int StartItemNumber => TotalCount == 0
-        ? 0
-        : ((PageNumber - 1) * PageSize) + 1;
+    public int StartItemNumber =>
+        PaginationCalculationHelper.CalculateStartItemNumber(PageNumber, PageSize, TotalCount);
 
-    public int EndItemNumber => Math.Min(PageNumber * PageSize, TotalCount);
+    public int EndItemNumber =>
+        PaginationCalculationHelper.CalculateEndItemNumber(PageNumber, PageSize, TotalCount);
 
     public static async Task<PagedResult<T>> CreateAsync(IQueryable<T> query, int pageNumber, int pageSize)
     {
@@ -30,12 +30,25 @@ public class PagedResult<T> : IPagedResult
         pageSize = Math.Clamp(pageSize, 1, 100);
 
         var totalCount = await query.CountAsync();
-        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        var totalPages = totalCount == 0 ? 0 : (int)Math.Ceiling(totalCount / (double)pageSize);
+        if (totalPages > 0 && pageNumber > totalPages)
+        {
+            pageNumber = totalPages;
+        }
+        else if (totalPages == 0)
+        {
+            pageNumber = 1;
+        }
 
-        var items = await query
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
+        var skipLong = ((long)pageNumber - 1L) * pageSize;
+        var skip = (int)Math.Clamp(skipLong, 0L, int.MaxValue);
+
+        var items = totalCount == 0
+            ? new List<T>()
+            : await query
+                .Skip(skip)
+                .Take(pageSize)
+                .ToListAsync();
 
         return new PagedResult<T>
         {

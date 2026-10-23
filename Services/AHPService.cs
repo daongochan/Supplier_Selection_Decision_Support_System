@@ -107,6 +107,7 @@ public class AHPService
                 BatchCode = batch.BatchCode,
                 BatchName = batch.BatchName,
                 Status = batch.Status,
+                RowVersion = BatchConcurrencyHelper.ToBase64(batch.RowVersion),
                 Criteria = criteria
             };
 
@@ -170,6 +171,7 @@ public class AHPService
         }
 
         EnsureBatchIsEvaluating(batch.Status);
+        BatchConcurrencyHelper.VerifyExpectedRowVersion(batch, model.RowVersion);
 
         var criteria =
             batch.Criteria
@@ -195,6 +197,39 @@ public class AHPService
             criteriaIds,
             criteria.Count);
 
+        var existingComparisonsPreCheck =
+            await _context.AhppairwiseComparisons
+                .AsNoTracking()
+                .Where(x => x.BatchId == model.BatchId)
+                .ToListAsync();
+
+        if (existingComparisonsPreCheck.Count == criteria.Count * criteria.Count)
+        {
+            var existingMap = existingComparisonsPreCheck.ToDictionary(
+                x => (x.CriteriaRowId, x.CriteriaColId),
+                x => x.ComparisonValue);
+
+            var anyChanged = false;
+            foreach (var item in model.Comparisons)
+            {
+                var value = Math.Round(item.Value, 4, MidpointRounding.AwayFromZero);
+                var inverseValue = Math.Round(1m / value, 4, MidpointRounding.AwayFromZero);
+                if (!existingMap.TryGetValue((item.CriteriaRowId, item.CriteriaColId), out var oldDirect) ||
+                    oldDirect != value ||
+                    !existingMap.TryGetValue((item.CriteriaColId, item.CriteriaRowId), out var oldInverse) ||
+                    oldInverse != inverseValue)
+                {
+                    anyChanged = true;
+                    break;
+                }
+            }
+
+            if (!anyChanged)
+            {
+                return;
+            }
+        }
+
         var evaluationTimestamp =
             DateTime.UtcNow;
 
@@ -207,6 +242,11 @@ public class AHPService
 
             try
             {
+                await BatchConcurrencyHelper.BumpAndVerifyBatchVersionAsync(
+                    _context,
+                    batch,
+                    model.RowVersion);
+
                 // -------------------------------------------------
                 // Remove previous matrix
                 // -------------------------------------------------
@@ -366,15 +406,6 @@ public class AHPService
                     _context.TopsisIdealSolutions.RemoveRange(staleTopsisIdeals);
                 }
 
-                // Invalidate stale pending/unfinalized Approvals
-                var staleApprovals = await _context.Approvals
-                    .Where(x => x.BatchId == model.BatchId && !x.IsFinal)
-                    .ToListAsync();
-                if (staleApprovals.Count > 0)
-                {
-                    _context.Approvals.RemoveRange(staleApprovals);
-                }
-
                 await _context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
@@ -408,11 +439,11 @@ public class AHPService
 
     public async Task<AHPResultViewModel>
         CalculateAsync(
-            int batchId)
+            int batchId,
+            string? expectedRowVersion = null)
     {
         var batch =
             await _context.EvaluationBatches
-                .AsNoTracking()
                 .Include(x => x.Criteria)
                 .FirstOrDefaultAsync(
                     x => x.BatchId == batchId);
@@ -424,6 +455,7 @@ public class AHPService
         }
 
         EnsureBatchIsEvaluating(batch.Status);
+        BatchConcurrencyHelper.VerifyExpectedRowVersion(batch, expectedRowVersion);
 
         var criteria =
             batch.Criteria
@@ -510,6 +542,11 @@ public class AHPService
 
             try
             {
+                await BatchConcurrencyHelper.BumpAndVerifyBatchVersionAsync(
+                    _context,
+                    batch,
+                    expectedRowVersion);
+
                 // -------------------------------------------------
                 // Remove old result
                 // -------------------------------------------------
@@ -556,15 +593,6 @@ public class AHPService
                 if (staleTopsisIdeals.Count > 0)
                 {
                     _context.TopsisIdealSolutions.RemoveRange(staleTopsisIdeals);
-                }
-
-                // Invalidate stale pending/unfinalized Approvals
-                var staleApprovals = await _context.Approvals
-                    .Where(x => x.BatchId == batchId && !x.IsFinal)
-                    .ToListAsync();
-                if (staleApprovals.Count > 0)
-                {
-                    _context.Approvals.RemoveRange(staleApprovals);
                 }
 
                 var calculatedAt =
