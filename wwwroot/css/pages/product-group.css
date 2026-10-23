@@ -105,6 +105,16 @@
    2. FILTER & SEARCH BAR
    ========================================================= */
 
+.filter-card {
+    margin-bottom: 24px;
+    padding: 20px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    box-sizing: border-box;
+}
+
 .group-filter {
     display: grid;
     grid-template-columns: minmax(0, 2.5fr) minmax(200px, 1.2fr) auto;
@@ -255,6 +265,33 @@
     display: inline-block;
 }
 
+.btn-action-dots {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-sm, 8px);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+    box-sizing: border-box;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-action-dots:hover,
+.btn-action-dots:focus-visible,
+.group-actions-dropdown.is-open .btn-action-dots {
+    background: var(--canvas-soft);
+    color: var(--ink);
+    border-color: var(--border-strong);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    outline: none;
+}
+
 .group-actions-menu {
     position: absolute;
     right: 0;
@@ -270,6 +307,17 @@
     flex-direction: column;
     gap: 2px;
     animation: dropdownFadeIn 0.15s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .group-actions-dropdown.is-open .group-actions-menu {

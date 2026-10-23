@@ -1,7 +1,7 @@
 @model SupplierSelectionDSS.Models.ProductGroupIndexViewModel
 
 @{
-    ViewData["Title"] = "Nhóm hàng";
+    ViewData["Title"] = "Product Groups";
 
     var activePercent = Model.TotalGroups > 0 
         ? (Model.ActiveGroups * 100.0 / Model.TotalGroups).ToString("0.#") 
@@ -20,15 +20,15 @@
      ========================================================= -->
 <div class="page-header">
     <div>
-        <h1 class="page-title">Nhóm hàng</h1>
+        <h1 class="page-title">Product Groups</h1>
         <p class="page-description">
-            Quản lý các nhóm hàng hóa, dịch vụ và cấu hình phân bổ nhà cung cấp trong hệ thống đánh giá.
+            Manage product categories, procurement classifications, and supplier associations.
         </p>
     </div>
 
     <a asp-action="Create" class="btn-primary">
         <i class="bi bi-plus-lg"></i>
-        <span>Thêm nhóm hàng</span>
+        <span>New Product Group</span>
     </a>
 </div>
 
@@ -36,14 +36,14 @@
      KPI SUMMARY GRID (100% GENUINE DATABASE METRICS)
      ========================================================= -->
 <div class="group-kpi-grid">
-    <!-- Card 1: Tổng nhóm hàng -->
+    <!-- Card 1: Total Groups -->
     <div class="group-kpi-card">
         <div class="group-kpi-content">
-            <span class="group-kpi-label">Tổng nhóm hàng</span>
+            <span class="group-kpi-label">Total Groups</span>
             <span class="group-kpi-value">@Model.TotalGroups.ToString("N0")</span>
             <div class="group-kpi-meta">
                 <span class="kpi-meta-pill pill-blue">
-                    <i class="bi bi-boxes"></i> Phân loại hệ thống
+                    <i class="bi bi-boxes"></i> System categories
                 </span>
             </div>
         </div>
@@ -52,14 +52,14 @@
         </div>
     </div>
 
-    <!-- Card 2: Đang hoạt động -->
+    <!-- Card 2: Active Groups -->
     <div class="group-kpi-card">
         <div class="group-kpi-content">
-            <span class="group-kpi-label">Đang hoạt động</span>
+            <span class="group-kpi-label">Active</span>
             <span class="group-kpi-value">@Model.ActiveGroups.ToString("N0")</span>
             <div class="group-kpi-meta">
                 <span class="kpi-meta-pill pill-green">
-                    <i class="bi bi-check2"></i> @activePercent% tổng số
+                    <i class="bi bi-check2"></i> @activePercent% of total
                 </span>
             </div>
         </div>
@@ -68,14 +68,14 @@
         </div>
     </div>
 
-    <!-- Card 3: Ngừng hoạt động -->
+    <!-- Card 3: Inactive Groups -->
     <div class="group-kpi-card">
         <div class="group-kpi-content">
-            <span class="group-kpi-label">Ngừng hoạt động</span>
+            <span class="group-kpi-label">Inactive</span>
             <span class="group-kpi-value">@Model.InactiveGroups.ToString("N0")</span>
             <div class="group-kpi-meta">
                 <span class="kpi-meta-pill pill-muted">
-                    <i class="bi bi-pause"></i> @inactivePercent% tổng số
+                    <i class="bi bi-pause"></i> @inactivePercent% of total
                 </span>
             </div>
         </div>
@@ -84,14 +84,14 @@
         </div>
     </div>
 
-    <!-- Card 4: Nhà cung cấp liên kết -->
+    <!-- Card 4: Linked Suppliers -->
     <div class="group-kpi-card">
         <div class="group-kpi-content">
-            <span class="group-kpi-label">Nhà cung cấp liên kết</span>
+            <span class="group-kpi-label">Linked Suppliers</span>
             <span class="group-kpi-value">@Model.TotalLinkedSuppliers.ToString("N0")</span>
             <div class="group-kpi-meta">
                 <span class="kpi-meta-pill pill-indigo">
-                    <i class="bi bi-building-check"></i> Đã gán nhóm hàng
+                    <i class="bi bi-building-check"></i> Group assignments
                 </span>
             </div>
         </div>
@@ -110,38 +110,38 @@
 
         <!-- 1. Keyword Search -->
         <div class="filter-field">
-            <label for="keyword">Tìm kiếm</label>
+            <label for="keyword">Search</label>
             <input id="keyword"
                    name="keyword"
                    value="@Model.Keyword"
                    class="form-control"
-                   placeholder="Mã nhóm, tên nhóm, mô tả..." />
+                   placeholder="Group code, name, description..." />
         </div>
 
         <!-- 2. Status Dropdown -->
         <div class="filter-field">
-            <label for="status">Trạng thái</label>
+            <label for="status">Status</label>
             <select id="status" name="status" class="form-control">
                 <option value="All" selected="@(string.IsNullOrEmpty(Model.Status) || Model.Status == "All")">
-                    Tất cả trạng thái
+                    All Statuses
                 </option>
                 <option value="Active" selected="@(Model.Status == "Active")">
-                    Đang hoạt động
+                    Active
                 </option>
                 <option value="Inactive" selected="@(Model.Status == "Inactive")">
-                    Ngừng hoạt động
+                    Inactive
                 </option>
             </select>
         </div>
 
         <!-- 3. Filter Action Buttons (Same height 42px) -->
         <div class="filter-actions">
-            <button type="submit" class="btn-primary" title="Tìm kiếm">
-                Tìm kiếm
+            <button type="submit" class="btn-primary" title="Search">
+                Search
             </button>
 
-            <a asp-action="Index" class="btn-outline" title="Đặt lại bộ lọc">
-                Đặt lại
+            <a asp-action="Index" class="btn-outline" title="Reset filter">
+                Reset
             </a>
         </div>
     </form>
@@ -157,12 +157,12 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th style="width: 140px;">Mã nhóm</th>
-                        <th style="min-width: 220px;">Tên nhóm hàng</th>
-                        <th style="min-width: 260px;">Mô tả</th>
-                        <th style="width: 160px;">Nhà cung cấp</th>
-                        <th style="width: 150px;">Trạng thái</th>
-                        <th style="width: 70px; text-align: center;">Thao tác</th>
+                        <th style="width: 140px;">Code</th>
+                        <th style="min-width: 220px;">Product Group Name</th>
+                        <th style="min-width: 260px;">Description</th>
+                        <th style="width: 160px;">Suppliers</th>
+                        <th style="width: 150px;">Status</th>
+                        <th style="width: 70px; text-align: center;">Actions</th>
                     </tr>
                 </thead>
 
@@ -171,12 +171,12 @@
                     {
                         var supplierCount = group.Suppliers?.Count ?? 0;
                         <tr>
-                            <!-- Mã nhóm -->
+                            <!-- Group Code -->
                             <td>
                                 <span class="group-code-badge">@group.GroupCode</span>
                             </td>
 
-                            <!-- Tên nhóm hàng -->
+                            <!-- Group Name -->
                             <td>
                                 <div class="group-name-cell">
                                     <a asp-action="Edit" asp-route-id="@group.GroupId" class="group-name-link">
@@ -185,7 +185,7 @@
                                 </div>
                             </td>
 
-                            <!-- Mô tả -->
+                            <!-- Description -->
                             <td>
                                 @if (!string.IsNullOrWhiteSpace(group.Description))
                                 {
@@ -199,35 +199,37 @@
                                 }
                             </td>
 
-                            <!-- Nhà cung cấp liên kết -->
+                            <!-- Linked Suppliers -->
                             <td>
                                 <a asp-action="Suppliers" asp-route-id="@group.GroupId" 
                                    class="group-suppliers-pill @(supplierCount == 0 ? "is-empty" : "")"
-                                   title="Xem và quản lý nhà cung cấp thuộc nhóm này">
+                                   title="View and manage suppliers assigned to this group">
                                     <i class="bi bi-building"></i>
-                                    <span>@supplierCount NCC</span>
+                                    <span>@supplierCount @(supplierCount == 1 ? "Supplier" : "Suppliers")</span>
                                 </a>
                             </td>
 
-                            <!-- Trạng thái -->
+                            <!-- Status -->
                             <td>
                                 @if (group.Status == "Active")
                                 {
-                                    <span class="status-pill status-active">Hoạt động</span>
+                                    <span class="status-pill status-active">Active</span>
                                 }
                                 else
                                 {
-                                    <span class="status-pill status-inactive">Ngừng hoạt động</span>
+                                    <span class="status-pill status-inactive">Inactive</span>
                                 }
                             </td>
 
-                            <!-- Thao tác dropdown [ ⋯ ] -->
+                            <!-- Actions dropdown [ ⋯ ] -->
                             <td style="text-align: center;">
                                 <div class="group-actions-dropdown">
                                     <button type="button"
                                             class="btn-action-dots"
-                                            aria-label="Thao tác cho @group.GroupName"
-                                            title="Thao tác">
+                                            aria-label="Actions for @group.GroupName"
+                                            aria-haspopup="true"
+                                            aria-expanded="false"
+                                            title="Actions">
                                         <i class="bi bi-three-dots-vertical"></i>
                                     </button>
 
@@ -236,14 +238,14 @@
                                            asp-route-id="@group.GroupId"
                                            class="group-action-item">
                                             <i class="bi bi-pencil"></i>
-                                            <span>Chỉnh sửa</span>
+                                            <span>Edit</span>
                                         </a>
 
                                         <a asp-action="Suppliers"
                                            asp-route-id="@group.GroupId"
                                            class="group-action-item">
                                             <i class="bi bi-building-check"></i>
-                                            <span>Gán nhà cung cấp</span>
+                                            <span>Assign Suppliers</span>
                                         </a>
 
                                         <div class="group-action-divider"></div>
@@ -257,18 +259,18 @@
                                                    value="@group.GroupId" />
                                             <button type="submit"
                                                     class="group-action-item @(group.Status == "Active" ? "text-danger" : "text-success")"
-                                                    data-dss-confirm="@(group.Status == "Active" ? $"Bạn có chắc chắn muốn ngừng hoạt động nhóm hàng \"{group.GroupName}\"?" : $"Bạn có chắc chắn muốn kích hoạt lại nhóm hàng \"{group.GroupName}\"?")"
-                                                    data-dss-title="@(group.Status == "Active" ? "Xác nhận ngừng hoạt động" : "Xác nhận kích hoạt")"
-                                                    data-dss-btn-text="@(group.Status == "Active" ? "Ngừng hoạt động" : "Kích hoạt")">
+                                                    data-dss-confirm="@(group.Status == "Active" ? $"Are you sure you want to deactivate product group \"{group.GroupName}\"?" : $"Are you sure you want to reactivate product group \"{group.GroupName}\"?")"
+                                                    data-dss-title="@(group.Status == "Active" ? "Confirm Deactivation" : "Confirm Activation")"
+                                                    data-dss-btn-text="@(group.Status == "Active" ? "Deactivate" : "Activate")">
                                                 @if (group.Status == "Active")
                                                 {
                                                     <i class="bi bi-slash-circle"></i>
-                                                    <span>Ngừng hoạt động</span>
+                                                    <span>Deactivate</span>
                                                 }
                                                 else
                                                 {
                                                     <i class="bi bi-check-circle"></i>
-                                                    <span>Kích hoạt</span>
+                                                    <span>Activate</span>
                                                 }
                                             </button>
                                         </form>
@@ -289,19 +291,19 @@
             <div style="font-size: 40px; color: var(--muted); margin-bottom: 12px;">
                 <i class="bi bi-search"></i>
             </div>
-            <h3>Không tìm thấy nhóm hàng nào</h3>
+            <h3>No product groups found</h3>
             <p>
-                Không có nhóm hàng nào phù hợp với điều kiện tìm kiếm hiện tại.
-                Vui lòng thử lại với từ khóa hoặc bộ lọc khác.
+                No product groups match the current search criteria.
+                Please try again with different keywords or filters.
             </p>
             <div style="display: flex; gap: 10px; justify-content: center; margin-top: 16px;">
                 <a asp-action="Index" class="btn-outline">
                     <i class="bi bi-arrow-counterclockwise"></i>
-                    <span>Xóa bộ lọc</span>
+                    <span>Reset filter</span>
                 </a>
                 <a asp-action="Create" class="btn-primary">
                     <i class="bi bi-plus-lg"></i>
-                    <span>Thêm nhóm hàng mới</span>
+                    <span>Add New Product Group</span>
                 </a>
             </div>
         </div>
@@ -321,21 +323,31 @@
                     const parent = trigger.closest(".group-actions-dropdown");
                     if (openDropdown && openDropdown !== parent) {
                         openDropdown.classList.remove("is-open");
+                        const prevBtn = openDropdown.querySelector(".btn-action-dots");
+                        if (prevBtn) prevBtn.setAttribute("aria-expanded", "false");
                     }
                     if (parent) {
-                        parent.classList.toggle("is-open");
+                        const isOpen = parent.classList.toggle("is-open");
+                        trigger.setAttribute("aria-expanded", isOpen ? "true" : "false");
                     }
                 } else if (openDropdown && !e.target.closest(".group-actions-menu")) {
                     openDropdown.classList.remove("is-open");
+                    const prevBtn = openDropdown.querySelector(".btn-action-dots");
+                    if (prevBtn) prevBtn.setAttribute("aria-expanded", "false");
                 }
             });
 
-            // Close on Escape key
+            // Close on Escape key and return focus
             document.addEventListener("keydown", function (e) {
                 if (e.key === "Escape") {
                     const openDropdown = document.querySelector(".group-actions-dropdown.is-open");
                     if (openDropdown) {
                         openDropdown.classList.remove("is-open");
+                        const trigger = openDropdown.querySelector(".btn-action-dots");
+                        if (trigger) {
+                            trigger.setAttribute("aria-expanded", "false");
+                            trigger.focus();
+                        }
                     }
                 }
             });

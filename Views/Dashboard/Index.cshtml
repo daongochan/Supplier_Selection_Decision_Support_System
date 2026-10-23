@@ -2,6 +2,11 @@
 
 @{
     ViewData["Title"] = "Dashboard";
+
+    var canAccessAhp = User.IsInRole("Administrator") || User.IsInRole("Expert");
+    var canAccessTopsis = User.IsInRole("Administrator") || User.IsInRole("Expert");
+    var canAccessEvaluation = User.IsInRole("Administrator") || User.IsInRole("PurchasingStaff") || User.IsInRole("Expert") || User.IsInRole("Manager");
+    var canAccessApproval = User.IsInRole("Administrator") || User.IsInRole("Manager");
 }
 
 @section Styles {
@@ -15,19 +20,19 @@
     <div class="dashboard-header-left">
         <h1 class="page-title">Dashboard</h1>
         <p class="page-description">
-            Hệ thống hỗ trợ ra quyết định lựa chọn nhà cung cấp bằng phương pháp AHP và TOPSIS.
+            Supplier Selection Decision Support System utilizing Analytic Hierarchy Process (AHP) and TOPSIS.
         </p>
     </div>
 
     <div class="dashboard-header-right">
         <!-- Live Clock -->
-        <div id="dashboard-live-clock" class="dashboard-clock-card" aria-label="Thời gian hệ thống">
-            <i class="bi bi-clock"></i> <span>Đang tải...</span>
+        <div id="dashboard-live-clock" class="dashboard-clock-card" aria-label="System Time">
+            <i class="bi bi-clock"></i> <span>Loading...</span>
         </div>
 
         <!-- Global Batch Context Switcher -->
-        <div class="batch-selector-box" title="Chọn đợt đánh giá để xem dữ liệu tương ứng">
-            <label for="batch-context-select"><i class="bi bi-layers"></i> Đợt ĐG:</label>
+        <div class="batch-selector-box" title="Select an evaluation batch to view context data">
+            <label for="batch-context-select"><i class="bi bi-layers"></i> Batch:</label>
             <select id="batch-context-select">
                 @if (Model.AvailableBatches.Any())
                 {
@@ -40,7 +45,7 @@
                 }
                 else
                 {
-                    <option value="">(Chưa có đợt)</option>
+                    <option value="">(No batches available)</option>
                 }
             </select>
         </div>
@@ -67,18 +72,18 @@
         </div>
 
         <div class="batch-banner-info">
-            <span class="batch-banner-label">Đợt đánh giá hiện tại</span>
+            <span class="batch-banner-label">Active Evaluation Batch</span>
             <div class="batch-banner-title">@Model.CurrentBatch.BatchCode</div>
             <div class="batch-banner-sub" title="@Model.CurrentBatch.BatchName">@Model.CurrentBatch.BatchName</div>
         </div>
 
         <div class="batch-banner-field">
-            <span class="field-label">Nhóm hàng</span>
+            <span class="field-label">Product Group</span>
             <div class="field-value">@Model.CurrentBatch.GroupName</div>
         </div>
 
         <div class="batch-banner-field">
-            <span class="field-label">Trạng thái</span>
+            <span class="field-label">Status</span>
             <div>
                 <span class="status-pill @statusClass">@Model.CurrentBatch.Status</span>
             </div>
@@ -86,8 +91,8 @@
 
         <div class="batch-progress-wrapper">
             <div class="batch-progress-text">
-                <strong>Tiến độ nhập điểm</strong>
-                <span>@Model.CurrentBatch.ScoredSuppliers / @Model.CurrentBatch.TotalSuppliers NCC (@Model.CurrentBatch.ProgressPercent%)</span>
+                <strong>Scoring Progress</strong>
+                <span>@Model.CurrentBatch.ScoredSuppliers / @Model.CurrentBatch.TotalSuppliers Suppliers with scores (@Model.CurrentBatch.ProgressPercent%)</span>
             </div>
             <div class="batch-progress-bar">
                 <div class="batch-progress-fill" style="width: @Model.CurrentBatch.ProgressPercent%;"></div>
@@ -95,7 +100,7 @@
         </div>
 
         <a asp-controller="EvaluationBatch" asp-action="Details" asp-route-id="@Model.CurrentBatch.BatchId" class="btn-banner-action">
-            <span>Xem chi tiết</span>
+            <span>View Details</span>
             <i class="bi bi-arrow-right"></i>
         </a>
     </div>
@@ -104,12 +109,12 @@ else
 {
     <div class="current-batch-banner banner-simple-grid">
         <div>
-            <div class="batch-banner-title">Chưa có đợt đánh giá nào trong hệ thống</div>
-            <div class="batch-banner-sub">Hãy tạo đợt đánh giá đầu tiên để bắt đầu quy trình lựa chọn nhà cung cấp.</div>
+            <div class="batch-banner-title">No evaluation batches recorded in the system</div>
+            <div class="batch-banner-sub">Create your first evaluation batch to begin the multi-criteria supplier selection process.</div>
         </div>
         <a asp-controller="EvaluationBatch" asp-action="Create" class="btn-primary">
             <i class="bi bi-plus-lg"></i>
-            <span>Tạo đợt đánh giá mới</span>
+            <span>New Evaluation Batch</span>
         </a>
     </div>
 }
@@ -118,68 +123,68 @@ else
      3. 6 KPI SUMMARY CARDS
      ========================================================= -->
 <div class="dashboard-kpi-grid">
-    <!-- 1. Nhà cung cấp -->
-    <a asp-controller="Supplier" asp-action="Index" class="dss-kpi-card" title="Xem danh sách nhà cung cấp">
+    <!-- 1. Suppliers -->
+    <a asp-controller="Supplier" asp-action="Index" class="dss-kpi-card" title="View supplier list">
         <div class="kpi-card-top">
-            <span class="kpi-label">Nhà cung cấp</span>
+            <span class="kpi-label">Suppliers</span>
             <div class="kpi-icon-wrap"><i class="bi bi-building"></i></div>
         </div>
         <div class="kpi-card-body">
             <div class="kpi-value">@Model.TotalSuppliers.ToString("N0")</div>
             <div class="kpi-meta">
                 <span class="kpi-dot dot-success"></span>
-                <span>@Model.ActiveSuppliers hoạt động</span>
+                <span>@Model.ActiveSuppliers active</span>
             </div>
         </div>
     </a>
 
-    <!-- 2. Nhóm hàng -->
-    <a asp-controller="ProductGroup" asp-action="Index" class="dss-kpi-card" title="Xem danh mục nhóm hàng">
+    <!-- 2. Product Groups -->
+    <a asp-controller="ProductGroup" asp-action="Index" class="dss-kpi-card" title="View product groups">
         <div class="kpi-card-top">
-            <span class="kpi-label">Nhóm hàng</span>
+            <span class="kpi-label">Product Groups</span>
             <div class="kpi-icon-wrap"><i class="bi bi-boxes"></i></div>
         </div>
         <div class="kpi-card-body">
             <div class="kpi-value">@Model.TotalProductGroups.ToString("N0")</div>
             <div class="kpi-meta">
-                <span class="kpi-meta-text">Danh mục ngành</span>
+                <span class="kpi-meta-text">Active categories</span>
             </div>
         </div>
     </a>
 
-    <!-- 3. Đợt đánh giá -->
-    <a asp-controller="EvaluationBatch" asp-action="Index" class="dss-kpi-card" title="Xem các đợt đánh giá">
+    <!-- 3. Evaluation Batches -->
+    <a asp-controller="EvaluationBatch" asp-action="Index" class="dss-kpi-card" title="View evaluation batches">
         <div class="kpi-card-top">
-            <span class="kpi-label">Đợt đánh giá</span>
+            <span class="kpi-label">Evaluation Batches</span>
             <div class="kpi-icon-wrap"><i class="bi bi-calendar2-check"></i></div>
         </div>
         <div class="kpi-card-body">
             <div class="kpi-value">@Model.TotalBatches.ToString("N0")</div>
             <div class="kpi-meta">
                 <span class="kpi-dot dot-success"></span>
-                <span>@Model.CompletedBatches hoàn thành</span>
+                <span>@Model.CompletedBatches completed</span>
             </div>
         </div>
     </a>
 
-    <!-- 4. Tiêu chí -->
-    <a asp-controller="Criteria" asp-action="Index" class="dss-kpi-card" title="Xem hệ thống tiêu chí">
+    <!-- 4. Criteria -->
+    <a asp-controller="Criteria" asp-action="Index" class="dss-kpi-card" title="View evaluation criteria">
         <div class="kpi-card-top">
-            <span class="kpi-label">Tiêu chí</span>
+            <span class="kpi-label">Criteria</span>
             <div class="kpi-icon-wrap"><i class="bi bi-sliders"></i></div>
         </div>
         <div class="kpi-card-body">
             <div class="kpi-value">@Model.TotalCriteria.ToString("N0")</div>
             <div class="kpi-meta">
-                <span class="kpi-meta-text">Bộ tiêu chí DSS</span>
+                <span class="kpi-meta-text">DSS criteria set</span>
             </div>
         </div>
     </a>
 
-    <!-- 5. CR (AHP) của đợt hiện tại -->
+    <!-- 5. CR (AHP) of Selected Batch -->
     <div class="dss-kpi-card">
         <div class="kpi-card-top">
-            <span class="kpi-label">Tỷ số CR (AHP)</span>
+            <span class="kpi-label">CR Ratio (AHP)</span>
             <div class="kpi-icon-wrap"><i class="bi bi-shield-check"></i></div>
         </div>
         <div class="kpi-card-body">
@@ -192,23 +197,23 @@ else
                     if (Model.IsAhpConsistent == true)
                     {
                         <span class="kpi-dot dot-success"></span>
-                        <span class="text-success-soft">Đạt nhất quán</span>
+                        <span class="text-success-soft">Consistent</span>
                     }
                     else
                     {
                         <span class="kpi-dot dot-warning"></span>
-                        <span class="text-warning-soft">Chưa nhất quán</span>
+                        <span class="text-warning-soft">Inconsistent</span>
                     }
                 }
                 else
                 {
-                    <span class="kpi-meta-text">Chưa tính toán</span>
+                    <span class="kpi-meta-text">Not calculated</span>
                 }
             </div>
         </div>
     </div>
 
-    <!-- 6. Top 1 (TOPSIS) của đợt hiện tại -->
+    <!-- 6. Top 1 (TOPSIS) of Selected Batch -->
     <div class="dss-kpi-card">
         <div class="kpi-card-top">
             <span class="kpi-label">Top 1 (TOPSIS)</span>
@@ -226,7 +231,7 @@ else
                 }
                 else
                 {
-                    <span class="kpi-meta-text">Chưa xếp hạng</span>
+                    <span class="kpi-meta-text">Not ranked yet</span>
                 }
             </div>
         </div>
@@ -237,28 +242,28 @@ else
      4. ROW 1 CHARTS (3 COLUMNS)
      ========================================================= -->
 <div class="dashboard-row1-grid">
-    <!-- Col 1: Tình trạng đợt đánh giá (Donut) -->
+    <!-- Col 1: Evaluation Batch Status (Donut) -->
     <div class="panel-card">
         <div class="panel-header">
             <div>
-                <h3 class="panel-title">Tình trạng đợt đánh giá</h3>
-                <p class="panel-subtitle">Cơ cấu theo tiến độ xử lý</p>
+                <h3 class="panel-title">Evaluation Batch Status</h3>
+                <p class="panel-subtitle">Distribution by workflow stage</p>
             </div>
         </div>
 
         <div class="donut-card-body">
             <div class="donut-chart-wrapper">
-                <canvas id="batchStatusDonutCanvas" role="img" aria-label="Biểu đồ phân bố trạng thái các đợt đánh giá"></canvas>
+                <canvas id="batchStatusDonutCanvas" role="img" aria-label="Evaluation batch status distribution chart"></canvas>
                 <div class="donut-center-text">
                     <span class="donut-center-val">@Model.TotalBatches</span>
-                    <span class="donut-center-lbl">Tổng số đợt</span>
+                    <span class="donut-center-lbl">Total Batches</span>
                 </div>
             </div>
 
             <div class="sr-only">
                 <table>
-                    <caption>Phân bố trạng thái đợt đánh giá</caption>
-                    <thead><tr><th scope="col">Trạng thái</th><th scope="col">Số lượng</th></tr></thead>
+                    <caption>Evaluation batch status distribution</caption>
+                    <thead><tr><th scope="col">Status</th><th scope="col">Count</th></tr></thead>
                     <tbody>
                         @for (int i = 0; i < Model.BatchStatusDistribution.Labels.Count; i++)
                         {
@@ -274,7 +279,7 @@ else
                     var label = Model.BatchStatusDistribution.Labels[i];
                     var val = Model.BatchStatusDistribution.Values[i];
                     var color = Model.BatchStatusDistribution.Colors[i];
-                    var pct = Model.TotalBatches > 0 ? (val * 100 / Model.TotalBatches) : 0;
+                    var pct = Model.TotalBatches > 0 ? (val * 100.0 / Model.TotalBatches).ToString("0.#") : "0";
 
                     <div class="donut-legend-item">
                         <div class="donut-legend-left">
@@ -288,33 +293,33 @@ else
         </div>
     </div>
 
-    <!-- Col 2: Xu hướng đánh giá theo thời gian (Line) -->
+    <!-- Col 2: Evaluation Trend Over Time (Line) -->
     <div class="panel-card">
         <div class="panel-header">
             <div>
-                <h3 class="panel-title">Xu hướng đánh giá theo thời gian</h3>
-                <p class="panel-subtitle">Số lượng nhà cung cấp & đợt đánh giá qua các tháng</p>
+                <h3 class="panel-title">Evaluation Trend Over Time</h3>
+                <p class="panel-subtitle">Monthly batch count and total supplier participations across batches</p>
             </div>
             <div class="trend-legend-group" id="trendLegendGroup">
-                <button type="button" class="trend-legend-pill" data-dataset-index="0" title="Nhấn để ẩn/hiện Số nhà cung cấp">
+                <button type="button" class="trend-legend-pill" data-dataset-index="0" title="Toggle Supplier Participations">
                     <span class="trend-legend-dot dot-suppliers"></span>
-                    <span class="trend-legend-label">Số nhà cung cấp</span>
+                    <span class="trend-legend-label">Supplier Participations</span>
                 </button>
-                <button type="button" class="trend-legend-pill" data-dataset-index="1" title="Nhấn để ẩn/hiện Số đợt đánh giá">
+                <button type="button" class="trend-legend-pill" data-dataset-index="1" title="Toggle Evaluation Batches">
                     <span class="trend-legend-dot dot-batches"></span>
-                    <span class="trend-legend-label">Số đợt đánh giá</span>
+                    <span class="trend-legend-label">Evaluation Batches</span>
                 </button>
             </div>
         </div>
 
         <div class="line-chart-container">
-            <canvas id="evaluationTrendCanvas" role="img" aria-label="Biểu đồ xu hướng đánh giá qua các tháng"></canvas>
+            <canvas id="evaluationTrendCanvas" role="img" aria-label="Evaluation trend over time chart"></canvas>
         </div>
 
         <div class="sr-only">
             <table>
-                <caption>Xu hướng đánh giá theo thời gian</caption>
-                <thead><tr><th scope="col">Tháng</th><th scope="col">Số nhà cung cấp</th><th scope="col">Số đợt đánh giá</th></tr></thead>
+                <caption>Evaluation trend over time</caption>
+                <thead><tr><th scope="col">Month</th><th scope="col">Supplier Participations</th><th scope="col">Evaluation Batches</th></tr></thead>
                 <tbody>
                     @for (int i = 0; i < Model.EvaluationTrend.MonthLabels.Count; i++)
                     {
@@ -329,28 +334,28 @@ else
         </div>
     </div>
 
-    <!-- Col 3: Phân bố nhà cung cấp (Donut) -->
+    <!-- Col 3: Supplier Status Distribution (Donut) -->
     <div class="panel-card">
         <div class="panel-header">
             <div>
-                <h3 class="panel-title">Phân bố nhà cung cấp</h3>
-                <p class="panel-subtitle">Theo trạng thái hoạt động</p>
+                <h3 class="panel-title">Supplier Status Distribution</h3>
+                <p class="panel-subtitle">By operational status</p>
             </div>
         </div>
 
         <div class="donut-card-body">
             <div class="donut-chart-wrapper">
-                <canvas id="supplierStatusDonutCanvas" role="img" aria-label="Biểu đồ phân bố trạng thái nhà cung cấp"></canvas>
+                <canvas id="supplierStatusDonutCanvas" role="img" aria-label="Supplier operational status distribution chart"></canvas>
                 <div class="donut-center-text">
                     <span class="donut-center-val">@Model.TotalSuppliers</span>
-                    <span class="donut-center-lbl">Tổng số NCC</span>
+                    <span class="donut-center-lbl">Total Suppliers</span>
                 </div>
             </div>
 
             <div class="sr-only">
                 <table>
-                    <caption>Phân bố trạng thái nhà cung cấp</caption>
-                    <thead><tr><th scope="col">Trạng thái</th><th scope="col">Số lượng</th></tr></thead>
+                    <caption>Supplier operational status distribution</caption>
+                    <thead><tr><th scope="col">Status</th><th scope="col">Count</th></tr></thead>
                     <tbody>
                         @for (int i = 0; i < Model.SupplierStatusDistribution.Labels.Count; i++)
                         {
@@ -366,7 +371,7 @@ else
                     var label = Model.SupplierStatusDistribution.Labels[i];
                     var val = Model.SupplierStatusDistribution.Values[i];
                     var color = Model.SupplierStatusDistribution.Colors[i];
-                    var pct = Model.TotalSuppliers > 0 ? (val * 100 / Model.TotalSuppliers) : 0;
+                    var pct = Model.TotalSuppliers > 0 ? (val * 100.0 / Model.TotalSuppliers).ToString("0.#") : "0";
 
                     <div class="donut-legend-item">
                         <div class="donut-legend-left">
@@ -382,35 +387,35 @@ else
 </div>
 
 <!-- =========================================================
-     5. ROW 2: TOPSIS RANKING, BAR CHART & WORKFLOW (3 PANELS)
+     5. ROW 2: TOPSIS RANKING, BAR CHART & WORKFLOW (PANELS)
      ========================================================= -->
 <div class="dashboard-row2-grid">
-    <!-- Panel 1: Top 5 Nhà cung cấp theo TOPSIS -->
-    <div class="panel-card">
-        <div class="panel-header">
-            <div>
-                <h3 class="panel-title">Top 5 nhà cung cấp theo TOPSIS</h3>
-                <p class="panel-subtitle">Bảng xếp hạng hệ số gần gũi (Closeness Coefficient)</p>
+    @if (Model.TopTopsisRankings.Any())
+    {
+        <!-- Panel 1: Top 5 Suppliers by TOPSIS -->
+        <div class="panel-card">
+            <div class="panel-header">
+                <div>
+                    <h3 class="panel-title">Top 5 Suppliers by TOPSIS</h3>
+                    <p class="panel-subtitle">Ranking based on Closeness Coefficient (CC)</p>
+                </div>
+                @if (Model.SelectedBatchId.HasValue && canAccessTopsis)
+                {
+                    <a asp-controller="TOPSIS" asp-action="Index" asp-route-batchId="@Model.SelectedBatchId.Value" class="btn-banner-action dashboard-btn-sm">
+                        TOPSIS Details
+                    </a>
+                }
             </div>
-            @if (Model.SelectedBatchId.HasValue)
-            {
-                <a asp-controller="TOPSIS" asp-action="Index" asp-route-batchId="@Model.SelectedBatchId.Value" class="btn-banner-action dashboard-btn-sm">
-                    Chi tiết TOPSIS
-                </a>
-            }
-        </div>
 
-        @if (Model.TopTopsisRankings.Any())
-        {
             <div class="data-table-wrapper dashboard-table-nowrap">
                 <table class="data-table dashboard-top-table">
                     <thead>
                         <tr>
-                            <th scope="col" class="w-col-rank">Hạng</th>
-                            <th scope="col">Nhà cung cấp</th>
-                            <th scope="col">Nhóm hàng</th>
-                            <th scope="col" class="text-end-cell">Hệ số CC</th>
-                            <th scope="col" class="text-center-cell">Trạng thái</th>
+                            <th scope="col" class="w-col-rank">Rank</th>
+                            <th scope="col">Supplier</th>
+                            <th scope="col">Product Group</th>
+                            <th scope="col" class="text-end-cell">CC Score</th>
+                            <th scope="col" class="text-center-cell">Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -439,42 +444,31 @@ else
                                     @rank.ClosenessCoefficient.ToString("0.0000")
                                 </td>
                                 <td class="text-center-cell">
-                                    <span class="status-pill status-active status-pill-sm">Hoạt động</span>
+                                    <span class="status-pill status-active status-pill-sm">Active</span>
                                 </td>
                             </tr>
                         }
                     </tbody>
                 </table>
             </div>
-        }
-        else
-        {
-            <div class="empty-state dashboard-empty-state">
-                <i class="bi bi-diagram-3 dashboard-empty-icon"></i>
-                <h4 class="dashboard-empty-title">Chưa có kết quả TOPSIS</h4>
-                <p class="dashboard-empty-desc">Đợt đánh giá chưa hoàn thành tính toán TOPSIS.</p>
-            </div>
-        }
-    </div>
-
-    <!-- Panel 2: Biểu đồ xếp hạng TOPSIS -->
-    <div class="panel-card">
-        <div class="panel-header">
-            <div>
-                <h3 class="panel-title">Biểu đồ xếp hạng TOPSIS</h3>
-                <p class="panel-subtitle">So sánh hệ số gần gũi (CC) của Top nhà cung cấp</p>
-            </div>
         </div>
 
-        @if (Model.TopTopsisRankings.Any())
-        {
+        <!-- Panel 2: TOPSIS Ranking Bar Chart -->
+        <div class="panel-card">
+            <div class="panel-header">
+                <div>
+                    <h3 class="panel-title">TOPSIS Ranking Chart</h3>
+                    <p class="panel-subtitle">Comparative Closeness Coefficient of top suppliers</p>
+                </div>
+            </div>
+
             <div class="topsis-bar-chart-container">
-                <canvas id="topsisBarChartCanvas" role="img" aria-label="Biểu đồ xếp hạng TOPSIS"></canvas>
+                <canvas id="topsisBarChartCanvas" role="img" aria-label="TOPSIS ranking comparison bar chart"></canvas>
             </div>
             <div class="sr-only">
                 <table>
-                    <caption>Xếp hạng TOPSIS</caption>
-                    <thead><tr><th scope="col">Hạng</th><th scope="col">Nhà cung cấp</th><th scope="col">Hệ số CC</th></tr></thead>
+                    <caption>TOPSIS supplier ranking</caption>
+                    <thead><tr><th scope="col">Rank</th><th scope="col">Supplier</th><th scope="col">CC Score</th></tr></thead>
                     <tbody>
                         @foreach (var rank in Model.TopTopsisRankings)
                         {
@@ -483,23 +477,45 @@ else
                     </tbody>
                 </table>
             </div>
-        }
-        else
-        {
-            <div class="empty-state dashboard-empty-state">
-                <i class="bi bi-bar-chart-line dashboard-empty-icon"></i>
-                <h4 class="dashboard-empty-title">Chưa có dữ liệu biểu đồ</h4>
-                <p class="dashboard-empty-desc">Biểu đồ sẽ xuất hiện sau khi tính toán TOPSIS.</p>
+        </div>
+    }
+    else
+    {
+        <!-- Consolidated Informative Single Empty State Spanning Columns 1 & 2 -->
+        <div class="panel-card panel-card-span2">
+            <div class="panel-header">
+                <div>
+                    <h3 class="panel-title">TOPSIS Supplier Ranking & Analysis</h3>
+                    <p class="panel-subtitle">Multi-criteria ranking based on closeness coefficients</p>
+                </div>
             </div>
-        }
-    </div>
 
-    <!-- Panel 3: Tiến độ đánh giá hiện tại -->
+            <div class="empty-state dashboard-empty-state" style="padding: 48px 24px;">
+                <i class="bi bi-diagram-3 dashboard-empty-icon" style="font-size: 38px;"></i>
+                <h4 class="dashboard-empty-title">TOPSIS Ranking Pending</h4>
+                <p class="dashboard-empty-desc" style="max-width: 480px; margin: 0 auto;">
+                    TOPSIS calculation has not been performed for the selected evaluation batch.
+                    Complete score entry and verify AHP criteria consistency to generate supplier rankings and comparison charts.
+                </p>
+                @if (Model.SelectedBatchId.HasValue && canAccessTopsis)
+                {
+                    <div style="margin-top: 16px;">
+                        <a asp-controller="TOPSIS" asp-action="Index" asp-route-batchId="@Model.SelectedBatchId.Value" class="btn-primary">
+                            <i class="bi bi-calculator"></i>
+                            <span>Open TOPSIS Calculation</span>
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Panel 3: Evaluation Workflow Progress -->
     <div class="panel-card">
         <div class="panel-header">
             <div>
-                <h3 class="panel-title">Tiến độ quy trình đánh giá</h3>
-                <p class="panel-subtitle">Quy trình 5 bước ra quyết định</p>
+                <h3 class="panel-title">Evaluation Workflow Progress</h3>
+                <p class="panel-subtitle">5-stage decision support lifecycle</p>
             </div>
         </div>
 
@@ -509,7 +525,7 @@ else
                 <div class="workflow-step-dot">
                     @(Model.WorkflowProgress.Step1DataInputDone ? "✓" : "1")
                 </div>
-                <span class="workflow-step-label">Nhập điểm</span>
+                <span class="workflow-step-label">Scoring</span>
             </div>
 
             <div class="workflow-step-node @(Model.WorkflowProgress.Step2AhpDone ? "is-done" : (Model.WorkflowProgress.CurrentStepNumber == 2 ? "is-active" : ""))">
@@ -530,14 +546,14 @@ else
                 <div class="workflow-step-dot">
                     @(Model.WorkflowProgress.Step4ComparisonDone ? "✓" : "4")
                 </div>
-                <span class="workflow-step-label">So sánh</span>
+                <span class="workflow-step-label">Review</span>
             </div>
 
             <div class="workflow-step-node @(Model.WorkflowProgress.Step5ApprovalDone ? "is-done" : (Model.WorkflowProgress.CurrentStepNumber == 5 ? "is-active" : ""))">
                 <div class="workflow-step-dot">
                     @(Model.WorkflowProgress.Step5ApprovalDone ? "✓" : "5")
                 </div>
-                <span class="workflow-step-label">Phê duyệt</span>
+                <span class="workflow-step-label">Approval</span>
             </div>
         </div>
 
@@ -547,21 +563,23 @@ else
                 @Model.WorkflowProgress.OverallPercent%
             </div>
             <div class="workflow-stage-content">
-                <div class="workflow-stage-title">Đang thực hiện: @Model.WorkflowProgress.CurrentStepName</div>
+                <div class="workflow-stage-title">Current Stage: @Model.WorkflowProgress.CurrentStepName</div>
                 <div class="workflow-stage-desc">@Model.WorkflowProgress.CurrentStepDescription</div>
                 @if (Model.SelectedBatchId.HasValue)
                 {
-                    var currentStepUrl = Model.WorkflowProgress.CurrentStepNumber switch
+                    var batchId = Model.SelectedBatchId.Value;
+                    string currentStepUrl = Model.WorkflowProgress.CurrentStepNumber switch
                     {
-                        1 => Url.Action("Index", "Evaluation", new { batchId = Model.SelectedBatchId.Value }),
-                        2 => Url.Action("Index", "AHP", new { batchId = Model.SelectedBatchId.Value }),
-                        3 => Url.Action("Index", "TOPSIS", new { batchId = Model.SelectedBatchId.Value }),
-                        4 => Url.Action("Index", "DecisionResult", new { batchId = Model.SelectedBatchId.Value }),
-                        5 => Url.Action("Index", "DecisionResult", new { batchId = Model.SelectedBatchId.Value }),
-                        _ => Url.Action("Details", "EvaluationBatch", new { id = Model.SelectedBatchId.Value })
+                        1 => canAccessEvaluation ? Url.Action("Index", "Evaluation", new { batchId }) ?? "" : Url.Action("Details", "EvaluationBatch", new { id = batchId }) ?? "",
+                        2 => canAccessAhp ? Url.Action("Index", "AHP", new { batchId }) ?? "" : Url.Action("Details", "EvaluationBatch", new { id = batchId }) ?? "",
+                        3 => canAccessTopsis ? Url.Action("Index", "TOPSIS", new { batchId }) ?? "" : Url.Action("Details", "EvaluationBatch", new { id = batchId }) ?? "",
+                        4 => Url.Action("Index", "DecisionResult", new { batchId }) ?? "",
+                        5 => canAccessApproval ? Url.Action("Index", "DecisionResult", new { batchId }) ?? "" : Url.Action("Details", "EvaluationBatch", new { id = batchId }) ?? "",
+                        _ => Url.Action("Details", "EvaluationBatch", new { id = batchId }) ?? ""
                     };
+
                     <a href="@currentStepUrl" class="workflow-stage-link">
-                        <span>Xem chi tiết</span>
+                        <span>View Details</span>
                         <i class="bi bi-arrow-right"></i>
                     </a>
                 }
@@ -574,17 +592,17 @@ else
      6. ROW 3: AHP WEIGHTS, RADAR, SYSTEM INFO, APPROVAL (4 PANELS)
      ========================================================= -->
 <div class="dashboard-row3-grid">
-    <!-- Panel 1: Phân bố trọng số tiêu chí (AHP) -->
+    <!-- Panel 1: AHP Criteria Weights -->
     <div class="panel-card">
         <div class="panel-header">
             <div>
-                <h3 class="panel-title">Trọng số tiêu chí (AHP)</h3>
-                <p class="panel-subtitle">Tỷ lệ đóng góp trọng số của các tiêu chí</p>
+                <h3 class="panel-title">AHP Criteria Weights</h3>
+                <p class="panel-subtitle">Normalized weight distribution from pairwise comparisons</p>
             </div>
-            @if (Model.SelectedBatchId.HasValue)
+            @if (Model.SelectedBatchId.HasValue && canAccessAhp)
             {
                 <a asp-controller="AHP" asp-action="Index" asp-route-batchId="@Model.SelectedBatchId.Value" class="btn-banner-action dashboard-btn-sm">
-                    Chi tiết AHP
+                    AHP Details
                 </a>
             }
         </div>
@@ -601,7 +619,7 @@ else
                                 <span class="ahp-weight-rank">#@rankIndex</span>
                                 <span class="ahp-weight-name" title="@w.CriteriaName">@w.CriteriaName</span>
                                 <span class="ahp-type-pill @(w.CriteriaType == "Cost" ? "is-cost" : "is-benefit")">
-                                    @(w.CriteriaType == "Cost" ? "Chi phí" : "Lợi ích")
+                                    @(w.CriteriaType == "Cost" ? "Cost" : "Benefit")
                                 </span>
                             </div>
                             <span class="ahp-weight-percent">@w.Percentage%</span>
@@ -618,23 +636,23 @@ else
         {
             <div class="empty-state dashboard-empty-state">
                 <i class="bi bi-pie-chart dashboard-empty-icon"></i>
-                <h4 class="dashboard-empty-title">Chưa tính trọng số AHP</h4>
-                <p class="dashboard-empty-desc">Cần hoàn thành ma trận so sánh cặp để tính trọng số.</p>
+                <h4 class="dashboard-empty-title">AHP Weights Not Calculated</h4>
+                <p class="dashboard-empty-desc">Pairwise comparison matrix must be completed and consistent to compute criteria weights.</p>
             </div>
         }
     </div>
 
-    <!-- Panel 2: So sánh nhà cung cấp (TOP 3) (Radar) -->
+    <!-- Panel 2: Top 3 Supplier Comparison (Radar) -->
     <div class="panel-card">
         <div class="panel-header">
             <div>
-                <h3 class="panel-title">So sánh nhà cung cấp (Top 3)</h3>
-                <p class="panel-subtitle">Chuẩn hóa đa tiêu chí (Thang 0 - 100)</p>
+                <h3 class="panel-title">Top 3 Supplier Comparison</h3>
+                <p class="panel-subtitle">Multi-criteria normalized scale (0 - 100)</p>
             </div>
             @if (Model.SelectedBatchId.HasValue)
             {
                 <a asp-controller="DecisionResult" asp-action="Index" asp-route-batchId="@Model.SelectedBatchId.Value" class="btn-banner-action dashboard-btn-sm">
-                    So sánh đầy đủ
+                    Full Comparison
                 </a>
             }
         </div>
@@ -642,14 +660,14 @@ else
         @if (Model.RadarComparison.Datasets.Any())
         {
             <div class="radar-chart-container">
-                <canvas id="radarComparisonCanvas" role="img" aria-label="Biểu đồ radar so sánh top 3 nhà cung cấp"></canvas>
+                <canvas id="radarComparisonCanvas" role="img" aria-label="Radar multi-criteria comparison chart for top suppliers"></canvas>
             </div>
             <div class="sr-only">
                 <table>
-                    <caption>So sánh đa tiêu chí Top 3 nhà cung cấp</caption>
+                    <caption>Multi-criteria comparison for top 3 suppliers</caption>
                     <thead>
                         <tr>
-                            <th scope="col">Tiêu chí</th>
+                            <th scope="col">Criteria</th>
                             @foreach (var ds in Model.RadarComparison.Datasets)
                             {
                                 <th scope="col">@ds.SupplierName</th>
@@ -675,51 +693,51 @@ else
         {
             <div class="empty-state dashboard-empty-state">
                 <i class="bi bi-compass dashboard-empty-icon"></i>
-                <h4 class="dashboard-empty-title">Chưa đủ dữ liệu so sánh</h4>
-                <p class="dashboard-empty-desc">Cần ít nhất 2 nhà cung cấp có điểm đánh giá để vẽ biểu đồ radar.</p>
+                <h4 class="dashboard-empty-title">Insufficient Comparison Data</h4>
+                <p class="dashboard-empty-desc">At least 2 suppliers with evaluation scores are required for radar comparison.</p>
             </div>
         }
     </div>
 
-    <!-- Panel 3: Thông tin hệ thống -->
+    <!-- Panel 3: System Information -->
     <div class="panel-card">
         <div class="panel-header">
             <div>
-                <h3 class="panel-title">Thông tin hệ thống</h3>
-                <p class="panel-subtitle">Cấu hình và môi trường vận hành</p>
+                <h3 class="panel-title">System Information</h3>
+                <p class="panel-subtitle">Environment and operational metrics</p>
             </div>
         </div>
 
         <div class="system-info-list">
             <div class="system-info-item">
-                <div class="system-info-label"><i class="bi bi-people"></i> Tổng người dùng</div>
+                <div class="system-info-label"><i class="bi bi-people"></i> Total Users</div>
                 <div class="system-info-val">@Model.SystemInfo.UserCount</div>
             </div>
             <div class="system-info-item">
-                <div class="system-info-label"><i class="bi bi-shield-lock"></i> Vai trò phân quyền</div>
-                <div class="system-info-val">@Model.SystemInfo.RoleCount</div>
+                <div class="system-info-label"><i class="bi bi-shield-lock"></i> Role-based Access</div>
+                <div class="system-info-val">@Model.SystemInfo.RoleCount Roles</div>
             </div>
             <div class="system-info-item">
-                <div class="system-info-label"><i class="bi bi-cpu"></i> Phiên bản</div>
+                <div class="system-info-label"><i class="bi bi-cpu"></i> Application Version</div>
                 <div class="system-info-val">@Model.SystemInfo.AppVersion</div>
             </div>
             <div class="system-info-item">
-                <div class="system-info-label"><i class="bi bi-database"></i> Cơ sở dữ liệu</div>
+                <div class="system-info-label"><i class="bi bi-database"></i> Database Engine</div>
                 <div class="system-info-val">@Model.SystemInfo.DatabaseType</div>
             </div>
             <div class="system-info-item">
-                <div class="system-info-label"><i class="bi bi-activity"></i> Tình trạng</div>
+                <div class="system-info-label"><i class="bi bi-activity"></i> Status</div>
                 <div class="system-info-val text-success">@Model.SystemInfo.SystemStatus</div>
             </div>
         </div>
     </div>
 
-    <!-- Panel 4: Trạng thái phê duyệt -->
+    <!-- Panel 4: Approval Decision -->
     <div class="panel-card">
         <div class="panel-header">
             <div>
-                <h3 class="panel-title">Trạng thái phê duyệt</h3>
-                <p class="panel-subtitle">Quyết định lựa chọn nhà cung cấp</p>
+                <h3 class="panel-title">Approval Decision</h3>
+                <p class="panel-subtitle">Official supplier selection record</p>
             </div>
         </div>
 
@@ -739,19 +757,19 @@ else
                         <i class="bi @(Model.ApprovalInfo.Status == "Approved" ? "bi-check-circle" : "bi-exclamation-circle")"></i>
                         @Model.ApprovalInfo.Status
                     </span>
-                    <span class="cell-date-sm">@Model.ApprovalInfo.ApprovalDate.ToString("dd/MM/yyyy")</span>
+                    <span class="cell-date-sm">@Model.ApprovalInfo.ApprovalDate.ToString("MMM dd, yyyy")</span>
                 </div>
 
                 @if (!string.IsNullOrWhiteSpace(Model.ApprovalInfo.SelectedSupplierName))
                 {
                     <div class="approval-detail-row">
-                        <span class="sub-label">Nhà cung cấp được chọn</span>
+                        <span class="sub-label">Selected Supplier</span>
                         <div class="sub-val">@Model.ApprovalInfo.SelectedSupplierName</div>
                     </div>
                 }
 
                 <div class="approval-detail-row">
-                    <span class="sub-label">Người phê duyệt</span>
+                    <span class="sub-label">Approved By</span>
                     <div class="sub-val">@Model.ApprovalInfo.ApproverName</div>
                 </div>
 
@@ -760,7 +778,7 @@ else
                     {
                         <a asp-controller="Report" asp-action="ViewReport" asp-route-batchId="@Model.SelectedBatchId.Value" class="btn-primary btn-flex-1">
                             <i class="bi bi-file-earmark-pdf"></i>
-                            <span>Xem báo cáo</span>
+                            <span>View Report</span>
                         </a>
                     }
                 </div>
@@ -768,15 +786,15 @@ else
             else
             {
                 <div class="approval-status-banner is-none">
-                    <span><i class="bi bi-clock"></i> Chưa gửi phê duyệt</span>
+                    <span><i class="bi bi-clock"></i> Pending Submission</span>
                 </div>
                 <p class="approval-help-desc">
-                    Đợt đánh giá hiện tại chưa có quyết định phê duyệt chính thức.
+                    The current evaluation batch does not have a finalized approval decision.
                 </p>
                 @if (Model.SelectedBatchId.HasValue && User.IsInRole("Manager"))
                 {
                     <a asp-controller="Approval" asp-action="Approve" asp-route-batchId="@Model.SelectedBatchId.Value" class="btn-outline btn-mt-auto">
-                        <span>Trình phê duyệt</span>
+                        <span>Submit for Approval</span>
                     </a>
                 }
             }

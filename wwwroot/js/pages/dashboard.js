@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             label: function (ctx) {
                                 const val = ctx.parsed || 0;
                                 const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                                const pct = total > 0 ? ((val / total) * 100).toFixed(0) : 0;
+                                const pct = total > 0 ? ((val / total) * 100).toFixed(1).replace(/\.0$/, '') : "0";
                                 return ` ${ctx.label}: ${val} batches (${pct}%)`;
                             }
                         }
@@ -126,7 +126,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             label: function (ctx) {
                                 const val = ctx.parsed || 0;
                                 const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                                const pct = total > 0 ? ((val / total) * 100).toFixed(0) : 0;
+                                const pct = total > 0 ? ((val / total) * 100).toFixed(1).replace(/\.0$/, '') : "0";
                                 return ` ${ctx.label}: ${val} suppliers (${pct}%)`;
                             }
                         }
@@ -147,7 +147,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 labels: window.dashboardTrendData.months || [],
                 datasets: [
                     {
-                        label: "Suppliers Evaluated",
+                        label: "Supplier Participations",
                         data: window.dashboardTrendData.suppliers || [],
                         borderColor: "#2563eb",
                         backgroundColor: "rgba(37, 99, 235, 0.08)",
