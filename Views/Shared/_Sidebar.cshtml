@@ -7,7 +7,7 @@
         ViewContext.RouteData.Values["action"]?.ToString();
 }
 
-<aside class="app-sidebar" aria-label="Main Navigation">
+<aside id="appSidebar" class="app-sidebar" aria-label="Main Navigation">
 
 
 
@@ -54,7 +54,7 @@
                asp-action="Index"
                class="sidebar-link @(currentController == "Supplier" ? "active" : "")">
                 <i class="bi bi-building"></i>
-                <span>Nhà cung cấp</span>
+                <span>Suppliers</span>
             </a>
         }
 
@@ -66,7 +66,7 @@
                asp-action="Index"
                class="sidebar-link @(currentController == "ProductGroup" ? "active" : "")">
                 <i class="bi bi-box-seam"></i>
-                <span>Nhóm hàng</span>
+                <span>Product Groups</span>
             </a>
         }
 
@@ -78,7 +78,7 @@
                asp-action="Index"
                class="sidebar-link @(currentController == "Criteria" ? "active" : "")">
                 <i class="bi bi-sliders"></i>
-                <span>Tiêu chí đánh giá</span>
+                <span>Evaluation Criteria</span>
             </a>
         }
 
@@ -98,7 +98,7 @@
                                      currentController == "Report"
                                      ? "active" : "")">
                 <i class="bi bi-collection"></i>
-                <span>Đợt đánh giá</span>
+                <span>Evaluation Batches</span>
             </a>
         }
 
@@ -109,7 +109,7 @@
                asp-action="Index"
                class="sidebar-link @(currentController == "User" ? "active" : "")">
                 <i class="bi bi-people"></i>
-                <span>Người dùng</span>
+                <span>Users</span>
             </a>
         }
 
@@ -120,7 +120,7 @@
                asp-action="Index"
                class="sidebar-link @(currentController == "AuditLog" ? "active" : "")">
                 <i class="bi bi-clock-history"></i>
-                <span>Nhật ký hệ thống</span>
+                <span>Audit Logs</span>
             </a>
         }
 
@@ -165,9 +165,9 @@
                 @Html.AntiForgeryToken()
                 <button type="submit"
                         class="btn-logout sidebar-btn-logout"
-                        title="Đăng xuất">
+                        title="Sign Out">
                     <i class="bi bi-box-arrow-right"></i>
-                    <span>Đăng xuất</span>
+                    <span>Sign Out</span>
                 </button>
             </form>
 

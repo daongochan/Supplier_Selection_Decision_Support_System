@@ -1394,6 +1394,80 @@
                 updatePeriodSummary();
 
 
+                let activeSupplierRequestController = null;
+                let latestSupplierRequestSeq = 0;
+                const preservedSupplierIds = new Set(
+                    Array.from(
+                        document.querySelectorAll('input[name="SelectedSupplierIds"]:checked')
+                    ).map(function(cb) { return String(cb.value); })
+                );
+
+                function renderSupplierStatusState(containerClass, iconClass, titleText, descText) {
+                    if (!supplierContainer) {
+                        return;
+                    }
+
+                    supplierContainer.replaceChildren();
+
+                    const wrapper = document.createElement("div");
+                    wrapper.className = containerClass + " create-selection-empty";
+
+                    const icon = document.createElement("i");
+                    icon.className = iconClass;
+
+                    const title = document.createElement("strong");
+                    title.textContent = titleText;
+
+                    const desc = document.createElement("span");
+                    desc.textContent = descText;
+
+                    wrapper.appendChild(icon);
+                    wrapper.appendChild(title);
+                    wrapper.appendChild(desc);
+
+                    supplierContainer.appendChild(wrapper);
+                }
+
+                function buildSupplierCardElement(supplier, isSelected) {
+                    const label = document.createElement("label");
+                    label.className = "selection-card" + (isSelected ? " selected" : "");
+
+                    const input = document.createElement("input");
+                    input.type = "checkbox";
+                    input.name = "SelectedSupplierIds";
+                    input.value = String(supplier.supplierId ?? "");
+                    input.checked = Boolean(isSelected);
+
+                    const checkSpan = document.createElement("span");
+                    checkSpan.className = "selection-card-check";
+                    const checkIcon = document.createElement("i");
+                    checkIcon.className = "bi bi-check";
+                    checkSpan.appendChild(checkIcon);
+
+                    const contentSpan = document.createElement("span");
+                    contentSpan.className = "selection-card-content";
+
+                    const codeStrong = document.createElement("strong");
+                    codeStrong.textContent = String(supplier.supplierCode ?? "");
+
+                    const nameSpan = document.createElement("span");
+                    nameSpan.className = "selection-item-name";
+                    nameSpan.textContent = String(supplier.supplierName ?? "");
+
+                    contentSpan.appendChild(codeStrong);
+                    contentSpan.appendChild(nameSpan);
+
+                    const buildingIcon = document.createElement("i");
+                    buildingIcon.className = "bi bi-building selection-card-icon";
+
+                    label.appendChild(input);
+                    label.appendChild(checkSpan);
+                    label.appendChild(contentSpan);
+                    label.appendChild(buildingIcon);
+
+                    return label;
+                }
+
                 // =================================================
                 // GROUP CHANGE
                 // =================================================
@@ -1406,166 +1480,121 @@
 
                             updateGroupSummary();
 
+                            if (supplierContainer) {
+                                supplierContainer
+                                    .querySelectorAll('input[name="SelectedSupplierIds"]:checked')
+                                    .forEach(function(cb) {
+                                        preservedSupplierIds.add(String(cb.value));
+                                    });
+                            }
 
-                            const groupId =
-                                this.value;
+                            if (activeSupplierRequestController) {
+                                activeSupplierRequestController.abort();
+                                activeSupplierRequestController = null;
+                            }
 
+                            const requestSeq = ++latestSupplierRequestSeq;
+                            const groupId = this.value;
 
                             if (!groupId) {
-
-                                supplierContainer.innerHTML = `
-                                            <div class="selection-empty create-selection-empty">
-
-                                                <i class="bi bi-building"></i>
-
-                                                <strong>
-                                                    Chưa chọn Product Group
-                                                </strong>
-
-                                                <span>
-                                                    Chọn Product Group để tải
-                                                    danh sách Supplier.
-                                                </span>
-
-                                            </div>
-                                        `;
-
+                                renderSupplierStatusState(
+                                    "selection-empty",
+                                    "bi bi-building",
+                                    "No product group selected",
+                                    "Select a product group to load participating suppliers."
+                                );
                                 updateSupplierSelection();
-
                                 return;
                             }
 
+                            const abortController = new AbortController();
+                            activeSupplierRequestController = abortController;
 
-                            supplierContainer.innerHTML = `
-                                        <div class="selection-loading create-selection-empty">
-
-                                            <i class="bi bi-arrow-repeat spinning"></i>
-
-                                            <strong>
-                                                Loading suppliers...
-                                            </strong>
-
-                                            <span>
-                                                Đang tải Supplier thuộc nhóm hàng.
-                                            </span>
-
-                                        </div>
-                                    `;
-
+                            renderSupplierStatusState(
+                                "selection-loading",
+                                "bi bi-arrow-repeat spinning",
+                                "Loading suppliers...",
+                                "Fetching active suppliers for the selected product group."
+                            );
 
                             try {
 
                                 const response =
                                     await fetch(
-                                        `/EvaluationBatch/SuppliersByGroup?groupId=${encodeURIComponent(groupId)}`
+                                        `/EvaluationBatch/SuppliersByGroup?groupId=${encodeURIComponent(groupId)}`,
+                                        {
+                                            signal: abortController.signal,
+                                            headers: { "Accept": "application/json" }
+                                        }
                                     );
 
-
-                                if (!response.ok) {
-
-                                    throw new Error(
-                                        "Unable to load suppliers."
-                                    );
-                                }
-
-
-                                const loadedSuppliers =
-                                    await response.json();
-
-
-                                if (
-                                    !loadedSuppliers.length
-                                ) {
-
-                                    supplierContainer.innerHTML = `
-                                                <div class="selection-empty create-selection-empty">
-
-                                                    <i class="bi bi-building-x"></i>
-
-                                                    <strong>
-                                                        No active suppliers
-                                                    </strong>
-
-                                                    <span>
-                                                        Product Group này chưa có
-                                                        Supplier Active.
-                                                    </span>
-
-                                                </div>
-                                            `;
-
-                                    updateSupplierSelection();
-
+                                if (requestSeq !== latestSupplierRequestSeq) {
                                     return;
                                 }
 
+                                if (response.status === 401 || response.status === 403 || response.redirected) {
+                                    renderSupplierStatusState(
+                                        "selection-error",
+                                        "bi bi-shield-lock",
+                                        "Session expired or unauthorized",
+                                        "Please sign in again and reload the page."
+                                    );
+                                    updateSupplierSelection();
+                                    return;
+                                }
 
-                                supplierContainer.innerHTML =
-                                    loadedSuppliers
-                                        .map(
-                                            function(supplier) {
+                                if (!response.ok) {
+                                    throw new Error("Unable to load suppliers.");
+                                }
 
-                                                return `
+                                const loadedSuppliers = await response.json();
 
-                                                            <label class="selection-card">
+                                if (requestSeq !== latestSupplierRequestSeq) {
+                                    return;
+                                }
 
-                                                                <input
-                                                                    type="checkbox"
-                                                                    name="SelectedSupplierIds"
-                                                                    value="${supplier.supplierId}" />
+                                if (!Array.isArray(loadedSuppliers) || !loadedSuppliers.length) {
+                                    renderSupplierStatusState(
+                                        "selection-empty",
+                                        "bi bi-building-x",
+                                        "No active suppliers",
+                                        "This product group currently has no active suppliers."
+                                    );
+                                    updateSupplierSelection();
+                                    return;
+                                }
 
-                                                                <span class="selection-card-check">
+                                supplierContainer.replaceChildren();
+                                const fragment = document.createDocumentFragment();
 
-                                                                    <i class="bi bi-check"></i>
+                                loadedSuppliers.forEach(function(supplier) {
+                                    const idStr = String(supplier.supplierId ?? "");
+                                    const shouldCheck = preservedSupplierIds.has(idStr);
+                                    fragment.appendChild(buildSupplierCardElement(supplier, shouldCheck));
+                                });
 
-                                                                </span>
-
-                                                                <span class="selection-card-content">
-
-                                                                    <strong>
-                                                                        ${supplier.supplierCode}
-                                                                    </strong>
-
-                                                                    <span class="selection-item-name">
-                                                                        ${supplier.supplierName}
-                                                                    </span>
-
-                                                                </span>
-
-                                                                <i class="bi bi-building selection-card-icon"></i>
-
-                                                            </label>
-
-                                                        `;
-
-                                            }
-                                        )
-                                        .join("");
-
-
+                                supplierContainer.appendChild(fragment);
                                 updateSupplierSelection();
 
                             }
                             catch (error) {
 
-                                supplierContainer.innerHTML = `
-                                            <div class="selection-error create-selection-empty">
+                                if (error && error.name === "AbortError") {
+                                    return;
+                                }
 
-                                                <i class="bi bi-exclamation-circle"></i>
+                                if (requestSeq !== latestSupplierRequestSeq) {
+                                    return;
+                                }
 
-                                                <strong>
-                                                    Unable to load suppliers
-                                                </strong>
-
-                                                <span>
-                                                    Không thể tải danh sách Supplier.
-                                                </span>
-
-                                            </div>
-                                        `;
+                                renderSupplierStatusState(
+                                    "selection-error",
+                                    "bi bi-exclamation-circle",
+                                    "Unable to load suppliers",
+                                    "Could not load the supplier list. Please try selecting the product group again."
+                                );
 
                                 updateSupplierSelection();
-
                                 console.error(error);
                             }
 
@@ -1588,6 +1617,12 @@
                                 'input[name="SelectedSupplierIds"]'
                             )
                         ) {
+                            const val = String(event.target.value);
+                            if (event.target.checked) {
+                                preservedSupplierIds.add(val);
+                            } else {
+                                preservedSupplierIds.delete(val);
+                            }
 
                             updateSupplierSelection();
 

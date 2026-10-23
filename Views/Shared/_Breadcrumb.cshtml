@@ -12,23 +12,23 @@
     var controllerNames = new Dictionary<string, (string Name, string Action, string Controller)>
     {
         { "Dashboard", ("Dashboard", "Index", "Dashboard") },
-        { "Account", ("Tài khoản", "Index", "Dashboard") },
-        { "Supplier", ("Nhà cung cấp", "Index", "Supplier") },
-        { "ProductGroup", ("Nhóm hàng", "Index", "ProductGroup") },
-        { "Criteria", ("Tiêu chí đánh giá", "Index", "Criteria") },
-        { "EvaluationBatch", ("Đợt đánh giá", "Index", "EvaluationBatch") },
-        { "Evaluation", ("Chấm điểm", "Index", "EvaluationBatch") },
-        { "AHP", ("Trọng số AHP", "Index", "EvaluationBatch") },
-        { "TOPSIS", ("Xếp hạng TOPSIS", "Index", "EvaluationBatch") },
-        { "DecisionResult", ("Kết quả phê duyệt", "Index", "EvaluationBatch") },
-        { "Report", ("Báo cáo DSS", "Index", "EvaluationBatch") },
-        { "User", ("Người dùng", "Index", "User") },
-        { "AuditLog", ("Nhật ký hệ thống", "Index", "AuditLog") },
+        { "Account", ("Account", "Index", "Dashboard") },
+        { "Supplier", ("Suppliers", "Index", "Supplier") },
+        { "ProductGroup", ("Product Groups", "Index", "ProductGroup") },
+        { "Criteria", ("Evaluation Criteria", "Index", "Criteria") },
+        { "EvaluationBatch", ("Evaluation Batches", "Index", "EvaluationBatch") },
+        { "Evaluation", ("Supplier Scoring", "Index", "EvaluationBatch") },
+        { "AHP", ("AHP Weights", "Index", "EvaluationBatch") },
+        { "TOPSIS", ("TOPSIS Ranking", "Index", "EvaluationBatch") },
+        { "DecisionResult", ("Approval & Decision", "Index", "EvaluationBatch") },
+        { "Report", ("DSS Report", "Index", "EvaluationBatch") },
+        { "User", ("Users", "Index", "User") },
+        { "AuditLog", ("Audit Logs", "Index", "AuditLog") },
     };
 
     var currentControllerInfo = controller != null && controllerNames.ContainsKey(controller) 
         ? controllerNames[controller] 
-        : (Name: controller ?? "Hệ thống", Action: "Index", Controller: controller ?? "Dashboard");
+        : (Name: controller ?? "System", Action: "Index", Controller: controller ?? "Dashboard");
 
     var customTitle = ViewData["BreadcrumbTitle"] as string ?? ViewData["Title"] as string;
 }
@@ -39,7 +39,7 @@
         <div class="dss-breadcrumb-trail">
             <a asp-controller="Dashboard" asp-action="Index" class="dss-breadcrumb-link">
                 <i class="bi bi-house-door"></i>
-                <span>Trang chủ</span>
+                <span>Home</span>
             </a>
 
             @if (string.Equals(action, "Index", StringComparison.OrdinalIgnoreCase))

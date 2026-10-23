@@ -179,8 +179,13 @@
 
 
 <!-- =========================================================
-     SAATY SCALE
+     SAATY SCALE & SHARED MATRIX NOTICE
      ========================================================= -->
+
+<div class="alert alert-info mb-3" style="border-radius: var(--radius-md); padding: 14px 18px; border: 1px solid rgba(59, 130, 246, 0.35); background: rgba(59, 130, 246, 0.08);">
+    <i class="bi bi-people-fill me-2 text-primary"></i>
+    <strong>Shared Batch Matrix:</strong> This evaluation batch uses a single shared AHP pairwise comparison matrix protected by optimistic concurrency control (<code>RowVersion</code>). Saving comparisons updates the batch-wide consensus matrix (see <code>docs/GROUP-AHP-PROPOSAL.md</code> for independent multi-expert ballot aggregation).
+</div>
 
 <div class="ahp-scale-card">
 
@@ -195,9 +200,8 @@
         </h2>
 
         <p>
-            Chỉ nhập các ô ở tam giác phía trên.
-            Hệ thống tự động tạo giá trị nghịch đảo
-            cho tam giác phía dưới.
+            Enter values in the upper triangle cells only.
+            Reciprocal values for the lower triangle are generated automatically.
         </p>
 
     </div>
@@ -257,6 +261,9 @@
         <input type="hidden"
                name="BatchId"
                value="@Model.BatchId" />
+        <input type="hidden"
+               name="RowVersion"
+               value="@Model.RowVersion" />
 
 
         <div class="ahp-table-wrapper">
@@ -455,7 +462,7 @@
         <span class="ahp-note-dot"></span>
 
         <span>
-            Ma trận sẽ được lưu trước khi tính AHP.
+            Save the pairwise comparison matrix before running AHP calculation.
         </span>
 
     </div>
@@ -495,6 +502,9 @@
           class="ahp-calculate-form">
 
         @Html.AntiForgeryToken()
+        <input type="hidden"
+               name="rowVersion"
+               value="@Model.RowVersion" />
 
 
         <div class="ahp-calculate-content">
@@ -510,9 +520,8 @@
                 </h3>
 
                 <p>
-                    Hệ thống sử dụng ma trận AHP đã lưu
-                    để tính trọng số tiêu chí, λmax, CI,
-                    RI và Consistency Ratio (CR).
+                    Computes the priority vector (criteria weights), λmax, CI,
+                    RI, and Consistency Ratio (CR) from the saved pairwise comparison matrix.
                 </p>
 
             </div>
@@ -520,9 +529,9 @@
 
             <button type="submit"
                     class="btn-primary"
-                    data-dss-confirm="Tính toán AHP sẽ cập nhật lại toàn bộ trọng số tiêu chí và yêu cầu tính lại TOPSIS nếu đã có. Bạn có chắc chắn muốn tính toán?"
-                    data-dss-title="Xác nhận tính AHP"
-                    data-dss-btn-text="Tính toán AHP">
+                    data-dss-confirm="Calculating AHP will recompute all criteria weights and require recalculating TOPSIS if rankings already exist. Do you want to proceed?"
+                    data-dss-title="Calculate AHP"
+                    data-dss-btn-text="Calculate AHP">
 
                 <i class="bi bi-calculator"></i>
 
@@ -656,18 +665,15 @@
                 @if (isConsistent)
                 {
                     <span>
-                        Ma trận đạt tính nhất quán.
-                        Có thể sử dụng trọng số AHP
-                        cho bước TOPSIS.
+                        The pairwise comparison matrix is consistent (CR ≤ 0.10).
+                        These AHP criteria weights can now be used for TOPSIS ranking.
                     </span>
                 }
                 else
                 {
                     <span>
-                        Ma trận chưa đạt tính nhất quán.
-                        CR &gt; 0.10.
-                        Hãy điều chỉnh lại các so sánh cặp
-                        trước khi tiếp tục.
+                        The pairwise comparison matrix is inconsistent (CR &gt; 0.10).
+                        Please revise the pairwise comparisons before proceeding to TOPSIS.
                     </span>
                 }
 
@@ -833,9 +839,8 @@
                     </h2>
 
                     <p>
-                        Ma trận AHP đã đạt yêu cầu nhất quán.
-                        Bạn có thể chuyển sang TOPSIS để
-                        xếp hạng nhà cung cấp.
+                        The AHP matrix meets the consistency threshold.
+                        Proceed to TOPSIS to rank the candidate suppliers.
                     </p>
 
                 </div>
@@ -885,9 +890,8 @@
                     </h2>
 
                     <p>
-                        CR đang lớn hơn 0.10.
-                        Hãy điều chỉnh các so sánh cặp
-                        trước khi chuyển sang TOPSIS.
+                        CR exceeds 0.10.
+                        Please adjust the pairwise comparisons before continuing to TOPSIS.
                     </p>
 
                 </div>

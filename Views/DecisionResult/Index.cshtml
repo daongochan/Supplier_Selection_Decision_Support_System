@@ -1,7 +1,7 @@
 @model SupplierSelectionDSS.Models.DecisionResultViewModel
 
 @{
-    ViewData["Title"] = "Final Result";
+    ViewData["Title"] = "Final Decision & Approval";
 
     var canApprove =
         User.IsInRole("Administrator") ||
@@ -22,11 +22,11 @@
     <div>
 
         <div class="page-eyebrow">
-            FINAL DECISION
+            FINAL DECISION · ROUND @Model.CurrentRoundNumber
         </div>
 
         <h1 class="page-title">
-            Supplier ranking
+            Supplier ranking &amp; decision
         </h1>
 
         <p class="page-description">
@@ -60,8 +60,6 @@
     </div>
 
 </div>
-
-
 
 
 <!-- =========================================================
@@ -164,6 +162,14 @@
 
 </div>
 
+@if (Model.IsFrozenFromSnapshot)
+{
+    <div class="alert alert-info mb-3" style="border-radius: var(--radius-md); padding: 14px 18px; border: 1px solid rgba(59, 130, 246, 0.35); background: rgba(59, 130, 246, 0.08);">
+        <i class="bi bi-lock-fill me-2 text-primary"></i>
+        <strong>Reproducible Evidence Snapshot:</strong> This completed decision is rendered from the immutable Round @Model.CurrentRoundNumber snapshot (@(Model.SnapshotMethodVersion ?? "AHP+TOPSIS")) recorded at final approval. Subsequent changes to master supplier or criteria names do not alter this historical record.
+    </div>
+}
+
 
 @if (!Model.Ranking.Any())
 {
@@ -178,7 +184,7 @@
         </h2>
 
         <p>
-            Chưa có kết quả xếp hạng TOPSIS cho Batch này.
+            TOPSIS ranking has not been calculated for the current round of this evaluation batch.
         </p>
 
 
@@ -215,7 +221,7 @@ else
                 </h2>
 
                 <p>
-                    Nhà cung cấp đứng đầu theo TOPSIS với
+                    Top-ranked supplier by TOPSIS with
                     Closeness Coefficient =
                     <strong>
                         @Model.RecommendedSupplier.ClosenessCoefficient.ToString("0.000000")
@@ -365,10 +371,10 @@ else
             <div class="decision-card-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
                 <div>
                     <div class="page-eyebrow">
-                        ACADEMIC ROBUSTNESS · PHÂN TÍCH ĐỘ NHẠY
+                        ROBUSTNESS CHECK · SENSITIVITY ANALYSIS
                     </div>
                     <h2 class="section-title">
-                        Tính ổn định của quyết định (Sensitivity Analysis ±10%, ±20%)
+                        Decision Stability (Weight Perturbation ±10%, ±20%)
                     </h2>
                     <p class="table-muted" style="margin-top: 6px; font-size: 14px; max-width: 780px;">
                         @Model.SensitivityAnalysis.SummaryMessage
@@ -378,13 +384,13 @@ else
                     @if (Model.SensitivityAnalysis.IsOverallRobust)
                     {
                         <span class="badge" style="background: var(--sage-soft); color: var(--sage-dark); font-weight: 600; padding: 6px 12px; border-radius: 999px; font-size: 13px;">
-                            ✓ Vững bền 100% (Không đổi #1)
+                            ✓ 100% Robust (Rank #1 Unchanged)
                         </span>
                     }
                     else
                     {
                         <span class="badge" style="background: var(--danger-soft); color: var(--danger-dark); font-weight: 600; padding: 6px 12px; border-radius: 999px; font-size: 13px;">
-                            ⚠️ Độ vững bền: @Model.SensitivityAnalysis.RobustnessPercentage%
+                            ⚠️ Robustness: @Model.SensitivityAnalysis.RobustnessPercentage%
                         </span>
                     }
                 </div>
@@ -523,9 +529,8 @@ else
             </h2>
 
             <p>
-                Kết quả lựa chọn hiện tại đã bị từ chối.
-                Người quản lý có thể yêu cầu đánh giá lại
-                trước khi đưa ra quyết định mới.
+                The current supplier ranking proposal was rejected.
+                A manager or administrator can request a re-evaluation round to revise scores and criteria weights.
             </p>
 
 
@@ -549,20 +554,21 @@ else
             {
                 <form method="post"
                       action="@Url.Action(
-                                                                  "Reevaluate",
-                                                                  "DecisionResult",
-                                                                  new
-                                                                  {
-                                                                      batchId = Model.BatchId
-                                                                  })">
+                                  "Reevaluate",
+                                  "DecisionResult",
+                                  new
+                                  {
+                                      batchId = Model.BatchId
+                                  })">
 
                     @Html.AntiForgeryToken()
+                    <input type="hidden" name="rowVersion" value="@Model.RowVersion" />
 
                     <button type="submit"
                             class="btn-primary"
-                            data-dss-confirm="Yêu cầu đánh giá lại sẽ vô hiệu hóa toàn bộ kết quả Evaluation, AHP và TOPSIS của đợt này. Bạn có chắc chắn muốn thực hiện?"
-                            data-dss-title="Yêu cầu đánh giá lại"
-                            data-dss-btn-text="Đánh giá lại">
+                            data-dss-confirm="Requesting re-evaluation will snapshot the current round and clear active Evaluation, AHP, and TOPSIS results for a new round. Do you want to proceed?"
+                            data-dss-title="Request Re-evaluation"
+                            data-dss-btn-text="Re-evaluate">
 
                         Re-evaluate
 
@@ -599,9 +605,8 @@ else
             </h2>
 
             <p>
-                Batch đã được yêu cầu đánh giá lại.
-                Dữ liệu Evaluation, AHP và TOPSIS cũ
-                đã được vô hiệu hóa.
+                A new evaluation round has been initiated.
+                Previous round inputs and rankings have been archived in the round snapshot history.
             </p>
 
 
@@ -645,13 +650,11 @@ else
             </h2>
 
             <p class="decision-approval-description">
-                TOPSIS đề xuất
+                TOPSIS recommends
                 <strong>
                     @Model.RecommendedSupplier.SupplierCode
                 </strong>
-                ở vị trí #1. Tuy nhiên, người quản lý
-                có thể lựa chọn bất kỳ Supplier nào trong
-                bảng xếp hạng trước khi phê duyệt.
+                at Rank #1. Managers may select any ranked supplier below; selecting a non-Rank-1 supplier requires a documented justification.
             </p>
 
 
@@ -663,6 +666,8 @@ else
                   id="rejectForm"
                   style="display:none;">
                 @Html.AntiForgeryToken()
+                <input type="hidden" name="rowVersion" value="@Model.RowVersion" />
+                <input type="hidden" name="notes" id="rejectNotesHidden" value="" />
             </form>
 
             <form method="post"
@@ -670,6 +675,8 @@ else
                   id="reevaluateForm"
                   style="display:none;">
                 @Html.AntiForgeryToken()
+                <input type="hidden" name="rowVersion" value="@Model.RowVersion" />
+                <input type="hidden" name="notes" id="reevaluateNotesHidden" value="" />
             </form>
 
             <!-- =============================================
@@ -680,6 +687,7 @@ else
                   id="approvalForm">
 
                 @Html.AntiForgeryToken()
+                <input type="hidden" name="rowVersion" value="@Model.RowVersion" />
 
                 <div class="decision-supplier-selection">
                     @foreach (var item in Model.Ranking.OrderBy(x => x.RankNo))
@@ -712,16 +720,16 @@ else
 
                 <div class="decision-approval-notes-field" style="margin-top: 16px; margin-bottom: 20px;">
                     <label for="approvalNotesInput" class="form-label" style="font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                        <span>Lý do / Ghi chú phê duyệt</span>
+                        <span>Decision Notes / Justification</span>
                         <span id="rankWarningBadge" style="display: none; color: #dc2626; font-size: 12px; font-weight: normal; background: #fee2e2; padding: 2px 8px; border-radius: 4px;">
-                            <i class="bi bi-exclamation-triangle"></i> Bắt buộc nhập lý do khi chọn nhà cung cấp không phải Hạng 1
+                            <i class="bi bi-exclamation-triangle"></i> Justification is required when selecting a non-Rank-1 supplier
                         </span>
                     </label>
                     <textarea id="approvalNotesInput"
                               name="notes"
                               class="form-control"
                               rows="2"
-                              placeholder="Nhập lý do hoặc căn cứ phê duyệt (bắt buộc nếu không chọn Hạng 1)..."
+                              placeholder="Enter approval rationale, rejection reason, or re-evaluation notes (mandatory if overriding Rank #1)..."
                               style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; font-family: inherit; font-size: 14px;"></textarea>
                 </div>
 
@@ -730,9 +738,9 @@ else
                         <button type="submit"
                                 form="rejectForm"
                                 class="btn-outline btn-outline-danger"
-                                data-dss-confirm="Bạn có chắc chắn muốn từ chối kết quả đánh giá hiện tại không?"
-                                data-dss-title="Từ chối quyết định"
-                                data-dss-btn-text="Từ chối">
+                                data-dss-confirm="Are you sure you want to reject the current evaluation decision?"
+                                data-dss-title="Reject Decision"
+                                data-dss-btn-text="Reject">
                             <i class="bi bi-x-circle"></i>
                             Reject
                         </button>
@@ -740,9 +748,9 @@ else
                         <button type="submit"
                                 form="reevaluateForm"
                                 class="btn-outline btn-outline-warning"
-                                data-dss-confirm="Yêu cầu đánh giá lại sẽ vô hiệu hóa toàn bộ kết quả Evaluation, AHP và TOPSIS của đợt này. Bạn có chắc chắn muốn thực hiện?"
-                                data-dss-title="Yêu cầu đánh giá lại"
-                                data-dss-btn-text="Đánh giá lại">
+                                data-dss-confirm="Requesting re-evaluation will snapshot the current round and clear active Evaluation, AHP, and TOPSIS results for a new round. Do you want to proceed?"
+                                data-dss-title="Request Re-evaluation"
+                                data-dss-btn-text="Re-evaluate">
                             <i class="bi bi-arrow-counterclockwise"></i>
                             Re-evaluate
                         </button>
@@ -751,9 +759,9 @@ else
                     <div class="decision-toolbar-primary">
                         <button type="submit"
                                 class="btn-primary"
-                                data-dss-confirm="Bạn có chắc chắn muốn phê duyệt nhà cung cấp này làm quyết định chính thức cho đợt đánh giá?"
-                                data-dss-title="Xác nhận phê duyệt"
-                                data-dss-btn-text="Phê duyệt">
+                                data-dss-confirm="Are you sure you want to approve the selected supplier as the official decision for this evaluation batch?"
+                                data-dss-title="Confirm Final Approval"
+                                data-dss-btn-text="Approve">
                             Approve selected supplier
                             <i class="bi bi-check2"></i>
                         </button>
@@ -763,6 +771,165 @@ else
 
         </div>
     }
+}
+
+<!-- =========================================================
+     APPEND-ONLY DECISION HISTORY (F05)
+     ========================================================= -->
+@if (Model.DecisionHistory.Any())
+{
+    <div class="table-card decision-ranking-card" style="margin-top: 28px;" id="decision-history">
+        <div class="decision-card-header">
+            <div>
+                <div class="page-eyebrow">
+                    GOVERNANCE LOG · APPEND-ONLY TIMELINE
+                </div>
+                <h2 class="section-title">
+                    Decision &amp; approval history
+                </h2>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Round</th>
+                        <th>Action / Status</th>
+                        <th>Selected Supplier</th>
+                        <th>Actor</th>
+                        <th>Timestamp</th>
+                        <th>Notes / Justification</th>
+                        <th>State</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ev in Model.DecisionHistory)
+                    {
+                        <tr>
+                            <td>
+                                <strong>Round #@ev.RoundNumber</strong>
+                            </td>
+                            <td>
+                                <span class="status-pill status-@ev.Status.ToLowerInvariant()">
+                                    @ev.Status
+                                </span>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(ev.SelectedSupplierCode) || !string.IsNullOrWhiteSpace(ev.SelectedSupplierName))
+                                {
+                                    <strong>@(ev.SelectedSupplierCode ?? "—")</strong>
+                                    <span class="table-muted">@ev.SelectedSupplierName</span>
+                                }
+                                else
+                                {
+                                    <span class="table-muted">—</span>
+                                }
+                            </td>
+                            <td>@(ev.ApprovedByName ?? "—")</td>
+                            <td>@ev.ApprovalDate.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@(string.IsNullOrWhiteSpace(ev.Notes) ? "—" : ev.Notes)</td>
+                            <td>
+                                @if (ev.IsFinal)
+                                {
+                                    <span class="badge" style="background: var(--sage-soft); color: var(--sage-dark); font-weight: 600; padding: 4px 10px; border-radius: 999px;">
+                                        Final
+                                    </span>
+                                }
+                                else if (ev.IsSuperseded)
+                                {
+                                    <span class="badge" style="background: var(--surface-muted); color: var(--muted); font-weight: 600; padding: 4px 10px; border-radius: 999px;">
+                                        Superseded
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge" style="background: var(--amber-soft); color: var(--amber-dark); font-weight: 600; padding: 4px 10px; border-radius: 999px;">
+                                        Active Round
+                                    </span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<!-- =========================================================
+     ROUND EVIDENCE SNAPSHOTS (F06)
+     ========================================================= -->
+@if (Model.RoundSnapshots.Any())
+{
+    <div class="table-card decision-ranking-card" style="margin-top: 28px;" id="round-snapshots">
+        <div class="decision-card-header">
+            <div>
+                <div class="page-eyebrow">
+                    HISTORICAL ARCHIVE · FROZEN EVIDENCE
+                </div>
+                <h2 class="section-title">
+                    Evaluation round snapshots
+                </h2>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Round</th>
+                        <th>Snapshot Type</th>
+                        <th>Rank #1 Supplier (Frozen)</th>
+                        <th>Selected Supplier</th>
+                        <th>AHP CR</th>
+                        <th>Recorded By</th>
+                        <th>Timestamp</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var snap in Model.RoundSnapshots)
+                    {
+                        <tr>
+                            <td><strong>Round #@snap.RoundNumber</strong></td>
+                            <td>
+                                <span class="status-pill status-@snap.SnapshotType.ToLowerInvariant()">
+                                    @snap.SnapshotType
+                                </span>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(snap.TopSupplierCode))
+                                {
+                                    <strong>@snap.TopSupplierCode</strong>
+                                    <span class="table-muted">@snap.TopSupplierName (CC: @(snap.TopClosenessCoefficient?.ToString("0.000000") ?? "—"))</span>
+                                }
+                                else
+                                {
+                                    <span class="table-muted">—</span>
+                                }
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(snap.SelectedSupplierCode) || !string.IsNullOrWhiteSpace(snap.SelectedSupplierName))
+                                {
+                                    <strong>@(snap.SelectedSupplierCode ?? "—")</strong>
+                                    <span class="table-muted">@snap.SelectedSupplierName</span>
+                                }
+                                else
+                                {
+                                    <span class="table-muted">—</span>
+                                }
+                            </td>
+                            <td>@(snap.AhpCrValue?.ToString("0.0000") ?? "—")</td>
+                            <td>@(snap.ActorName ?? "—")</td>
+                            <td>@snap.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@(string.IsNullOrWhiteSpace(snap.Notes) ? "—" : snap.Notes)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 }
 
 @section Styles {
@@ -776,6 +943,26 @@ else
             var notesBadge = document.getElementById('rankWarningBadge');
             var notesInput = document.getElementById('approvalNotesInput');
             var form = document.getElementById('approvalForm');
+            var rejectForm = document.getElementById('rejectForm');
+            var reevaluateForm = document.getElementById('reevaluateForm');
+            var rejectNotesHidden = document.getElementById('rejectNotesHidden');
+            var reevaluateNotesHidden = document.getElementById('reevaluateNotesHidden');
+
+            function syncSecondaryNotes() {
+                var val = notesInput ? notesInput.value : '';
+                if (rejectNotesHidden) rejectNotesHidden.value = val;
+                if (reevaluateNotesHidden) reevaluateNotesHidden.value = val;
+            }
+
+            if (notesInput) {
+                notesInput.addEventListener('input', syncSecondaryNotes);
+            }
+            if (rejectForm) {
+                rejectForm.addEventListener('submit', syncSecondaryNotes);
+            }
+            if (reevaluateForm) {
+                reevaluateForm.addEventListener('submit', syncSecondaryNotes);
+            }
 
             function updateNotesRequirement() {
                 var selectedRadio = document.querySelector('input[name="supplierId"]:checked');
@@ -784,28 +971,44 @@ else
                 var isRank1 = label && label.querySelector('.decision-supplier-rank') && label.querySelector('.decision-supplier-rank').textContent.includes('#1');
                 if (isRank1) {
                     if (notesBadge) notesBadge.style.display = 'none';
-                    if (notesInput) notesInput.removeAttribute('required');
+                    if (notesInput) {
+                        notesInput.removeAttribute('required');
+                        notesInput.setCustomValidity('');
+                    }
                 } else {
                     if (notesBadge) notesBadge.style.display = 'inline-flex';
-                    if (notesInput) notesInput.setAttribute('required', 'required');
+                    if (notesInput) {
+                        notesInput.setAttribute('required', 'required');
+                        if (!notesInput.value.trim()) {
+                            notesInput.setCustomValidity('Justification is required when selecting a non-Rank-1 supplier.');
+                        } else {
+                            notesInput.setCustomValidity('');
+                        }
+                    }
                 }
             }
 
             radios.forEach(function (r) {
                 r.addEventListener('change', updateNotesRequirement);
             });
+            if (notesInput) {
+                notesInput.addEventListener('input', updateNotesRequirement);
+            }
             updateNotesRequirement();
 
             if (form) {
                 form.addEventListener('submit', function (e) {
+                    updateNotesRequirement();
                     var selectedRadio = document.querySelector('input[name="supplierId"]:checked');
                     if (!selectedRadio) return;
                     var label = selectedRadio.closest('.decision-supplier-option');
                     var isRank1 = label && label.querySelector('.decision-supplier-rank') && label.querySelector('.decision-supplier-rank').textContent.includes('#1');
                     if (!isRank1 && (!notesInput || !notesInput.value.trim())) {
                         e.preventDefault();
-                        alert('Bạn đang chọn nhà cung cấp không phải Hạng 1. Bắt buộc phải nhập lý do giải trình phê duyệt.');
-                        if (notesInput) notesInput.focus();
+                        if (notesInput) {
+                            notesInput.reportValidity();
+                            notesInput.focus();
+                        }
                     }
                 });
             }

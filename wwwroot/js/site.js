@@ -12,11 +12,12 @@
         _confirmCallback: null,
         _previousActiveElement: null,
         _isProcessing: false,
+        _currentConfirmText: "Confirm",
 
         showConfirmModal: function (options) {
             const modal = document.getElementById("dssConfirmModal");
             if (!modal) {
-                if (confirm(options.message || "Bạn có chắc chắn muốn thực hiện thao tác này?")) {
+                if (confirm(options.message || "Are you sure you want to proceed with this action?")) {
                     if (typeof options.onConfirm === "function") {
                         options.onConfirm("");
                     }
@@ -49,10 +50,11 @@
             if (closeBtn) closeBtn.disabled = false;
 
             // Content bindings
-            if (titleEl) titleEl.textContent = options.title || "Xác nhận thao tác";
-            if (messageEl) messageEl.textContent = options.message || "Bạn có chắc chắn muốn tiếp tục?";
+            this._currentConfirmText = options.confirmText || "Confirm";
+            if (titleEl) titleEl.textContent = options.title || "Confirm Action";
+            if (messageEl) messageEl.textContent = options.message || "Are you sure you want to continue?";
             if (submitTextEl) {
-                submitTextEl.textContent = options.confirmText || "Xác nhận";
+                submitTextEl.textContent = this._currentConfirmText;
             }
 
             // Consequence callout - only show when non-empty text exists
@@ -91,10 +93,10 @@
             // Optional text input (reasons / notes)
             if (options.requireInput) {
                 if (inputGroup) inputGroup.style.display = "block";
-                if (inputLabel) inputLabel.textContent = options.inputLabel || "Ghi chú / Lý do:";
+                if (inputLabel) inputLabel.textContent = options.inputLabel || "Reason / Notes:";
                 if (inputEl) {
                     inputEl.value = "";
-                    inputEl.placeholder = options.inputPlaceholder || "Nhập lý do hoặc ý kiến...";
+                    inputEl.placeholder = options.inputPlaceholder || "Enter your reason or comments...";
                 }
             } else {
                 if (inputGroup) inputGroup.style.display = "none";
@@ -152,14 +154,25 @@
 
         const sidebarToggleBtn = document.getElementById("sidebarToggle");
         const sidebarBackdrop = document.getElementById("sidebarBackdrop");
+        const appSidebar = document.getElementById("appSidebar");
 
         function closeMobileSidebar() {
             document.body.classList.remove("sidebar-mobile-open");
+            if (sidebarToggleBtn) {
+                sidebarToggleBtn.setAttribute("aria-expanded", "false");
+            }
         }
 
         if (sidebarToggleBtn) {
             sidebarToggleBtn.addEventListener("click", function () {
-                document.body.classList.toggle("sidebar-mobile-open");
+                const isOpen = document.body.classList.toggle("sidebar-mobile-open");
+                sidebarToggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+                if (isOpen && appSidebar) {
+                    const firstLink = appSidebar.querySelector("a, button");
+                    if (firstLink && typeof firstLink.focus === "function") {
+                        setTimeout(function () { firstLink.focus(); }, 50);
+                    }
+                }
             });
         }
 
@@ -196,6 +209,20 @@
         // CONFIRMATION MODAL SUBMIT BUTTON & INTERACTIONS
         // =====================================================
         const confirmSubmitBtn = document.getElementById("dssConfirmSubmitBtn");
+        function resetModalProcessingState() {
+            const submitTextEl = document.getElementById("dssConfirmSubmitText");
+            const submitSpinnerEl = document.getElementById("dssConfirmSubmitSpinner");
+            const cancelBtn = document.getElementById("dssConfirmCancelBtn");
+            const closeBtn = document.getElementById("dssConfirmCloseBtn");
+
+            DSS._isProcessing = false;
+            if (confirmSubmitBtn) confirmSubmitBtn.disabled = false;
+            if (cancelBtn) cancelBtn.disabled = false;
+            if (closeBtn) closeBtn.disabled = false;
+            if (submitSpinnerEl) submitSpinnerEl.style.display = "none";
+            if (submitTextEl) submitTextEl.textContent = DSS._currentConfirmText || "Confirm";
+        }
+
         if (confirmSubmitBtn) {
             confirmSubmitBtn.addEventListener("click", function () {
                 if (DSS._isProcessing) return; // Prevent double submit
@@ -209,7 +236,7 @@
 
                 if (submitSpinnerEl) submitSpinnerEl.style.display = "inline-block";
                 if (submitTextEl) {
-                    submitTextEl.textContent = "Đang xử lý...";
+                    submitTextEl.textContent = "Processing...";
                 }
                 confirmSubmitBtn.disabled = true;
                 if (cancelBtn) cancelBtn.disabled = true;
@@ -221,27 +248,54 @@
 
                 if (typeof callback === "function") {
                     try {
-                        callback(inputValue);
+                        Promise.resolve(callback(inputValue)).catch(function (err) {
+                            console.error("Confirmation async callback error:", err);
+                            resetModalProcessingState();
+                        });
                     } catch (err) {
                         console.error("Confirmation callback error:", err);
-                        DSS._isProcessing = false;
-                        confirmSubmitBtn.disabled = false;
-                        if (cancelBtn) cancelBtn.disabled = false;
-                        if (closeBtn) closeBtn.disabled = false;
-                        if (submitSpinnerEl) submitSpinnerEl.style.display = "none";
-                        if (submitTextEl) submitTextEl.textContent = "Xác nhận";
+                        resetModalProcessingState();
                     }
+                } else {
+                    resetModalProcessingState();
                 }
             });
         }
 
-        // Close modal or mobile sidebar on Escape (only when idle)
+        // Close modal or mobile sidebar on Escape, and trap focus inside modal when open
         document.addEventListener("keydown", function (e) {
+            const modal = document.getElementById("dssConfirmModal");
+            const isModalOpen = modal && modal.getAttribute("aria-hidden") === "false";
+
             if (e.key === "Escape") {
-                if (document.body.classList.contains("sidebar-mobile-open")) {
-                    closeMobileSidebar();
-                } else if (!DSS._isProcessing) {
+                if (isModalOpen && !DSS._isProcessing) {
                     DSS.closeConfirmModal();
+                } else if (document.body.classList.contains("sidebar-mobile-open")) {
+                    closeMobileSidebar();
+                    if (sidebarToggleBtn && typeof sidebarToggleBtn.focus === "function") {
+                        sidebarToggleBtn.focus();
+                    }
+                }
+                return;
+            }
+
+            if (e.key === "Tab" && isModalOpen) {
+                const focusable = Array.from(
+                    modal.querySelectorAll("button:not(:disabled), textarea:not(:disabled), input:not(:disabled), [tabindex]:not([tabindex='-1'])")
+                ).filter(function (el) {
+                    return el.offsetParent !== null;
+                });
+
+                if (focusable.length > 0) {
+                    const first = focusable[0];
+                    const last = focusable[focusable.length - 1];
+                    if (e.shiftKey && document.activeElement === first) {
+                        e.preventDefault();
+                        last.focus();
+                    } else if (!e.shiftKey && document.activeElement === last) {
+                        e.preventDefault();
+                        first.focus();
+                    }
                 }
             }
         });
@@ -253,10 +307,23 @@
             const trigger = e.target.closest("[data-dss-confirm]");
             if (!trigger) return;
 
+            const form = trigger.closest("form") || trigger.form || (trigger.getAttribute("form") ? document.getElementById(trigger.getAttribute("form")) : null);
+
+            // Validate form BEFORE opening confirmation modal so invalid forms are not locked
+            if (form && !trigger.hasAttribute("formnovalidate")) {
+                if (typeof form.checkValidity === "function" && !form.checkValidity()) {
+                    e.preventDefault();
+                    if (typeof form.reportValidity === "function") {
+                        form.reportValidity();
+                    }
+                    return;
+                }
+            }
+
             e.preventDefault();
             const message = trigger.getAttribute("data-dss-confirm");
-            const title = trigger.getAttribute("data-dss-title") || "Xác nhận";
-            const confirmText = trigger.getAttribute("data-dss-btn-text") || "Đồng ý";
+            const title = trigger.getAttribute("data-dss-title") || "Confirm Action";
+            const confirmText = trigger.getAttribute("data-dss-btn-text") || "Confirm";
             const consequence = trigger.getAttribute("data-dss-consequence");
 
             let actionType = trigger.getAttribute("data-dss-type");
@@ -281,8 +348,6 @@
                 }
             }
 
-            const form = trigger.closest("form") || trigger.form || (trigger.getAttribute("form") ? document.getElementById(trigger.getAttribute("form")) : null);
-
             DSS.showConfirmModal({
                 title: title,
                 message: message,
@@ -291,15 +356,23 @@
                 actionType: actionType,
                 onConfirm: function () {
                     if (form) {
-                        // Submit the form
+                        // Submit the form via requestSubmit when supported so submit listeners & validation run
                         if (trigger.type === "submit" && trigger.name) {
-                            const hidden = document.createElement("input");
-                            hidden.type = "hidden";
-                            hidden.name = trigger.name;
-                            hidden.value = trigger.value;
-                            form.appendChild(hidden);
+                            let existingHidden = form.querySelector(`input[type="hidden"][data-dss-submit-mirror="${trigger.name}"]`);
+                            if (!existingHidden) {
+                                existingHidden = document.createElement("input");
+                                existingHidden.type = "hidden";
+                                existingHidden.setAttribute("data-dss-submit-mirror", trigger.name);
+                                existingHidden.name = trigger.name;
+                                form.appendChild(existingHidden);
+                            }
+                            existingHidden.value = trigger.value;
                         }
-                        form.submit();
+                        if (typeof form.requestSubmit === "function") {
+                            form.requestSubmit();
+                        } else {
+                            form.submit();
+                        }
                     } else if (trigger.tagName === "A" && trigger.href) {
                         window.location.href = trigger.href;
                     }

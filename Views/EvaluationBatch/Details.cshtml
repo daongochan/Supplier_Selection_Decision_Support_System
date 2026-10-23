@@ -1,8 +1,8 @@
+@using SupplierSelectionDSS.Services
 @model SupplierSelectionDSS.Data.Entities.EvaluationBatch
 
 @{
     ViewData["Title"] = "Evaluation Batch";
-
 
     var isAdmin =
         User.IsInRole("Administrator");
@@ -16,22 +16,18 @@
     var isManager =
         User.IsInRole("Manager");
 
-
     var canEvaluate =
         isAdmin ||
         isPurchasing ||
         isExpert;
 
-
     var canAHP =
         isAdmin ||
         isExpert;
 
-
     var canTOPSIS =
         isAdmin ||
         isExpert;
-
 
     var canResult =
         isAdmin ||
@@ -39,85 +35,52 @@
         isManager ||
         isExpert;
 
-
     var canApprove =
         isAdmin ||
         isManager;
-
 
     var canReport =
         isAdmin ||
         isManager;
 
-
     // =========================================================
-    // WORKFLOW DATA
+    // UNIFIED WORKFLOW READINESS (Single Source of Truth)
     // =========================================================
+    var readiness =
+        BatchWorkflowReadinessService.ComputeFromBatchEntity(Model);
 
     var supplierCount =
-        Model.Suppliers.Count;
-
+        readiness.SupplierCount;
 
     var criteriaCount =
-        Model.Criteria.Count;
-
+        readiness.CriteriaCount;
 
     var evaluationScoreCount =
-        Model.EvaluationScores.Count;
-
+        readiness.ActualScoreCount;
 
     var expectedEvaluationScoreCount =
-        supplierCount *
-        criteriaCount;
-
+        readiness.ExpectedScoreCount;
 
     var evaluationComplete =
-        supplierCount > 0 &&
-        criteriaCount > 0 &&
-        evaluationScoreCount >=
-            expectedEvaluationScoreCount;
-
+        readiness.IsScoresComplete;
 
     var ahpResultExists =
-        Model.Ahpresult != null;
-
+        readiness.HasAhpResult;
 
     var ahpConsistent =
-        ahpResultExists &&
-        Model.Ahpresult!.IsConsistent;
-
+        readiness.IsAhpReady;
 
     var ahpCR =
-        ahpResultExists
-            ? Model.Ahpresult!.Crvalue
-            : (decimal?)null;
-
+        readiness.AhpCrValue;
 
     var topsisResultCount =
-        Model.TopsisResults.Count;
-
+        readiness.TopsisResultCount;
 
     var topsisComplete =
-        supplierCount > 0 &&
-        topsisResultCount >=
-            supplierCount;
-
-
-    var finalApproval =
-        Model.Approvals
-            .Where(
-                x =>
-                    x.IsFinal &&
-                    x.Status == "Approved")
-            .OrderByDescending(
-                x =>
-                    x.ApprovalDate)
-            .FirstOrDefault();
-
+        readiness.IsTopsisComplete;
 
     var isCompleted =
-        Model.Status == "Completed" ||
-        finalApproval != null;
+        readiness.IsCompleted;
 }
 
 
@@ -482,9 +445,7 @@
                 </h2>
 
                 <p>
-                    Phạm vi đánh giá đã được cấu hình trong bước
-                    tạo Batch. Sau khi kiểm tra Supplier và Criteria,
-                    hãy bắt đầu Evaluation.
+                    The evaluation scope has been configured. After verifying participating suppliers and criteria, start the evaluation workflow.
                 </p>
             }
             else if (!evaluationComplete)
@@ -494,7 +455,7 @@
                 </h2>
 
                 <p>
-                    Đã nhập
+                    Entered
                     <strong>
                         @evaluationScoreCount
                     </strong>
@@ -502,7 +463,7 @@
                     <strong>
                         @expectedEvaluationScoreCount
                     </strong>
-                    giá trị đánh giá.
+                    evaluation scores.
                 </p>
             }
             else if (!ahpResultExists)
@@ -512,9 +473,7 @@
                 </h2>
 
                 <p>
-                    Ma trận đánh giá đã đầy đủ.
-                    Hãy thực hiện so sánh cặp và Calculate AHP
-                    để xác định trọng số Criteria.
+                    The evaluation score matrix is complete. Enter pairwise comparisons and calculate AHP to determine criteria weights.
                 </p>
             }
             else if (!ahpConsistent)
@@ -524,12 +483,11 @@
                 </h2>
 
                 <p>
-                    Consistency Ratio hiện tại là
+                    Current Consistency Ratio is
                     <strong>
                         @((ahpCR ?? 0m).ToString("0.0000"))
                     </strong>.
-                    Cần điều chỉnh ma trận để CR ≤ 0.10
-                    trước khi thực hiện TOPSIS.
+                    Adjust the pairwise matrix so that CR ≤ 0.10 before running TOPSIS.
                 </p>
             }
             else if (!topsisComplete)
@@ -539,9 +497,7 @@
                 </h2>
 
                 <p>
-                    AHP đã đạt tính nhất quán.
-                    Có thể sử dụng trọng số AHP để
-                    xếp hạng các nhà cung cấp.
+                    AHP consistency is satisfied. You can now apply AHP weights to rank candidate suppliers using TOPSIS.
                 </p>
             }
             else if (isCompleted)
@@ -551,7 +507,7 @@
                 </h2>
 
                 <p>
-                    Quyết định cuối cùng của Batch đã được hoàn tất.
+                    The final supplier selection decision for this batch has been approved.
                 </p>
             }
             else
@@ -561,8 +517,7 @@
                 </h2>
 
                 <p>
-                    TOPSIS đã hoàn tất.
-                    Bạn có thể chuyển sang trang Decision Result.
+                    TOPSIS ranking is complete. Proceed to Decision Result to review and approve the final supplier.
                 </p>
             }
 
@@ -588,12 +543,15 @@
                     <input type="hidden"
                            name="id"
                            value="@Model.BatchId" />
+                    <input type="hidden"
+                           name="rowVersion"
+                           value="@readiness.RowVersion" />
 
                     <button type="submit"
                             class="btn-primary"
-                            data-dss-confirm="Bạn có chắc chắn muốn bắt đầu tiến trình đánh giá cho đợt '@Model.BatchName'?"
-                            data-dss-title="Bắt đầu đánh giá"
-                            data-dss-btn-text="Bắt đầu"
+                            data-dss-confirm="Are you sure you want to start the evaluation workflow for batch '@Model.BatchName'?"
+                            data-dss-title="Start Evaluation"
+                            data-dss-btn-text="Start"
                             data-dss-type="primary">
 
                         Start Evaluation
@@ -756,12 +714,15 @@
                     <input type="hidden"
                            name="id"
                            value="@Model.BatchId" />
+                    <input type="hidden"
+                           name="rowVersion"
+                           value="@readiness.RowVersion" />
 
                     <button type="submit"
                             class="btn-outline text-danger border-danger"
-                            data-dss-confirm="Bạn có chắc chắn muốn hủy đợt đánh giá '@Model.BatchName'? Thao tác này không thể hoàn tác."
-                            data-dss-title="Xác nhận hủy đợt đánh giá"
-                            data-dss-btn-text="Hủy đợt"
+                            data-dss-confirm="Are you sure you want to cancel evaluation batch '@Model.BatchName'? This action cannot be undone."
+                            data-dss-title="Cancel Evaluation Batch"
+                            data-dss-btn-text="Cancel Batch"
                             data-dss-type="danger">
 
                         <i class="bi bi-x-circle me-1"></i> Cancel Batch
@@ -788,7 +749,7 @@
 
         @if (Model.Status == "Cancelled")
         {
-            @: Cancelled · Đợt đánh giá đã bị hủy
+            @: Cancelled · Evaluation batch was cancelled
         }
         else if (isCompleted)
         {
@@ -929,7 +890,7 @@
                     </h3>
 
                     <p>
-                        Batch chưa có nhà cung cấp tham gia.
+                        No participating suppliers have been assigned to this batch.
                     </p>
 
                 </div>
@@ -1084,7 +1045,7 @@
                     </h3>
 
                     <p>
-                        Batch chưa có tiêu chí đánh giá.
+                        No evaluation criteria have been assigned to this batch.
                     </p>
 
                 </div>
