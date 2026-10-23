@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using SupplierSelectionDSS.Data;
 using SupplierSelectionDSS.Data.Entities;
@@ -83,12 +84,14 @@ public class AuditLogService
                     targetId,
 
                 OldValue =
-                    NormalizeNullable(
-                        oldValue),
+                    SanitizeSensitiveData(
+                        NormalizeNullable(
+                            oldValue)),
 
                 NewValue =
-                    NormalizeNullable(
-                        newValue),
+                    SanitizeSensitiveData(
+                        NormalizeNullable(
+                            newValue)),
 
                 ActionTime =
                     DateTime.UtcNow,
@@ -276,10 +279,10 @@ public class AuditLogService
                                 x.TargetId,
 
                             OldValue =
-                                x.OldValue,
+                                SanitizeSensitiveData(x.OldValue),
 
                             NewValue =
-                                x.NewValue,
+                                SanitizeSensitiveData(x.NewValue),
 
                             ActionTime =
                                 x.ActionTime,
@@ -376,6 +379,20 @@ public class AuditLogService
     // =========================================================
     // SUPPORT
     // =========================================================
+
+    private static readonly Regex SensitiveJsonRegex = new(
+        @"""(?<key>(?i:password|passwordhash|token|secret|jwt|apikey))""\s*:\s*""[^""]*""",
+        RegexOptions.Compiled);
+
+    public static string? SanitizeSensitiveData(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return value;
+        }
+
+        return SensitiveJsonRegex.Replace(value, @"""${key}"": ""********""");
+    }
 
     private static string? NormalizeNullable(
         string? value)

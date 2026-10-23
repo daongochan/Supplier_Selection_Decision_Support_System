@@ -1,22 +1,35 @@
 @model SupplierSelectionDSS.Models.CriteriaFormViewModel
 
 @{
-    ViewData["Title"] = "Thêm tiêu chí";
+    ViewData["Title"] = "Add Criteria";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/criteria.css" asp-append-version="true" />
 }
 
 <div class="page-header">
 
     <div>
 
+        <div class="page-eyebrow">
+            CRITERIA MANAGEMENT
+        </div>
+
         <h1 class="page-title">
-            Thêm tiêu chí
+            Add Evaluation Criteria
         </h1>
 
         <p class="page-description">
-            Thêm một tiêu chí mới cho quy trình đánh giá nhà cung cấp.
+            Define a new evaluation criterion with measurement unit and impact direction (Benefit / Cost) for supplier DSS analysis.
         </p>
 
     </div>
+
+    <a asp-action="Index" class="btn-outline">
+        <i class="bi bi-arrow-left"></i>
+        <span>Back to Criteria</span>
+    </a>
 
 </div>
 
@@ -37,75 +50,75 @@
 
             <!-- 1. Criteria Identity -->
             <div class="form-section">
-                <div class="form-section-title">Thông tin tiêu chí</div>
-                <div class="form-section-desc">Mã định danh và tên tiêu chí sử dụng trong đánh giá</div>
+                <div class="form-section-title">Criterion Information</div>
+                <div class="form-section-desc">Code identifier and display name used across evaluations</div>
             </div>
 
             <div class="form-group">
                 <label asp-for="CriteriaCode" class="required-field">
-                    Mã tiêu chí
+                    Criteria Code
                 </label>
                 <input asp-for="CriteriaCode"
                        class="form-control"
                        maxlength="20"
-                       placeholder="VD: C1, CRIT-01"
+                       placeholder="e.g., C01, CRIT-01"
                        autocomplete="off" />
                 <span asp-validation-for="CriteriaCode" class="text-danger"></span>
             </div>
 
             <div class="form-group">
                 <label asp-for="CriteriaName" class="required-field">
-                    Tên tiêu chí
+                    Criteria Name
                 </label>
                 <input asp-for="CriteriaName"
                        class="form-control"
                        maxlength="150"
-                       placeholder="VD: Đơn giá, Chất lượng sản phẩm, Tiến độ giao hàng..." />
+                       placeholder="e.g., Unit Price, Product Quality, Delivery Lead Time..." />
                 <span asp-validation-for="CriteriaName" class="text-danger"></span>
             </div>
 
             <!-- 2. Evaluation Attributes -->
             <div class="form-section">
-                <div class="form-section-title">Thuộc tính & Đơn vị tính</div>
-                <div class="form-section-desc">Phân loại hướng tác động (Lợi ích / Chi phí) và đơn vị đo lường</div>
+                <div class="form-section-title">Classification & Unit</div>
+                <div class="form-section-desc">Impact direction (Benefit / Cost) and measurement unit</div>
             </div>
 
             <div class="form-group">
                 <label asp-for="CriteriaType" class="required-field">
-                    Loại tiêu chí
+                    Criteria Type
                 </label>
                 <select asp-for="CriteriaType" class="form-control">
-                    <option value="Benefit">Benefit (Càng cao càng tốt - Lợi ích)</option>
-                    <option value="Cost">Cost (Càng thấp càng tốt - Chi phí / Rủi ro)</option>
+                    <option value="Benefit">Benefit (Higher is better - Quality, Capacity, Service)</option>
+                    <option value="Cost">Cost (Lower is better - Price, Lead Time, Defect Rate)</option>
                 </select>
                 <span asp-validation-for="CriteriaType" class="text-danger"></span>
             </div>
 
             <div class="form-group">
                 <label asp-for="Unit">
-                    Đơn vị tính
+                    Measurement Unit
                 </label>
                 <input asp-for="Unit"
                        class="form-control"
                        maxlength="30"
-                       placeholder="VD: VND, Ngày, %, Điểm (1-10)..." />
+                       placeholder="e.g., USD, Days, %, Score (1-10)..." />
                 <span asp-validation-for="Unit" class="text-danger"></span>
             </div>
 
             <!-- 3. Description & Notes -->
             <div class="form-section">
-                <div class="form-section-title">Mô tả & Hướng dẫn đánh giá</div>
-                <div class="form-section-desc">Hướng dẫn chi tiết phương pháp chấm điểm và quy tắc đo lường</div>
+                <div class="form-section-title">Description & Guidelines</div>
+                <div class="form-section-desc">Assessment guidance, scoring rules, and data verification notes</div>
             </div>
 
             <div class="form-group form-group-full">
                 <label asp-for="Description">
-                    Mô tả chi tiết
+                    Detailed Description
                 </label>
                 <textarea asp-for="Description"
                           class="form-control"
                           maxlength="500"
-                          placeholder="Mô tả chi tiết cách tính điểm, tiêu chí phụ hoặc căn cứ dữ liệu đối soát..."></textarea>
+                          placeholder="Detailed instructions for scoring, evaluation sub-criteria, or data verification sources..."></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
 
@@ -116,12 +129,12 @@
 
             <a asp-action="Index"
                class="btn-outline">
-                Hủy bỏ
+                Cancel
             </a>
 
             <button type="submit"
                     class="btn-primary">
-                Lưu tiêu chí
+                Save Criterion
             </button>
 
         </div>

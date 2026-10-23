@@ -63,6 +63,22 @@ public class ReportController : Controller
         return View(model);
     }
 
+    [HttpGet]
+    [Route("Report/ViewReport")]
+    [Route("Report/Index")]
+    public IActionResult ViewReport(
+        [FromQuery] int? batchId,
+        [FromQuery] int? id)
+    {
+        var targetId = batchId ?? id;
+        if (!targetId.HasValue || targetId.Value <= 0)
+        {
+            return NotFound();
+        }
+
+        return RedirectToAction(nameof(Index), new { batchId = targetId.Value });
+    }
+
 
     // =========================================================
     // GENERATE PDF

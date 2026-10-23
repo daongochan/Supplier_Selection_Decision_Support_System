@@ -2,7 +2,7 @@
 @using SupplierSelectionDSS.Constants
 
 @{
-    ViewData["Title"] = "Nhật ký hệ thống";
+    ViewData["Title"] = "Audit Logs";
     var isFiltered = !string.IsNullOrWhiteSpace(Model.Keyword) ||
                      (!string.IsNullOrWhiteSpace(Model.ActionType) && Model.ActionType != "All") ||
                      Model.UserId.HasValue;
@@ -17,9 +17,10 @@
      ========================================================= -->
 <div class="page-header">
     <div>
-        <h1 class="page-title">Nhật ký hệ thống</h1>
+        <div class="page-eyebrow">SYSTEM GOVERNANCE</div>
+        <h1 class="page-title">Audit Logs</h1>
         <p class="page-description">
-            Theo dõi và kiểm toán lịch sử thao tác của người dùng, thay đổi dữ liệu và các quyết định trong hệ thống DSS.
+            Track and inspect user activity, data modifications, and critical evaluation decisions across the system.
         </p>
     </div>
 </div>
@@ -28,14 +29,14 @@
      KPI SUMMARY GRID (100% GENUINE DATABASE METRICS)
      ========================================================= -->
 <div class="audit-kpi-grid">
-    <!-- Card 1: Tổng bản ghi -->
+    <!-- Card 1: Total Records -->
     <div class="audit-kpi-card">
         <div class="audit-kpi-content">
-            <span class="audit-kpi-label">Tổng bản ghi</span>
+            <span class="audit-kpi-label">Total Records</span>
             <span class="audit-kpi-value">@Model.TotalLogs.ToString("N0")</span>
             <div class="audit-kpi-meta">
                 <span class="kpi-meta-pill pill-blue">
-                    <i class="bi bi-journal-text"></i> Toàn bộ hệ thống
+                    <i class="bi bi-journal-text"></i> System-wide activity
                 </span>
             </div>
         </div>
@@ -44,14 +45,14 @@
         </div>
     </div>
 
-    <!-- Card 2: Hoạt động hôm nay -->
+    <!-- Card 2: Today Activity -->
     <div class="audit-kpi-card">
         <div class="audit-kpi-content">
-            <span class="audit-kpi-label">Hôm nay</span>
+            <span class="audit-kpi-label">Today</span>
             <span class="audit-kpi-value">@Model.TodayLogs.ToString("N0")</span>
             <div class="audit-kpi-meta">
                 <span class="kpi-meta-pill pill-green">
-                    <i class="bi bi-calendar-check"></i> Phát sinh trong ngày
+                    <i class="bi bi-calendar-check"></i> Recorded today
                 </span>
             </div>
         </div>
@@ -60,14 +61,14 @@
         </div>
     </div>
 
-    <!-- Card 3: Người thao tác -->
+    <!-- Card 3: Active Users -->
     <div class="audit-kpi-card">
         <div class="audit-kpi-content">
-            <span class="audit-kpi-label">Người thao tác</span>
+            <span class="audit-kpi-label">Active Users</span>
             <span class="audit-kpi-value">@Model.ActiveUsersCount.ToString("N0")</span>
             <div class="audit-kpi-meta">
                 <span class="kpi-meta-pill pill-indigo">
-                    <i class="bi bi-people"></i> Tài khoản ghi nhận
+                    <i class="bi bi-people"></i> Distinct actors
                 </span>
             </div>
         </div>
@@ -76,14 +77,14 @@
         </div>
     </div>
 
-    <!-- Card 4: Thao tác trọng yếu -->
+    <!-- Card 4: Critical Actions -->
     <div class="audit-kpi-card">
         <div class="audit-kpi-content">
-            <span class="audit-kpi-label">Thao tác trọng yếu</span>
+            <span class="audit-kpi-label">Critical Actions</span>
             <span class="audit-kpi-value">@Model.CriticalActionsCount.ToString("N0")</span>
             <div class="audit-kpi-meta">
                 <span class="kpi-meta-pill pill-amber">
-                    <i class="bi bi-shield-check"></i> Đánh giá & Phê duyệt
+                    <i class="bi bi-shield-check"></i> Approvals & calculations
                 </span>
             </div>
         </div>
@@ -102,20 +103,20 @@
 
         <!-- 1. Keyword Search -->
         <div class="filter-field">
-            <label for="keyword">Tìm kiếm</label>
+            <label for="keyword">Search</label>
             <input id="keyword"
                    name="keyword"
                    value="@Model.Keyword"
                    class="form-control"
-                   placeholder="Người dùng, thao tác, đối tượng, mô tả..." />
+                   placeholder="Actor, action, target entity, description..." />
         </div>
 
         <!-- 2. Action Type Dropdown -->
         <div class="filter-field">
-            <label for="actionType">Hành động</label>
+            <label for="actionType">Action Type</label>
             <select id="actionType" name="actionType" class="form-control">
                 <option value="All" selected="@(string.IsNullOrEmpty(Model.ActionType) || Model.ActionType == "All")">
-                    Tất cả hành động
+                    All Actions
                 </option>
                 @foreach (var action in AuditActions.All)
                 {
@@ -128,10 +129,10 @@
 
         <!-- 3. User Dropdown -->
         <div class="filter-field">
-            <label for="userId">Người thực hiện</label>
+            <label for="userId">Actor</label>
             <select id="userId" name="userId" class="form-control">
                 <option value="" selected="@(!Model.UserId.HasValue)">
-                    Tất cả người dùng
+                    All Users
                 </option>
                 @foreach (var u in Model.Users)
                 {
@@ -142,14 +143,14 @@
             </select>
         </div>
 
-        <!-- 4. Filter Action Buttons (Same height 42px) -->
+        <!-- 4. Filter Action Buttons -->
         <div class="filter-actions">
-            <button type="submit" class="btn-primary" title="Tìm kiếm">
-                Tìm kiếm
+            <button type="submit" class="btn-primary" title="Search">
+                Search
             </button>
 
-            <a asp-action="Index" class="btn-outline" title="Đặt lại bộ lọc">
-                Đặt lại
+            <a asp-action="Index" class="btn-outline" title="Reset filter">
+                Reset
             </a>
         </div>
     </form>
@@ -161,12 +162,12 @@
         <div class="audit-filter-banner-text">
             <i class="bi bi-funnel-fill"></i>
             <span>
-                Tìm thấy <strong>@Model.TotalCount.ToString("N0")</strong> bản ghi phù hợp với bộ lọc hiện tại.
+                Found <strong>@Model.TotalCount.ToString("N0")</strong> records matching active filters.
             </span>
         </div>
 
         <a asp-action="Index" class="audit-filter-banner-reset">
-            <i class="bi bi-x-circle"></i> Đặt lại bộ lọc
+            <i class="bi bi-x-circle"></i> Reset filter
         </a>
     </div>
 }
@@ -181,12 +182,12 @@
             <table class="data-table audit-table">
                 <thead>
                     <tr>
-                        <th style="width: 130px;">Thời gian</th>
-                        <th style="min-width: 180px;">Người thực hiện</th>
-                        <th style="width: 170px;">Hành động</th>
-                        <th style="width: 160px;">Đối tượng</th>
-                        <th style="min-width: 250px;">Nội dung mô tả</th>
-                        <th style="min-width: 180px;">Thay đổi dữ liệu</th>
+                        <th style="width: 140px;">Timestamp</th>
+                        <th style="min-width: 180px;">Actor</th>
+                        <th style="width: 170px;">Action</th>
+                        <th style="width: 160px;">Target Entity</th>
+                        <th style="min-width: 250px;">Description</th>
+                        <th style="min-width: 180px;">Changes / Diff</th>
                     </tr>
                 </thead>
 
@@ -216,7 +217,7 @@
                         }
 
                         <tr>
-                            <!-- Thời gian -->
+                            <!-- Timestamp (UTC to Local) -->
                             <td>
                                 <div class="audit-time-cell">
                                     <strong>@log.ActionTime.ToLocalTime().ToString("dd/MM/yyyy")</strong>
@@ -224,7 +225,7 @@
                                 </div>
                             </td>
 
-                            <!-- Người thực hiện -->
+                            <!-- Actor -->
                             <td>
                                 <div class="audit-user-cell">
                                     <span class="audit-user-name">@log.FullName</span>
@@ -232,14 +233,14 @@
                                 </div>
                             </td>
 
-                            <!-- Hành động -->
+                            <!-- Action -->
                             <td>
                                 <span class="audit-action-badge @actionClass">
                                     @log.ActionType
                                 </span>
                             </td>
 
-                            <!-- Đối tượng -->
+                            <!-- Target Entity -->
                             <td>
                                 @if (!string.IsNullOrWhiteSpace(log.TargetTable))
                                 {
@@ -257,7 +258,7 @@
                                 }
                             </td>
 
-                            <!-- Nội dung mô tả -->
+                            <!-- Description -->
                             <td>
                                 @if (!string.IsNullOrWhiteSpace(log.Description))
                                 {
@@ -269,27 +270,27 @@
                                 }
                             </td>
 
-                            <!-- Thay đổi dữ liệu -->
+                            <!-- Changes / Diff -->
                             <td>
                                 @if (!string.IsNullOrWhiteSpace(log.OldValue) || !string.IsNullOrWhiteSpace(log.NewValue))
                                 {
                                     <details class="audit-change-details">
                                         <summary class="audit-change-summary">
                                             <i class="bi bi-code-square"></i>
-                                            <span>Xem thay đổi</span>
+                                            <span>View changes</span>
                                         </summary>
                                         <div class="audit-change-body">
                                             @if (!string.IsNullOrWhiteSpace(log.OldValue))
                                             {
                                                 <div class="audit-change-block">
-                                                    <span class="audit-change-label label-old">Dữ liệu cũ:</span>
+                                                    <span class="audit-change-label label-old">Before:</span>
                                                     <pre class="audit-change-pre">@log.OldValue</pre>
                                                 </div>
                                             }
                                             @if (!string.IsNullOrWhiteSpace(log.NewValue))
                                             {
                                                 <div class="audit-change-block">
-                                                    <span class="audit-change-label label-new">Dữ liệu mới:</span>
+                                                    <span class="audit-change-label label-new">After:</span>
                                                     <pre class="audit-change-pre">@log.NewValue</pre>
                                                 </div>
                                             }
@@ -315,17 +316,17 @@
             <div style="font-size: 40px; color: var(--muted); margin-bottom: 12px;">
                 <i class="bi bi-journal-x"></i>
             </div>
-            <h3>Không tìm thấy nhật ký thao tác nào</h3>
+            <h3>No audit records found</h3>
             <p>
-                Không có bản ghi nhật ký nào phù hợp với điều kiện tìm kiếm hoặc bộ lọc hiện tại.
-                Vui lòng thử lại với từ khóa hoặc bộ lọc khác.
+                No audit entries match the current search keywords or filters.
+                Please refine your search criteria.
             </p>
             @if (isFiltered)
             {
                 <div style="display: flex; gap: 10px; justify-content: center; margin-top: 16px;">
                     <a asp-action="Index" class="btn-outline">
                         <i class="bi bi-arrow-counterclockwise"></i>
-                        <span>Đặt lại bộ lọc</span>
+                        <span>Reset filters</span>
                     </a>
                 </div>
             }

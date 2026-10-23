@@ -1,3 +1,4 @@
+using SupplierSelectionDSS.Constants;
 using SupplierSelectionDSS.Data.Entities;
 
 namespace SupplierSelectionDSS.Models;
@@ -23,4 +24,8 @@ public class SupplierSelectionItemViewModel
     public string SupplierName { get; set; } = string.Empty;
 
     public bool Selected { get; set; }
+
+    public string Status { get; set; } = EntityStatus.Active;
+
+    public bool IsInactiveAssigned => !string.Equals(Status, EntityStatus.Active, StringComparison.OrdinalIgnoreCase);
 }

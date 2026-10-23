@@ -1,7 +1,12 @@
 @model SupplierSelectionDSS.Models.ProductGroupSuppliersViewModel
 
 @{
-    ViewData["Title"] = "Gán nhà cung cấp - " + Model.GroupName;
+    ViewData["Title"] = "Assign Suppliers - " + Model.GroupName;
+    var initialSelectedCount = Model.Suppliers.Count(s => s.Selected);
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/product-group.css" asp-append-version="true" />
 }
 
 <div class="page-header">
@@ -9,113 +14,143 @@
     <div>
 
         <div class="page-eyebrow">
-            NHÓM HÀNG
+            PRODUCT GROUPS
         </div>
 
         <h1 class="page-title">
-            Gán nhà cung cấp: @Model.GroupName
+            Assign Suppliers: @Model.GroupName
         </h1>
 
         <p class="page-description">
-            Chọn các nhà cung cấp có khả năng cung ứng cho nhóm hàng này trong hệ thống.
+            Select suppliers authorized to supply products or services in this product group.
         </p>
 
     </div>
 
-
-    <a asp-action="Index"
-       class="btn-outline">
+    <a asp-action="Index" class="btn-outline" id="btnBackToGroups">
         <i class="bi bi-arrow-left"></i>
-        <span>Quay lại</span>
+        <span>Back to Groups</span>
     </a>
 
 </div>
 
+<div class="form-card" style="max-width: 1040px;">
 
-<div class="form-card">
-
-    <form asp-action="Suppliers"
-          method="post">
+    <form asp-action="Suppliers" method="post" id="supplierAssignmentForm">
 
         @Html.AntiForgeryToken()
 
-        <input type="hidden"
-               name="id"
-               value="@Model.GroupId" />
+        <input type="hidden" name="id" value="@Model.GroupId" />
 
-
-        <div class="assignment-header">
-
+        <div class="assignment-header" style="margin-bottom: 20px;">
             <div>
-
                 <span class="card-label">
-                    Mã nhóm: @Model.GroupCode
+                    Group Code: @Model.GroupCode
                 </span>
-
-                <h2 class="card-title">
-                    Danh sách nhà cung cấp khả dụng
+                <h2 class="card-title" style="margin-top: 4px;">
+                    Available Suppliers Catalog
                 </h2>
-
             </div>
-
         </div>
 
+        <!-- Toolbar: Search filter, counters & bulk selection -->
+        <div class="assign-toolbar">
+            <div class="assign-search-box">
+                <i class="bi bi-search"></i>
+                <input type="text"
+                       id="supplierSearchInput"
+                       class="form-control"
+                       placeholder="Filter by code or supplier name..."
+                       autocomplete="off" />
+            </div>
 
-        <div class="supplier-selection-grid">
+            <div class="assign-badge-actions">
+                <span id="selectedCountBadge" class="selection-count-badge">
+                    <i class="bi bi-check2-circle"></i>
+                    <span id="selectedCountNumber">@initialSelectedCount</span> of @Model.Suppliers.Count selected
+                </span>
+
+                <button type="button" class="btn-outline btn-sm" id="btnSelectAllVisible" style="height: 36px;">
+                    Select Visible
+                </button>
+
+                <button type="button" class="btn-outline btn-sm" id="btnClearSelection" style="height: 36px;">
+                    Clear All
+                </button>
+            </div>
+        </div>
+
+        @if (Model.Suppliers.Any(s => s.IsInactiveAssigned))
+        {
+            <div class="alert alert-warning mb-3" style="border-radius: var(--radius-md); padding: 12px 16px; border: 1px solid rgba(245, 158, 11, 0.35); background: rgba(245, 158, 11, 0.08); font-size: 13px;">
+                <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+                <strong>Note:</strong> Some suppliers below are currently inactive in the directory but remain assigned to this group. You may keep or unassign them as needed.
+            </div>
+        }
+
+        <div class="supplier-selection-grid" id="supplierCardsContainer">
 
             @foreach (var supplier in Model.Suppliers)
             {
-                <label class="supplier-selection-item">
+                <label class="supplier-assign-card @(supplier.Selected ? "is-selected" : "")"
+                       data-supplier-id="@supplier.SupplierId"
+                       data-code="@supplier.SupplierCode.ToLowerInvariant()"
+                       data-name="@supplier.SupplierName.ToLowerInvariant()">
 
-                    <input type="checkbox"
-                           name="supplierIds"
-                           value="@supplier.SupplierId"
-                           checked="@supplier.Selected" />
+                    <div class="supplier-assign-check">
+                        <input type="checkbox"
+                               name="supplierIds"
+                               value="@supplier.SupplierId"
+                               checked="@supplier.Selected"
+                               class="supplier-checkbox" />
+                    </div>
 
-                    <span class="supplier-selection-content">
+                    <div class="supplier-assign-info">
+                        <div class="supplier-assign-title">
+                            <span class="supplier-code-badge">
+                                @supplier.SupplierCode
+                            </span>
 
-                        <span class="supplier-selection-code">
-                            @supplier.SupplierCode
-                        </span>
+                            <strong class="supplier-name-text">
+                                @supplier.SupplierName
+                            </strong>
 
-                        <span class="supplier-selection-name">
-                            @supplier.SupplierName
-                        </span>
-
-                    </span>
+                            @if (supplier.IsInactiveAssigned)
+                            {
+                                <span class="badge-inactive" title="This supplier is currently marked Inactive in the system catalog.">
+                                    <i class="bi bi-pause-circle"></i> Inactive
+                                </span>
+                            }
+                        </div>
+                    </div>
 
                 </label>
             }
 
         </div>
 
-
         @if (!Model.Suppliers.Any())
         {
             <div class="empty-state">
-
-                <h3>
-                    Không có nhà cung cấp nào đang hoạt động.
-                </h3>
-
+                <div style="font-size: 40px; color: var(--muted); margin-bottom: 12px;">
+                    <i class="bi bi-building-x"></i>
+                </div>
+                <h3>No suppliers available</h3>
                 <p>
-                    Hãy tạo hoặc kích hoạt nhà cung cấp trước khi thực hiện gán.
+                    Please create and activate suppliers in the directory before assigning them to this product group.
                 </p>
-
             </div>
         }
 
-
         <div class="form-actions">
 
-            <a asp-action="Index"
-               class="btn-outline">
-                Hủy bỏ
+            <a asp-action="Index" class="btn-outline" id="btnCancelAssignment">
+                Cancel
             </a>
 
-            <button type="submit"
-                    class="btn-primary">
-                Lưu phân bổ
+            <button type="submit" class="btn-primary" id="btnSaveAssignment">
+                <i class="bi bi-check-lg"></i>
+                <span>Save Assignments</span>
             </button>
 
         </div>
@@ -123,3 +158,119 @@
     </form>
 
 </div>
+
+@section Scripts {
+    <script>
+        (function () {
+            "use strict";
+
+            let isDirty = false;
+            const form = document.getElementById("supplierAssignmentForm");
+            const searchInput = document.getElementById("supplierSearchInput");
+            const countNum = document.getElementById("selectedCountNumber");
+            const cards = document.querySelectorAll(".supplier-assign-card");
+            const selectVisibleBtn = document.getElementById("btnSelectAllVisible");
+            const clearAllBtn = document.getElementById("btnClearSelection");
+            const btnCancel = document.getElementById("btnCancelAssignment");
+            const btnBack = document.getElementById("btnBackToGroups");
+
+            function updateCount() {
+                const totalChecked = document.querySelectorAll(".supplier-checkbox:checked").length;
+                if (countNum) {
+                    countNum.textContent = totalChecked;
+                }
+            }
+
+            // Sync visual styling and count when checkboxes change
+            document.addEventListener("change", function (e) {
+                if (e.target && e.target.classList.contains("supplier-checkbox")) {
+                    isDirty = true;
+                    const card = e.target.closest(".supplier-assign-card");
+                    if (card) {
+                        if (e.target.checked) {
+                            card.classList.add("is-selected");
+                        } else {
+                            card.classList.remove("is-selected");
+                        }
+                    }
+                    updateCount();
+                }
+            });
+
+            // Instant client-side search without deselecting hidden checkboxes
+            if (searchInput) {
+                searchInput.addEventListener("input", function () {
+                    const query = searchInput.value.trim().toLowerCase();
+                    cards.forEach(function (card) {
+                        const code = card.getAttribute("data-code") || "";
+                        const name = card.getAttribute("data-name") || "";
+                        if (!query || code.includes(query) || name.includes(query)) {
+                            card.style.display = "";
+                        } else {
+                            card.style.display = "none";
+                        }
+                    });
+                });
+            }
+
+            // Select all visible cards
+            if (selectVisibleBtn) {
+                selectVisibleBtn.addEventListener("click", function () {
+                    isDirty = true;
+                    cards.forEach(function (card) {
+                        if (card.style.display !== "none") {
+                            const cb = card.querySelector(".supplier-checkbox");
+                            if (cb && !cb.checked) {
+                                cb.checked = true;
+                                card.classList.add("is-selected");
+                            }
+                        }
+                    });
+                    updateCount();
+                });
+            }
+
+            // Clear all selections
+            if (clearAllBtn) {
+                clearAllBtn.addEventListener("click", function () {
+                    isDirty = true;
+                    cards.forEach(function (card) {
+                        const cb = card.querySelector(".supplier-checkbox");
+                        if (cb && cb.checked) {
+                            cb.checked = false;
+                            card.classList.remove("is-selected");
+                        }
+                    });
+                    updateCount();
+                });
+            }
+
+            // Prevent leaving page with unsaved modifications
+            function confirmLeave(e) {
+                if (isDirty) {
+                    if (!confirm("You have unsaved supplier assignments. Do you really want to leave this page?")) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            if (btnCancel) btnCancel.addEventListener("click", confirmLeave);
+            if (btnBack) btnBack.addEventListener("click", confirmLeave);
+
+            window.addEventListener("beforeunload", function (e) {
+                if (isDirty) {
+                    e.preventDefault();
+                    e.returnValue = "";
+                }
+            });
+
+            if (form) {
+                form.addEventListener("submit", function () {
+                    isDirty = false;
+                });
+            }
+        })();
+    </script>
+}

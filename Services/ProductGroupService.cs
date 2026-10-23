@@ -223,10 +223,14 @@ public class ProductGroupService
             .Distinct()
             .ToList();
 
+        var currentAssignedIds = group.Suppliers
+            .Select(x => x.SupplierId)
+            .ToHashSet();
+
         var suppliers = await _context.Suppliers
             .Where(x =>
                 requestedIds.Contains(x.SupplierId) &&
-                x.Status == EntityStatus.Active)
+                (x.Status == EntityStatus.Active || currentAssignedIds.Contains(x.SupplierId)))
             .ToListAsync();
 
         if (suppliers.Count != requestedIds.Count)

@@ -22,9 +22,9 @@ public class AHPCalculationService
 
     /// <summary>
     /// Sai số cho phép khi kiểm tra tính reciprocal:
-    /// aji ≈ 1 / aij.
+    /// aji ≈ 1 / aij. Dung sai 0.01 bao quát các giá trị Saaty 4 chữ số (VD: 1/7 = 0.1429, 1/6 = 0.1667).
     /// </summary>
-    private const double ReciprocityTolerance = 1e-3;
+    private const double ReciprocityTolerance = 0.01;
 
     /// <summary>
     /// Sai số nhỏ dùng để tránh chia cho số gần bằng 0.

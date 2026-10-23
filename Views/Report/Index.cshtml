@@ -87,9 +87,9 @@
             </h2>
 
             <p>
-                Batch đã hoàn tất phê duyệt.
-                Bạn có thể tạo báo cáo PDF hoặc Excel
-                từ kết quả đánh giá cuối cùng.
+                The evaluation batch has reached Approved status.
+                You can generate and download official PDF or Excel reports
+                based on the finalized decision package.
             </p>
         }
         else
@@ -99,8 +99,8 @@
             </h2>
 
             <p>
-                Báo cáo cuối chỉ được tạo khi Batch đã
-                hoàn tất quy trình và có quyết định cuối cùng.
+                Final evaluation reports are unlocked once the batch workflow
+                is completed and the final supplier decision is approved.
             </p>
         }
 
@@ -117,9 +117,9 @@
                    asp-action="Download"
                    asp-route-reportId="@latestPdf.ReportId"
                    class="btn-primary"
-                   title="Tải bản PDF đã sinh gần nhất (@latestPdf.GeneratedAt.ToString("dd/MM/yyyy HH:mm"))">
+                   title="Download latest generated PDF (@latestPdf.GeneratedAt.ToString("dd/MM/yyyy HH:mm"))">
                     <i class="bi bi-file-earmark-pdf"></i>
-                    Tải PDF hiện tại
+                    Download PDF
                 </a>
 
                 <form method="post"
@@ -128,9 +128,9 @@
                     @Html.AntiForgeryToken()
                     <button type="submit"
                             class="btn-outline"
-                            title="Tạo lại bản PDF mới">
+                            title="Regenerate a new PDF report">
                         <i class="bi bi-arrow-repeat"></i>
-                        Tạo lại PDF
+                        Regenerate PDF
                     </button>
                 </form>
             }
@@ -142,7 +142,7 @@
                     <button type="submit"
                             class="btn-primary">
                         <i class="bi bi-file-earmark-pdf"></i>
-                        Tạo PDF
+                        Generate PDF
                     </button>
                 </form>
             }
@@ -153,9 +153,9 @@
                    asp-action="Download"
                    asp-route-reportId="@latestExcel.ReportId"
                    class="btn-outline"
-                   title="Tải bản Excel đã sinh gần nhất (@latestExcel.GeneratedAt.ToString("dd/MM/yyyy HH:mm"))">
+                   title="Download latest generated Excel (@latestExcel.GeneratedAt.ToString("dd/MM/yyyy HH:mm"))">
                     <i class="bi bi-file-earmark-spreadsheet"></i>
-                    Tải Excel hiện tại
+                    Download Excel
                 </a>
 
                 <form method="post"
@@ -164,9 +164,9 @@
                     @Html.AntiForgeryToken()
                     <button type="submit"
                             class="btn-outline"
-                            title="Tạo lại file Excel mới">
+                            title="Regenerate a new Excel report">
                         <i class="bi bi-arrow-repeat"></i>
-                        Tạo lại Excel
+                        Regenerate Excel
                     </button>
                 </form>
             }
@@ -178,7 +178,7 @@
                     <button type="submit"
                             class="btn-outline">
                         <i class="bi bi-file-earmark-spreadsheet"></i>
-                        Tạo Excel
+                        Generate Excel
                     </button>
                 </form>
             }
@@ -488,14 +488,13 @@
                 </h3>
 
                 <p>
-                    Chưa có báo cáo nào được tạo cho Batch này.
+                    No evaluation reports have been generated for this batch yet.
                 </p>
 
                 @if (canGenerate)
                 {
                     <p>
-                        Chọn Generate PDF hoặc Generate Excel
-                        để tạo báo cáo đầu tiên.
+                        Click Generate PDF or Generate Excel above to create the initial decision report.
                     </p>
                 }
 
@@ -522,8 +521,7 @@
         </strong>
 
         <span>
-            Báo cáo được tạo từ dữ liệu Evaluation,
-            AHP, TOPSIS và Final Approval của Batch.
+            Reports are synthesized from finalized supplier evaluation scores, AHP criteria weights, TOPSIS rankings, and executive approval records.
         </span>
 
     </div>

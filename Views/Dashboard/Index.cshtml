@@ -776,7 +776,7 @@ else
                 <div class="card-action-bar-end">
                     @if (Model.SelectedBatchId.HasValue)
                     {
-                        <a asp-controller="Report" asp-action="ViewReport" asp-route-batchId="@Model.SelectedBatchId.Value" class="btn-primary btn-flex-1">
+                        <a asp-controller="Report" asp-action="Index" asp-route-batchId="@Model.SelectedBatchId.Value" class="btn-primary btn-flex-1">
                             <i class="bi bi-file-earmark-pdf"></i>
                             <span>View Report</span>
                         </a>
