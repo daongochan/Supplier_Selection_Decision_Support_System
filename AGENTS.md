@@ -36,9 +36,10 @@ Tài liệu này quy định các nguyên tắc, quy ước phát triển và ph
 
 ## 3. Quy Ước Bắt Buộc
 
-1. **Ngôn ngữ:**
-   - Giao diện người dùng (UI), nhãn hiển thị, thông báo lỗi/thành công: **Tiếng Việt**.
-   - Tên biến, hàm, class, schema CSDL, commit messages: **Tiếng Anh**.
+1. **Language & Terminology:**
+   - Primary UI language (`<html lang="en">`, navigation, workflow steppers, page headers, table headers, confirmation dialogs): **English**.
+   - Code identifiers (variables, methods, classes, DB schema, commit messages): **English**.
+   - Database enum/status values (`Active`, `Inactive`, `Draft`, `Evaluating`, `Completed`, `Cancelled`, `Benefit`, `Cost`, `Approved`, `Rejected`, `PendingReevaluation`, `FinalApproval`, `Reevaluation`) must never be translated in persisted storage.
 2. **Quy tắc Commit:**
    - Tuân thủ [Conventional Commits](https://www.conventionalcommits.org/): `feat:`, `fix:`, `chore:`, `test:`, `docs:`, `refactor:`.
    - Làm việc trên nhánh tính năng/bảo trì, không commit trực tiếp trên `main`, tuyệt đối không `git push --force`.

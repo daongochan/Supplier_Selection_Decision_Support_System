@@ -4,6 +4,30 @@ Toàn bộ các thay đổi quan trọng về kiến trúc, thuật toán, bảo
 
 ---
 
+## [1.4.0] - 2026-10-23
+
+### Comprehensive System Audit Remediation (Security, Concurrency, Auditability & UX)
+
+- **Security & Session Integrity (P0 — F01, F04):**
+  - Replaced all `innerHTML` string interpolation in `Views/EvaluationBatch/Create.cshtml` with safe DOM creation (`createElement`, `textContent`, `replaceChildren`) to eliminate stored DOM XSS sinks.
+  - Added `UserCookieSecurityStamp` (`dss:security_stamp`) and `CookieAuthenticationOptions.Events.OnValidatePrincipal` in `Program.cs` to validate active user status, password hash stamp, and live role on every request; added safe local `ReturnUrl` redirection on login.
+- **Aggregate Concurrency & Data Integrity (P0/P1 — F02, F03, F10):**
+  - Updated `EvaluationController.Save` and `EvaluationService.SaveAsync` to inspect `ModelState.IsValid`, preserve raw invalid inputs without deleting existing scores, require explicit `ClearedCells` flags to delete cells, and treat unchanged score saves as no-ops.
+  - Added `BatchConcurrencyHelper` to verify and atomically bump `EvaluationBatch.RowVersion` (`WHERE BatchID = @id AND RowVersion = @rv`) inside transactions across all batch, score, AHP, TOPSIS, and decision mutations.
+  - Updated SQL Server triggers (`01_schema.sql`, `Run_All.sql`, `07_Triggers.sql`, `20261023_trigger_batch_state_locks.sql`) to block child table mutations when a batch is `Completed` or `Cancelled`.
+  - Wrapped administrator role/status updates in `IsolationLevel.Serializable` transactions in `UserService` to prevent concurrent demotions from leaving zero active administrators.
+- **Immutable Decision History & Frozen Snapshots (P1 — F05, F06):**
+  - Removed `RemoveRange` on non-final `Approvals`; decision events remain append-only and are marked as `[Superseded ...]` when scores or AHP weights change.
+  - Upgraded `BatchRoundSnapshotData` (`SchemaVersion = 2`) to store full supplier/criterion metadata, raw scores, AHP weights, TOPSIS matrices, ranking, and sensitivity stability; updated `DecisionResultService` and `ReportService` to serve completed batches directly from frozen snapshots.
+- **Workflow Readiness, UX & Accessibility (P1/P2 — F07, F08, F09, F11, F12):**
+  - Introduced `BatchWorkflowReadinessService` shared across `EvaluationBatch/Details` and `DashboardService`.
+  - Rendered `_Topbar.cshtml` in `_Layout.cshtml` with `#sidebarToggle` (`aria-controls="appSidebar"`, `aria-expanded`) for viewports `<= 900px`.
+  - Added `AbortController`, request sequence counter, and supplier selection preservation in `Views/EvaluationBatch/Create.cshtml`.
+  - Added Shared Batch Matrix disclosure banner in `Views/AHP/Index.cshtml`, progressive disclosure (`<details>`) in `Views/TOPSIS/Index.cshtml`, and native `checkValidity()`/`requestSubmit()` + keyboard focus trap in `wwwroot/js/site.js`.
+- **Performance, Pagination & Automated Verification (P2 — F13, F14, F15):**
+  - Eliminated duplicate `TOPSISService.GetWorkspaceAsync` calls in `DecisionResultService` and `ReportService`, gated `PerfBenchmarkRunner` behind `DSS_RUN_PERF=1`, and protected pagination against `int` overflow.
+  - Expanded automated test suite to **164 passing xUnit tests**, including `McdmBenchmarkParityTests`, `AuditFindingsRegressionTests`, and disposable SQL Server `SqlServerConcurrencyAndTriggerTests`.
+
 ## [1.3.0] - 2026-10-22
 
 ### Tối Ưu Hiệu Năng, Giao Diện & Toàn Vẹn Luồng Nghiệp Vụ (Round 3 Optimization)
