@@ -15,7 +15,7 @@
     border-radius: var(--radius-pill);
     background: var(--terracotta);
     color: #ffffff;
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: 15px;
     font-weight: 600;
     line-height: 1;
@@ -185,5 +185,37 @@
         text-decoration: none;
         cursor: pointer;
     }
+
+/* =========================================================
+   ACTION DOTS BUTTON [ ⋯ ]
+   Dùng cho dropdown thao tác theo dòng trong data tables
+   ========================================================= */
+
+.btn-action-dots {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-sm, 8px);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+    box-sizing: border-box;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-action-dots:hover,
+.btn-action-dots:focus-visible,
+[class*="-actions-dropdown"].is-open .btn-action-dots {
+    background: var(--canvas-soft);
+    color: var(--ink);
+    border-color: var(--border-strong);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    outline: none;
+}
 
 

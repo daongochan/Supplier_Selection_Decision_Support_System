@@ -667,6 +667,10 @@
     min-width: 0;
 }
 
+.dashboard-row2-grid .panel-card-span2 {
+    grid-column: span 2;
+}
+
 /* Dashboard Top 5 Table Override */
 .dashboard-top-table {
     min-width: 0 !important;

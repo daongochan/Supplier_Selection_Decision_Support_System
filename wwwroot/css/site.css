@@ -11,7 +11,8 @@
        FONTS & FAMILIES
        ========================================================= */
 
-    --font-serif: "Source Serif 4", "Source Serif Pro", Georgia, "Times New Roman", serif;
+    /* Modern Enterprise SaaS Clean Sans-serif Font Stack */
+    --font-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 
@@ -188,7 +189,18 @@ textarea {
     color: inherit;
 }
 
-table {
+table,
+.data-table,
+.card-value,
+.ranking-score,
+.kpi-value,
+.supplier-kpi-value,
+.group-kpi-value,
+.donut-center-val,
+.cell-score-val,
+.cell-code-sm,
+.supplier-code-badge,
+.group-code-badge {
     font-family: var(--font-sans);
     font-variant-numeric: tabular-nums;
 }
@@ -896,75 +908,11 @@ textarea:focus:not(:focus-visible) {
    COLLAPSIBLE SIDEBAR & BACKDROP
    ========================================================= */
 
-.app-topbar {
-    display: none;
-    height: var(--topbar-height);
-    padding: 0 24px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 900;
-}
-
-.topbar-left {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-}
-
-.sidebar-toggle {
-    display: none;
-    width: 40px;
-    height: 40px;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    color: var(--ink);
-    font-size: 20px;
-    cursor: pointer;
-    transition: background 0.16s ease, border-color 0.16s ease;
-}
-
-.sidebar-toggle:hover {
-    background: var(--surface-soft);
-    border-color: var(--terracotta);
-    color: var(--terracotta);
-}
-
-.topbar-context {
-    display: flex;
-    flex-direction: column;
-}
-
-.topbar-eyebrow {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.8px;
-    color: var(--terracotta);
-    text-transform: uppercase;
-}
-
-.topbar-title {
-    font-family: var(--font-serif);
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--ink);
-}
-
 .sidebar-backdrop {
     display: none;
 }
 
 @media (max-width: 900px) {
-
-    .app-topbar {
-        display: flex;
-    }
 
     .app-sidebar {
         transform: translateX(-100%);
@@ -1097,7 +1045,7 @@ textarea:focus:not(:focus-visible) {
     border-radius: var(--radius-pill);
     background: var(--terracotta);
     color: #ffffff;
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: 15px;
     font-weight: 600;
     line-height: 1;
@@ -1267,6 +1215,38 @@ textarea:focus:not(:focus-visible) {
         text-decoration: none;
         cursor: pointer;
     }
+
+/* =========================================================
+   ACTION DOTS BUTTON [ ⋯ ]
+   Dùng cho dropdown thao tác theo dòng trong data tables
+   ========================================================= */
+
+.btn-action-dots {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-sm, 8px);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+    box-sizing: border-box;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-action-dots:hover,
+.btn-action-dots:focus-visible,
+[class*="-actions-dropdown"].is-open .btn-action-dots {
+    background: var(--canvas-soft);
+    color: var(--ink);
+    border-color: var(--border-strong);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    outline: none;
+}
 /* --- END components/buttons.css --- */
 
 /* --- BEGIN components/cards.css --- */
@@ -1285,6 +1265,16 @@ textarea:focus:not(:focus-visible) {
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-card);
+}
+
+/* =========================================================
+   FILTER CARD (SHARED)
+   ========================================================= */
+
+.filter-card {
+    margin-bottom: 24px;
+    padding: 20px 24px;
+    box-sizing: border-box;
 }
 
 
@@ -3381,5 +3371,7 @@ a:active,
     line-height: 1.3 !important;
     text-transform: none !important;
 }
+/* --- END site utilities & resets --- */
+/* --- END site utilities & resets --- */
 /* --- END site utilities & resets --- */
 /* --- END site utilities & resets --- */

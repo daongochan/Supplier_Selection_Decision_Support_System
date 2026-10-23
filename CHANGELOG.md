@@ -4,6 +4,30 @@ Toàn bộ các thay đổi quan trọng về kiến trúc, thuật toán, bảo
 
 ---
 
+## [1.4.1] - 2026-10-23
+
+### UI Assets, Layout Consistency & English Workspace Synchronization
+
+- **Bootstrap Icons Font Path Fix:**
+  - Corrected `@font-face` URL in `wwwroot/css/bootstrap-icons.css` from `fonts/bootstrap-icons.woff2` to `../fonts/bootstrap-icons/bootstrap-icons.woff2` (and `.woff`), resolving HTTP 404/decode failures and restoring all glyph icons across sidebar, breadcrumbs, buttons, KPI cards, tables, and empty states.
+- **Product Groups & Shared Layout Polish:**
+  - Promoted `.filter-card` with consistent padding (`20px 24px`) and bottom margin (`24px`) into shared `wwwroot/css/components/cards.css` and `product-group.css`, eliminating border flushness and table contact.
+  - Standardized `.btn-action-dots` across shared `wwwroot/css/components/buttons.css` and `product-group.css`, replacing unstyled browser-native buttons with refined dropdown triggers.
+  - Added `aria-haspopup="true"`, dynamic `aria-expanded` attributes, and `Escape` key focus restoration to dropdown menus in both `ProductGroup/Index.cshtml` and `Supplier/Index.cshtml`.
+- **CSS Pipeline & Typography Unification:**
+  - Modernized typography token `--font-serif` to clean enterprise sans-serif (`-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`) across all headers, cards, and labels.
+  - Added `font-variant-numeric: tabular-nums` to `table`, `.data-table`, `.card-value`, `.ranking-score`, `.kpi-value`, and metric cells for aligned financial/operational numbers.
+  - Made `tools/perf/bundle_css.py` portable across all operating systems using repository-relative root calculation, and regenerated `wwwroot/css/site.css` (77.6 KB).
+- **Dashboard Data Clarity & English UI Synchronization:**
+  - Synchronized complete English UI across Suppliers, Product Groups, and Dashboard views (page headers, KPI labels, filters, table headers, status badges, confirmation modals, and empty states).
+  - Clarified trend chart metric as **Supplier Participations** across batches with subtitle `"Monthly batch count and total supplier participations across batches"`.
+  - Upgraded donut legend and tooltip percentages to decimal formatting (`(val * 100.0 / total).ToString("0.#") + "%"`), resolving integer division truncation.
+  - Consolidated duplicate empty boxes into a single informative 2-column card (`.panel-card-span2`) when TOPSIS calculations are pending, providing clear guidance and role-aware action links.
+  - Made workflow next-step links and action buttons role-aware, gracefully falling back to `EvaluationBatch/Details` for unauthorized roles to prevent 403 errors.
+  - Updated `AGENTS.md` language guidelines to standardize on English administrative UI.
+
+---
+
 ## [1.4.0] - 2026-10-23
 
 ### Comprehensive System Audit Remediation (Security, Concurrency, Auditability & UX)

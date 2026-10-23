@@ -28,7 +28,18 @@ textarea {
     color: inherit;
 }
 
-table {
+table,
+.data-table,
+.card-value,
+.ranking-score,
+.kpi-value,
+.supplier-kpi-value,
+.group-kpi-value,
+.donut-center-val,
+.cell-score-val,
+.cell-code-sm,
+.supplier-code-badge,
+.group-code-badge {
     font-family: var(--font-sans);
     font-variant-numeric: tabular-nums;
 }

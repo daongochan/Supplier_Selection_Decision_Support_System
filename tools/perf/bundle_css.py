@@ -1,7 +1,12 @@
 import os
+import sys
 
 def main():
-    root_dir = r"D:\DEAN\Projects\SupplierSelectionDSS\wwwroot\css"
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    repo_root = os.path.abspath(os.path.join(script_dir, "..", ".."))
+    root_dir = os.path.join(repo_root, "wwwroot", "css")
+    if not os.path.isdir(root_dir) and len(sys.argv) > 1:
+        root_dir = sys.argv[1]
     core_files = [
         "tokens.css",
         os.path.join("base", "typography.css"),

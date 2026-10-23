@@ -238,7 +238,7 @@ public class DashboardService
                         Status = approval.Status,
                         SelectedSupplierName = approval.SelectedSupplier?.SupplierName,
                         SelectedSupplierCode = approval.SelectedSupplier?.SupplierCode,
-                        ApproverName = approval.ApprovedByNavigation?.FullName ?? "Quản trị viên",
+                        ApproverName = approval.ApprovedByNavigation?.FullName ?? "System Administrator",
                         ApprovalDate = approval.ApprovalDate,
                         Notes = approval.Notes,
                         HasReport = latestReportId.HasValue,
@@ -488,7 +488,7 @@ public class DashboardService
         var batchStatusDistribution = new DashboardDonutChartDto
         {
             TotalCount = totalBatches,
-            Labels = new List<string> { "Hoàn thành", "Đang đánh giá", "Bản nháp", "Đã hủy" },
+            Labels = new List<string> { "Completed", "Evaluating", "Draft", "Cancelled" },
             Values = new List<int> { completedBatches, evaluatingBatches, draftBatches, cancelledBatches },
             Colors = new List<string> { "#16a34a", "#2563eb", "#f59e0b", "#ef4444" }
         };
@@ -496,7 +496,7 @@ public class DashboardService
         var supplierStatusDistribution = new DashboardDonutChartDto
         {
             TotalCount = totalSuppliers,
-            Labels = new List<string> { "Hoạt động", "Không hoạt động" },
+            Labels = new List<string> { "Active", "Inactive" },
             Values = new List<int> { activeSuppliers, Math.Max(0, totalSuppliers - activeSuppliers) },
             Colors = new List<string> { "#16a34a", "#94a3b8" }
         };
@@ -522,7 +522,7 @@ public class DashboardService
         for (int i = 5; i >= 0; i--)
         {
             var targetMonthDate = now.AddMonths(-i);
-            var monthLabel = "T" + targetMonthDate.Month + "/" + targetMonthDate.ToString("yy");
+            var monthLabel = targetMonthDate.ToString("MMM yy", System.Globalization.CultureInfo.InvariantCulture);
             trendLabels.Add(monthLabel);
 
             var monthBatches = recentBatches
@@ -561,7 +561,8 @@ public class DashboardService
 
                 foreach (var g in groups)
                 {
-                    trendLabels.Add("T" + g.Key.Month + "/" + (g.Key.Year % 100));
+                    var d = new DateTime(g.Key.Year, g.Key.Month, 1);
+                    trendLabels.Add(d.ToString("MMM yy", System.Globalization.CultureInfo.InvariantCulture));
                     trendBatchCounts.Add(g.Count());
                     trendSupplierCounts.Add(g.Sum(b => b.SupplierCount));
                 }
