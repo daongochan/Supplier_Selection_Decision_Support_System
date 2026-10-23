@@ -10,6 +10,8 @@ public class DecisionResultViewModel
 
     public string BatchStatus { get; set; } = string.Empty;
 
+    public string RowVersion { get; set; } = string.Empty;
+
 
     // =========================================================
     // TOPSIS
@@ -51,5 +53,17 @@ public class DecisionResultViewModel
     /// Kết quả phân tích độ nhạy (biến thiên trọng số +-10%, +-20%).
     /// </summary>
     public SensitivityAnalysisResultViewModel? SensitivityAnalysis { get; set; }
+
+    public int CurrentRoundNumber { get; set; } = 1;
+
+    public bool IsFrozenFromSnapshot { get; set; }
+
+    public string? SnapshotMethodVersion { get; set; }
+
+    public List<DecisionHistoryItemViewModel> DecisionHistory { get; set; }
+        = new();
+
+    public List<RoundSnapshotSummaryViewModel> RoundSnapshots { get; set; }
+        = new();
 }
 

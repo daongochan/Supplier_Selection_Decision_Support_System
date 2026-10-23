@@ -229,6 +229,19 @@
                name="BatchId"
                value="@Model.BatchId" />
 
+        <input type="hidden"
+               name="RowVersion"
+               value="@Model.RowVersion" />
+
+        @if (!ViewData.ModelState.IsValid || ViewData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger" role="alert" style="margin: 16px 24px 0;">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span>@(ViewData["ErrorMessage"] ?? "Please review and fix the highlighted score inputs.")</span>
+                <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+            </div>
+        }
+
 
         <div class="evaluation-table-wrapper">
 
@@ -342,32 +355,39 @@
                                 var cell =
                                     supplier.Scores[
                                         criterion.CriteriaId];
+                                var displayValue =
+                                    cell.RawInput ??
+                                    (cell.Score.HasValue
+                                        ? cell.Score.Value.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture)
+                                        : string.Empty);
+                                var hasCellError =
+                                    !string.IsNullOrWhiteSpace(cell.ErrorMessage);
 
 
-                                <td class="score-cell">
+                                <td class="score-cell @(hasCellError ? "has-error" : "")">
 
                                     @if (criterion.IsRating)
                                     {
                                         <input type="number"
                                                name="Rows[@rowIndex].Scores[@criterion.CriteriaId]"
-                                               value="@cell.Score"
-                                               class="score-input score-input-rating"
+                                               value="@displayValue"
+                                               class="score-input score-input-rating @(hasCellError ? "is-invalid" : "")"
                                                min="0"
                                                max="10"
                                                step="0.1"
                                                placeholder="—"
-                                               title="Nhập điểm từ 0 đến 10" />
+                                               title="Enter a score from 0 to 10" />
                                     }
                                     else
                                     {
                                         <input type="number"
                                                name="Rows[@rowIndex].Scores[@criterion.CriteriaId]"
-                                               value="@cell.Score"
-                                               class="score-input score-input-numeric"
+                                               value="@displayValue"
+                                               class="score-input score-input-numeric @(hasCellError ? "is-invalid" : "")"
                                                min="0"
                                                step="0.0001"
                                                placeholder="—"
-                                               title="Nhập giá trị thực tế của tiêu chí" />
+                                               title="Enter the actual metric value for this criterion" />
                                     }
 
 
@@ -378,6 +398,13 @@
                                         <span class="input-unit">
                                             @criterion.Unit
                                         </span>
+                                    }
+
+                                    @if (hasCellError)
+                                    {
+                                        <div class="text-danger field-validation-error" style="font-size: 0.75rem; margin-top: 4px;">
+                                            @cell.ErrorMessage
+                                        </div>
                                     }
 
                                 </td>

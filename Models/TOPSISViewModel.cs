@@ -10,6 +10,8 @@ public class TOPSISViewModel
 
     public string Status { get; set; } = string.Empty;
 
+    public string RowVersion { get; set; } = string.Empty;
+
 
     // =========================================================
     // AHP READINESS

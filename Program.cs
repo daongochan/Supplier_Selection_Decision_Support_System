@@ -1,5 +1,7 @@
 using System.IO.Compression;
+using System.Security.Claims;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -122,6 +124,7 @@ builder.Services.AddScoped<CriteriaService>();
 
 builder.Services.AddScoped<EvaluationBatchService>();
 builder.Services.AddScoped<EvaluationService>();
+builder.Services.AddScoped<BatchWorkflowReadinessService>();
 
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<AuditLogService>();
@@ -182,6 +185,60 @@ builder.Services
 
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
+
+        options.Events.OnValidatePrincipal = async context =>
+        {
+            var userIdStr = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdStr, out var userId))
+            {
+                context.RejectPrincipal();
+                await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                return;
+            }
+
+            var db = context.HttpContext.RequestServices.GetRequiredService<ApplicationDbContext>();
+            var liveUser = await db.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.UserId == userId);
+
+            if (liveUser == null || !string.Equals(liveUser.Status, EntityStatus.Active, StringComparison.OrdinalIgnoreCase))
+            {
+                context.RejectPrincipal();
+                await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                return;
+            }
+
+            var cookiePwdStamp = context.Principal?.FindFirstValue(AuthClaimTypes.PasswordStamp);
+            if (!string.IsNullOrEmpty(cookiePwdStamp))
+            {
+                var livePwdStamp = AuthClaimTypes.ComputePasswordStamp(liveUser.PasswordHash);
+                if (!string.Equals(cookiePwdStamp, livePwdStamp, StringComparison.Ordinal))
+                {
+                    context.RejectPrincipal();
+                    await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                    return;
+                }
+            }
+
+            var cookieRole = context.Principal?.FindFirstValue(ClaimTypes.Role);
+            var cookieGivenName = context.Principal?.FindFirstValue(ClaimTypes.GivenName);
+            if (!string.Equals(cookieRole, liveUser.Role, StringComparison.Ordinal)
+                || !string.Equals(cookieGivenName, liveUser.FullName, StringComparison.Ordinal))
+            {
+                var updatedClaims = new List<Claim>
+                {
+                    new(ClaimTypes.NameIdentifier, liveUser.UserId.ToString()),
+                    new(ClaimTypes.Name, liveUser.Username),
+                    new(ClaimTypes.GivenName, liveUser.FullName),
+                    new(ClaimTypes.Role, liveUser.Role),
+                    new(AuthClaimTypes.PasswordStamp, AuthClaimTypes.ComputePasswordStamp(liveUser.PasswordHash))
+                };
+
+                var updatedIdentity = new ClaimsIdentity(updatedClaims, CookieAuthenticationDefaults.AuthenticationScheme);
+                context.ReplacePrincipal(new ClaimsPrincipal(updatedIdentity));
+                context.ShouldRenew = true;
+            }
+        };
 
         options.Events.OnRedirectToLogin = context =>
         {

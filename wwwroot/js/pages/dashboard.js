@@ -5,13 +5,13 @@
 
 document.addEventListener("DOMContentLoaded", function () {
     // =========================================================
-    // 1. LIVE CLOCK (VIETNAMESE LOCALE)
+    // 1. LIVE CLOCK (ENGLISH LOCALE)
     // =========================================================
     const clockEl = document.getElementById("dashboard-live-clock");
     if (clockEl) {
         function updateClock() {
             const now = new Date();
-            const days = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
+            const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
             const dayName = days[now.getDay()];
             const day = String(now.getDate()).padStart(2, "0");
             const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -20,7 +20,16 @@ document.addEventListener("DOMContentLoaded", function () {
             const minutes = String(now.getMinutes()).padStart(2, "0");
             const seconds = String(now.getSeconds()).padStart(2, "0");
 
-            clockEl.innerHTML = `<i class="bi bi-clock"></i> <span>${dayName}, ${day}/${month}/${year} <strong>${hours}:${minutes}:${seconds}</strong></span>`;
+            clockEl.replaceChildren();
+            const icon = document.createElement("i");
+            icon.className = "bi bi-clock";
+            const textSpan = document.createElement("span");
+            textSpan.textContent = ` ${dayName}, ${day}/${month}/${year} `;
+            const timeStrong = document.createElement("strong");
+            timeStrong.textContent = `${hours}:${minutes}:${seconds}`;
+            textSpan.appendChild(timeStrong);
+            clockEl.appendChild(icon);
+            clockEl.appendChild(textSpan);
         }
         updateClock();
         setInterval(updateClock, 1000);
@@ -80,7 +89,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                 const val = ctx.parsed || 0;
                                 const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
                                 const pct = total > 0 ? ((val / total) * 100).toFixed(0) : 0;
-                                return ` ${ctx.label}: ${val} đợt (${pct}%)`;
+                                return ` ${ctx.label}: ${val} batches (${pct}%)`;
                             }
                         }
                     }
@@ -118,7 +127,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                 const val = ctx.parsed || 0;
                                 const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
                                 const pct = total > 0 ? ((val / total) * 100).toFixed(0) : 0;
-                                return ` ${ctx.label}: ${val} NCC (${pct}%)`;
+                                return ` ${ctx.label}: ${val} suppliers (${pct}%)`;
                             }
                         }
                     }
@@ -132,13 +141,13 @@ document.addEventListener("DOMContentLoaded", function () {
     // ---------------------------------------------------------
     const trendCanvas = document.getElementById("evaluationTrendCanvas");
     if (trendCanvas && window.dashboardTrendData) {
-        new Chart(trendCanvas, {
+        const trendChart = new Chart(trendCanvas, {
             type: "line",
             data: {
                 labels: window.dashboardTrendData.months || [],
                 datasets: [
                     {
-                        label: "Số nhà cung cấp",
+                        label: "Suppliers Evaluated",
                         data: window.dashboardTrendData.suppliers || [],
                         borderColor: "#2563eb",
                         backgroundColor: "rgba(37, 99, 235, 0.08)",
@@ -152,7 +161,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         pointHoverRadius: 6
                     },
                     {
-                        label: "Số đợt đánh giá",
+                        label: "Evaluation Batches",
                         data: window.dashboardTrendData.batches || [],
                         borderColor: "#f59e0b",
                         backgroundColor: "transparent",
@@ -252,7 +261,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     tooltip: {
                         callbacks: {
                             label: function (ctx) {
-                                return ` Hệ số CC: ${ctx.parsed.x.toFixed(4)}`;
+                                return ` CC Score: ${ctx.parsed.x.toFixed(4)}`;
                             }
                         }
                     }
@@ -283,7 +292,7 @@ document.addEventListener("DOMContentLoaded", function () {
             data: {
                 labels: window.dashboardRadarData.labels || [],
                 datasets: window.dashboardRadarData.datasets.map(ds => {
-                    const name = ds.SupplierName || ds.supplierName || "Nhà cung cấp";
+                    const name = ds.SupplierName || ds.supplierName || "Supplier";
                     const color = ds.Color || ds.color || "#2563eb";
                     const scores = ds.Scores || ds.scores || [];
                     return {
@@ -323,7 +332,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                 const dsIndex = ctx.datasetIndex;
                                 const dataIndex = ctx.dataIndex;
                                 const dsRaw = window.dashboardRadarData.datasets[dsIndex];
-                                const supplierName = ctx.dataset.label || "Nhà cung cấp";
+                                const supplierName = ctx.dataset.label || "Supplier";
                                 const normVal = ctx.parsed.r;
 
                                 let rawValText = "";
@@ -338,9 +347,9 @@ document.addEventListener("DOMContentLoaded", function () {
                                 }
 
                                 if (rawValText) {
-                                    return ` ${supplierName}: ${rawValText} (Điểm quy đổi: ${normVal}/100)`;
+                                    return ` ${supplierName}: ${rawValText} (Normalized: ${normVal}/100)`;
                                 }
-                                return ` ${supplierName}: Điểm quy đổi ${normVal}/100`;
+                                return ` ${supplierName}: Normalized ${normVal}/100`;
                             }
                         }
                     }

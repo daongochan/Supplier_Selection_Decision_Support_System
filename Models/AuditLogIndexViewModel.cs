@@ -32,9 +32,9 @@ public class AuditLogIndexViewModel : IPagedResult
 
     public bool HasNextPage => PageNumber < TotalPages;
 
-    public int StartItemNumber => TotalCount == 0
-        ? 0
-        : ((PageNumber - 1) * PageSize) + 1;
+    public int StartItemNumber =>
+        PaginationCalculationHelper.CalculateStartItemNumber(PageNumber, PageSize, TotalCount);
 
-    public int EndItemNumber => Math.Min(PageNumber * PageSize, TotalCount);
+    public int EndItemNumber =>
+        PaginationCalculationHelper.CalculateEndItemNumber(PageNumber, PageSize, TotalCount);
 }

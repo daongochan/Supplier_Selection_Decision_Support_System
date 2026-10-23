@@ -123,7 +123,8 @@ public class DecisionResultController : Controller
     public async Task<IActionResult> Approve(
         int batchId,
         int supplierId,
-        string? notes)
+        string? notes,
+        string? rowVersion = null)
     {
         if (
             batchId <= 0 ||
@@ -162,7 +163,8 @@ public class DecisionResultController : Controller
                         batchId,
                         supplierId,
                         approvedBy,
-                        notes);
+                        notes,
+                        rowVersion);
 
 
             // =================================================
@@ -300,7 +302,8 @@ public class DecisionResultController : Controller
         "EvaluationBatch/{batchId:int}/Result/Reject")]
     public async Task<IActionResult> Reject(
         int batchId,
-        string? notes)
+        string? notes,
+        string? rowVersion = null)
     {
         if (batchId <= 0)
         {
@@ -336,7 +339,8 @@ public class DecisionResultController : Controller
                     .RejectAsync(
                         batchId,
                         notes,
-                        approvedBy);
+                        approvedBy,
+                        rowVersion);
 
 
             // =================================================
@@ -443,7 +447,8 @@ public class DecisionResultController : Controller
         "EvaluationBatch/{batchId:int}/Result/Reevaluate")]
     public async Task<IActionResult> Reevaluate(
         int batchId,
-        string? notes)
+        string? notes,
+        string? rowVersion = null)
     {
         if (batchId <= 0)
         {
@@ -479,7 +484,8 @@ public class DecisionResultController : Controller
                     .RequestReevaluationAsync(
                         batchId,
                         notes,
-                        approvedBy);
+                        approvedBy,
+                        rowVersion);
 
 
             // =================================================

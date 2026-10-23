@@ -15,4 +15,6 @@ public class LoginViewModel
 
     [Display(Name = "Ghi nhớ đăng nhập")]
     public bool RememberMe { get; set; }
+
+    public string? ReturnUrl { get; set; }
 }

@@ -67,7 +67,10 @@ public class TOPSISService
                     batch.BatchName,
 
                 Status =
-                    batch.Status
+                    batch.Status,
+
+                RowVersion =
+                    BatchConcurrencyHelper.ToBase64(batch.RowVersion)
             };
 
 
@@ -412,7 +415,8 @@ public class TOPSISService
     // =========================================================
 
     public async Task CalculateAsync(
-        int batchId)
+        int batchId,
+        string? expectedRowVersion = null)
     {
         _logger.LogInformation("Bắt đầu tính toán xếp hạng TOPSIS cho đợt đánh giá ID {BatchId}.", batchId);
 
@@ -440,6 +444,8 @@ public class TOPSISService
             throw new BusinessRuleException(
                 "Chỉ được tính TOPSIS khi Batch đang ở trạng thái Evaluating.");
         }
+
+        BatchConcurrencyHelper.VerifyExpectedRowVersion(batch, expectedRowVersion);
 
 
         // =====================================================
@@ -713,6 +719,11 @@ public class TOPSISService
 
             try
             {
+                await BatchConcurrencyHelper.BumpAndVerifyBatchVersionAsync(
+                    _context,
+                    batch,
+                    expectedRowVersion);
+
                 // -------------------------------------------------
                 // DELETE OLD IDEALS
                 // -------------------------------------------------
@@ -846,6 +857,12 @@ public class TOPSISService
                     "Tính toán xếp hạng TOPSIS thành công cho đợt đánh giá ID {BatchId} với {SupplierCount} nhà cung cấp.",
                     batchId,
                     supplierCount);
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogWarning(ex, "Xung đột đồng thời khi tính toán TOPSIS cho đợt {BatchId}.", batchId);
+                throw new BusinessRuleException(BatchConcurrencyHelper.ConcurrencyConflictMessage);
             }
             catch (Exception ex)
             {

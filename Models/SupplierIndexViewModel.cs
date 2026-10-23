@@ -48,12 +48,8 @@ public class SupplierIndexViewModel : IPagedResult
         PageNumber < TotalPages;
 
     public int StartItemNumber =>
-        TotalCount == 0
-            ? 0
-            : ((PageNumber - 1) * PageSize) + 1;
+        PaginationCalculationHelper.CalculateStartItemNumber(PageNumber, PageSize, TotalCount);
 
     public int EndItemNumber =>
-        Math.Min(
-            PageNumber * PageSize,
-            TotalCount);
+        PaginationCalculationHelper.CalculateEndItemNumber(PageNumber, PageSize, TotalCount);
 }

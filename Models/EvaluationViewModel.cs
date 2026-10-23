@@ -16,6 +16,8 @@ public class EvaluationViewModel
 
     public string Status { get; set; } = string.Empty;
 
+    public string RowVersion { get; set; } = string.Empty;
+
     public List<EvaluationCriteriaColumnViewModel> Criteria { get; set; }
         = new();
 

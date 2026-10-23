@@ -30,7 +30,7 @@
                     class="dss-modal-close"
                     id="dssConfirmCloseBtn"
                     onclick="DSS.closeConfirmModal()"
-                    aria-label="Đóng">
+                    aria-label="Close">
                 <i class="bi bi-x-lg"></i>
             </button>
 
@@ -40,13 +40,13 @@
                     <span class="dss-modal-icon-badge badge-primary" id="dssConfirmIconBadge">
                         <i id="dssConfirmIcon" class="bi bi-question-circle-fill"></i>
                     </span>
-                    <h3 id="dssConfirmTitle" class="dss-modal-title">Xác nhận thao tác</h3>
+                    <h3 id="dssConfirmTitle" class="dss-modal-title">Confirm Action</h3>
                 </div>
             </div>
 
             <!-- Body Message -->
             <div class="dss-modal-body-wrap">
-                <p id="dssConfirmMessage" class="dss-modal-message">Bạn có chắc chắn muốn thực hiện thao tác này?</p>
+                <p id="dssConfirmMessage" class="dss-modal-message">Are you sure you want to proceed with this action?</p>
 
                 <!-- Optional Consequence Callout (Only visible when text is provided) -->
                 <div id="dssConfirmConsequence" class="dss-modal-consequence">
@@ -56,8 +56,8 @@
 
                 <!-- Optional Input for Reason / Notes -->
                 <div id="dssConfirmInputGroup" class="dss-modal-input-group" style="display:none;">
-                    <label id="dssConfirmInputLabel" class="form-label" for="dssConfirmInput">Ghi chú / Lý do:</label>
-                    <textarea id="dssConfirmInput" class="form-textarea" rows="3" placeholder="Nhập lý do hoặc ý kiến..."></textarea>
+                    <label id="dssConfirmInputLabel" class="form-label" for="dssConfirmInput">Reason / Notes:</label>
+                    <textarea id="dssConfirmInput" class="form-textarea" rows="3" placeholder="Enter your reason or comments..."></textarea>
                 </div>
             </div>
 
@@ -66,12 +66,12 @@
                 <button type="button"
                         id="dssConfirmCancelBtn"
                         class="dss-modal-btn dss-modal-btn-cancel"
-                        onclick="DSS.closeConfirmModal()">Hủy bỏ</button>
+                        onclick="DSS.closeConfirmModal()">Cancel</button>
                 <button type="button"
                         id="dssConfirmSubmitBtn"
                         class="dss-modal-btn dss-modal-btn-confirm btn-primary">
                     <span id="dssConfirmSubmitSpinner" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true" style="display:none;"></span>
-                    <span id="dssConfirmSubmitText">Xác nhận</span>
+                    <span id="dssConfirmSubmitText">Confirm</span>
                 </button>
             </div>
 

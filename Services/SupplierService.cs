@@ -242,14 +242,22 @@ public class SupplierService
             pageNumber =
                 totalPages;
         }
+        else if (totalPages == 0)
+        {
+            pageNumber = 1;
+        }
 
 
         // =====================================================
         // DATA
         // =====================================================
 
-        var items =
-            await query
+        var skipLong = ((long)pageNumber - 1L) * pageSize;
+        var skip = (int)Math.Clamp(skipLong, 0L, int.MaxValue);
+
+        var items = totalCount == 0
+            ? new List<Supplier>()
+            : await query
                 .OrderBy(
                     x =>
                         x.SupplierCode)
@@ -257,8 +265,7 @@ public class SupplierService
                     x =>
                         x.SupplierId)
                 .Skip(
-                    (pageNumber - 1) *
-                    pageSize)
+                    skip)
                 .Take(
                     pageSize)
                 .ToListAsync();

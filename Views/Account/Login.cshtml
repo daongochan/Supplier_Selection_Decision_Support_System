@@ -1,7 +1,7 @@
 @model SupplierSelectionDSS.Models.LoginViewModel
 
 @{
-    ViewData["Title"] = "Đăng nhập";
+    ViewData["Title"] = "Sign In";
 }
 
 <div class="login-page">
@@ -32,9 +32,9 @@
 
                 <!-- Header -->
                 <div class="login-form-header">
-                    <h1 class="login-form-title">Đăng nhập</h1>
+                    <h1 class="login-form-title">Sign In</h1>
                     <p class="login-form-subtitle">
-                        Nhập thông tin đăng nhập để truy cập hệ thống.
+                        Enter your credentials to access the Supplier Selection DSS workspace.
                     </p>
                 </div>
 
@@ -68,12 +68,13 @@
                       novalidate>
 
                     @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="ReturnUrl" />
 
                     <!-- Username -->
                     <div class="login-field">
                         <label class="login-label"
                                for="Username">
-                            Tên đăng nhập
+                            Username
                         </label>
                         <div class="login-input-wrap">
                             <i class="bi bi-person login-input-icon"></i>
@@ -81,7 +82,7 @@
                                    id="Username"
                                    class="login-input @(ViewData.ModelState["Username"]?.Errors.Count > 0 ? "is-invalid" : "")"
                                    type="text"
-                                   placeholder="Nhập tên đăng nhập"
+                                   placeholder="Enter your username"
                                    autocomplete="username"
                                    spellcheck="false" />
                         </div>
@@ -93,7 +94,7 @@
                     <div class="login-field">
                         <label class="login-label"
                                for="Password">
-                            Mật khẩu
+                            Password
                         </label>
                         <div class="login-input-wrap">
                             <i class="bi bi-lock login-input-icon"></i>
@@ -101,14 +102,14 @@
                                    id="Password"
                                    class="login-input @(ViewData.ModelState["Password"]?.Errors.Count > 0 ? "is-invalid" : "")"
                                    type="password"
-                                   placeholder="Nhập mật khẩu"
+                                   placeholder="Enter your password"
                                    autocomplete="current-password" />
                             <button type="button"
                                     class="login-pw-toggle"
                                     id="pwToggle"
-                                    aria-label="Hiện/ẩn mật khẩu"
+                                    aria-label="Show/hide password"
                                     aria-pressed="false"
-                                    title="Hiện/ẩn mật khẩu">
+                                    title="Show/hide password">
                                 <i class="bi bi-eye" id="pwToggleIcon"></i>
                             </button>
                         </div>
@@ -122,7 +123,7 @@
                             <input asp-for="RememberMe"
                                    id="RememberMe"
                                    type="checkbox" />
-                            Ghi nhớ đăng nhập
+                            Remember me
                         </label>
                     </div>
 
@@ -130,7 +131,7 @@
                     <button type="submit"
                             class="login-submit"
                             id="loginBtn">
-                        <span id="loginBtnText">Đăng nhập</span>
+                        <span id="loginBtnText">Sign In</span>
                     </button>
 
                 </form>
@@ -175,7 +176,7 @@
                         loginBtn.disabled = true;
                         loginBtn.innerHTML =
                             '<span class="login-spinner" aria-hidden="true"></span>' +
-                            '<span>Đang đăng nhập...</span>';
+                            '<span>Signing in...</span>';
                     }, 10);
                 });
             }

@@ -896,11 +896,75 @@ textarea:focus:not(:focus-visible) {
    COLLAPSIBLE SIDEBAR & BACKDROP
    ========================================================= */
 
+.app-topbar {
+    display: none;
+    height: var(--topbar-height);
+    padding: 0 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 900;
+}
+
+.topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.sidebar-toggle {
+    display: none;
+    width: 40px;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 20px;
+    cursor: pointer;
+    transition: background 0.16s ease, border-color 0.16s ease;
+}
+
+.sidebar-toggle:hover {
+    background: var(--surface-soft);
+    border-color: var(--terracotta);
+    color: var(--terracotta);
+}
+
+.topbar-context {
+    display: flex;
+    flex-direction: column;
+}
+
+.topbar-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: var(--terracotta);
+    text-transform: uppercase;
+}
+
+.topbar-title {
+    font-family: var(--font-serif);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
 .sidebar-backdrop {
     display: none;
 }
 
 @media (max-width: 900px) {
+
+    .app-topbar {
+        display: flex;
+    }
 
     .app-sidebar {
         transform: translateX(-100%);

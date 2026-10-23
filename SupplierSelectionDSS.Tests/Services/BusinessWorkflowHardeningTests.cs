@@ -278,13 +278,13 @@ public class BusinessWorkflowHardeningTests : IDisposable
         batch.Criteria.Add(crit);
         _context.EvaluationBatches.Add(batch);
 
-        // Existing unfinalized approval
+        // Existing non-final rejection record in decision history
         _context.Approvals.Add(new Approval
         {
             ApprovalId = 10,
             BatchId = 201,
             SelectedSupplierId = 31,
-            Status = ApprovalStatus.Approved,
+            Status = ApprovalStatus.Rejected,
             IsFinal = false,
             ApprovalDate = DateTime.UtcNow
         });
@@ -318,12 +318,20 @@ public class BusinessWorkflowHardeningTests : IDisposable
         // Act: Save modified evaluation score
         await service.SaveAsync(model, 1);
 
-        // Assert: Pending approvals and topsis results are cleanly invalidated
+        // Assert: TOPSIS results are invalidated, while append-only decision history (Approvals) is preserved and marked superseded
         var approvals = await _context.Approvals.Where(x => x.BatchId == 201).ToListAsync();
-        approvals.Should().BeEmpty();
+        approvals.Should().ContainSingle();
+        approvals[0].Status.Should().Be(ApprovalStatus.Rejected);
 
         var topsis = await _context.TopsisResults.Where(x => x.BatchId == 201).ToListAsync();
         topsis.Should().BeEmpty();
+
+        var decisionService = CreateDecisionResultService();
+        var decisionVm = await decisionService.GetResultAsync(201);
+        decisionVm.Should().NotBeNull();
+        decisionVm!.HasApproval.Should().BeFalse();
+        decisionVm.DecisionHistory.Should().ContainSingle();
+        decisionVm.DecisionHistory[0].IsSuperseded.Should().BeTrue();
     }
 
     // =========================================================

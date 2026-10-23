@@ -74,7 +74,8 @@ public class TOPSISController : Controller
     [Route(
         "EvaluationBatch/{batchId:int}/TOPSIS/Calculate")]
     public async Task<IActionResult> Calculate(
-        int batchId)
+        int batchId,
+        string? rowVersion = null)
     {
         if (batchId <= 0)
         {
@@ -132,7 +133,8 @@ public class TOPSISController : Controller
 
             await _topsisService
                 .CalculateAsync(
-                    batchId);
+                    batchId,
+                    rowVersion);
 
 
             // =================================================

@@ -353,7 +353,8 @@ public class EvaluationBatchController : Controller
         Roles =
             UserRole.Administrator + "," + UserRole.PurchasingStaff)]
     public async Task<IActionResult> Start(
-        int id)
+        int id,
+        string? rowVersion = null)
     {
         try
         {
@@ -362,7 +363,7 @@ public class EvaluationBatchController : Controller
             // =================================================
 
             await _batchService
-                .StartAsync(id);
+                .StartAsync(id, rowVersion);
 
 
             // =================================================
@@ -492,7 +493,8 @@ public class EvaluationBatchController : Controller
             UserRole.Administrator + "," + UserRole.Manager)]
     public async Task<IActionResult> Cancel(
         int id,
-        string? reason)
+        string? reason,
+        string? rowVersion = null)
     {
         if (id <= 0)
         {
@@ -521,7 +523,7 @@ public class EvaluationBatchController : Controller
                 Status = batch.Status
             });
 
-            await _batchService.CancelAsync(id, reason);
+            await _batchService.CancelAsync(id, reason, rowVersion);
 
             var newValue = JsonSerializer.Serialize(new
             {

@@ -549,6 +549,11 @@ public class ReportService
     }
 
 
+    private static readonly JsonSerializerOptions SnapshotJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
     // =========================================================
     // LOAD REPORT DATA
     // =========================================================
@@ -582,6 +587,36 @@ public class ReportService
                 "Evaluation Batch không tồn tại.");
         }
 
+        // Check if a FinalApproval frozen snapshot is available for reproducible historical reporting
+        var finalSnapshotRow = await _context.BatchRoundSnapshots
+            .AsNoTracking()
+            .Include(x => x.CreatedByNavigation)
+            .Where(x => x.BatchId == batchId && x.SnapshotType == "FinalApproval")
+            .OrderByDescending(x => x.CreatedAt)
+            .ThenByDescending(x => x.SnapshotId)
+            .FirstOrDefaultAsync();
+
+        if (finalSnapshotRow != null && !string.IsNullOrWhiteSpace(finalSnapshotRow.SnapshotData))
+        {
+            BatchSnapshotPayload? snap = null;
+            try
+            {
+                snap = JsonSerializer.Deserialize<BatchSnapshotPayload>(finalSnapshotRow.SnapshotData, SnapshotJsonOptions);
+            }
+            catch
+            {
+                snap = null;
+            }
+
+            if (snap != null
+                && snap.Suppliers.Count > 0
+                && snap.Criteria.Count > 0
+                && snap.TopsisResults.Count > 0
+                && snap.TopsisResults.All(r => !string.IsNullOrWhiteSpace(r.SupplierCode)))
+            {
+                return await BuildReportDataFromSnapshotAsync(batch, finalSnapshotRow, snap);
+            }
+        }
 
         // =====================================================
         // EVALUATION SCORES
@@ -766,6 +801,247 @@ public class ReportService
         }
 
         return reportData;
+    }
+
+    private async Task<ReportData> BuildReportDataFromSnapshotAsync(
+        EvaluationBatch liveBatch,
+        BatchRoundSnapshot snapshotRow,
+        BatchSnapshotPayload snap)
+    {
+        var frozenSuppliers = snap.Suppliers
+            .Select(s => new Supplier
+            {
+                SupplierId = s.SupplierId,
+                SupplierCode = s.SupplierCode,
+                SupplierName = s.SupplierName
+            })
+            .ToDictionary(s => s.SupplierId, s => s);
+
+        var frozenCriteria = snap.Criteria
+            .Select(c => new Criterion
+            {
+                CriteriaId = c.CriteriaId,
+                CriteriaCode = c.CriteriaCode,
+                CriteriaName = c.CriteriaName,
+                CriteriaType = c.CriteriaType,
+                Unit = c.Unit
+            })
+            .ToDictionary(c => c.CriteriaId, c => c);
+
+        var frozenBatch = new EvaluationBatch
+        {
+            BatchId = liveBatch.BatchId,
+            BatchCode = string.IsNullOrWhiteSpace(snap.BatchCode) ? liveBatch.BatchCode : snap.BatchCode,
+            BatchName = string.IsNullOrWhiteSpace(snap.BatchName) ? liveBatch.BatchName : snap.BatchName,
+            Status = liveBatch.Status,
+            GroupId = liveBatch.GroupId,
+            Group = (!string.IsNullOrWhiteSpace(snap.GroupCode) || !string.IsNullOrWhiteSpace(snap.GroupName))
+                ? new ProductGroup
+                {
+                    GroupId = liveBatch.GroupId,
+                    GroupCode = snap.GroupCode ?? liveBatch.Group?.GroupCode ?? string.Empty,
+                    GroupName = snap.GroupName ?? liveBatch.Group?.GroupName ?? string.Empty
+                }
+                : liveBatch.Group,
+            Suppliers = frozenSuppliers.Values.ToList(),
+            Criteria = frozenCriteria.Values.ToList()
+        };
+
+        var scores = snap.EvaluationScores
+            .Select(s =>
+            {
+                if (!frozenSuppliers.TryGetValue(s.SupplierId, out var sup))
+                {
+                    sup = new Supplier
+                    {
+                        SupplierId = s.SupplierId,
+                        SupplierCode = s.SupplierCode ?? string.Empty,
+                        SupplierName = s.SupplierName ?? string.Empty
+                    };
+                }
+
+                if (!frozenCriteria.TryGetValue(s.CriteriaId, out var crit))
+                {
+                    crit = new Criterion
+                    {
+                        CriteriaId = s.CriteriaId,
+                        CriteriaCode = s.CriteriaCode ?? string.Empty,
+                        CriteriaName = s.CriteriaName ?? string.Empty
+                    };
+                }
+
+                return new EvaluationScore
+                {
+                    BatchId = liveBatch.BatchId,
+                    SupplierId = s.SupplierId,
+                    Supplier = sup,
+                    CriteriaId = s.CriteriaId,
+                    Criteria = crit,
+                    ScoreValue = s.ScoreValue
+                };
+            })
+            .OrderBy(s => s.Supplier.SupplierCode)
+            .ThenBy(s => s.Criteria.CriteriaCode)
+            .ToList();
+
+        var ahpResult = snap.AhpResult == null
+            ? null
+            : new Ahpresult
+            {
+                BatchId = liveBatch.BatchId,
+                LambdaMax = snap.AhpResult.LambdaMax,
+                Civalue = snap.AhpResult.Civalue,
+                Rivalue = snap.AhpResult.Rivalue,
+                Crvalue = snap.AhpResult.Crvalue,
+                IsConsistent = snap.AhpResult.IsConsistent
+            };
+
+        var ahpWeights = snap.AhpWeights
+            .Select(w =>
+            {
+                frozenCriteria.TryGetValue(w.CriteriaId, out var crit);
+                return new ReportAHPWeight
+                {
+                    CriteriaCode = w.CriteriaCode ?? crit?.CriteriaCode ?? string.Empty,
+                    CriteriaName = w.CriteriaName ?? crit?.CriteriaName ?? string.Empty,
+                    WeightValue = w.WeightValue
+                };
+            })
+            .OrderBy(w => w.CriteriaCode)
+            .ToList();
+
+        var ahpComparisons = snap.AhpComparisons
+            .Select(c =>
+            {
+                frozenCriteria.TryGetValue(c.CriteriaRowId, out var rowCrit);
+                frozenCriteria.TryGetValue(c.CriteriaColId, out var colCrit);
+                return new AhppairwiseComparison
+                {
+                    BatchId = liveBatch.BatchId,
+                    CriteriaRowId = c.CriteriaRowId,
+                    CriteriaRow = rowCrit ?? new Criterion { CriteriaId = c.CriteriaRowId, CriteriaCode = c.CriteriaRowCode ?? string.Empty },
+                    CriteriaColId = c.CriteriaColId,
+                    CriteriaCol = colCrit ?? new Criterion { CriteriaId = c.CriteriaColId, CriteriaCode = c.CriteriaColCode ?? string.Empty },
+                    ComparisonValue = c.ComparisonValue
+                };
+            })
+            .OrderBy(c => c.CriteriaRow.CriteriaCode)
+            .ThenBy(c => c.CriteriaCol.CriteriaCode)
+            .ToList();
+
+        var ideals = snap.TopsisIdeals
+            .Select(i =>
+            {
+                if (!frozenCriteria.TryGetValue(i.CriteriaId, out var crit))
+                {
+                    crit = new Criterion
+                    {
+                        CriteriaId = i.CriteriaId,
+                        CriteriaCode = i.CriteriaCode ?? string.Empty,
+                        CriteriaName = i.CriteriaName ?? string.Empty,
+                        CriteriaType = i.CriteriaType ?? string.Empty,
+                        Unit = i.Unit
+                    };
+                }
+
+                return new TopsisIdealSolution
+                {
+                    BatchId = liveBatch.BatchId,
+                    CriteriaId = i.CriteriaId,
+                    Criteria = crit,
+                    Pisvalue = i.Pisvalue,
+                    Nisvalue = i.Nisvalue
+                };
+            })
+            .OrderBy(i => i.Criteria.CriteriaCode)
+            .ToList();
+
+        var topsisResults = snap.TopsisResults
+            .Select(r =>
+            {
+                if (!frozenSuppliers.TryGetValue(r.SupplierId, out var sup))
+                {
+                    sup = new Supplier
+                    {
+                        SupplierId = r.SupplierId,
+                        SupplierCode = r.SupplierCode ?? string.Empty,
+                        SupplierName = r.SupplierName ?? string.Empty
+                    };
+                }
+
+                return new TopsisResult
+                {
+                    BatchId = liveBatch.BatchId,
+                    SupplierId = r.SupplierId,
+                    Supplier = sup,
+                    DistanceToPis = r.DistanceToPis,
+                    DistanceToNis = r.DistanceToNis,
+                    ClosenessCoefficient = r.ClosenessCoefficient,
+                    RankNo = r.RankNo
+                };
+            })
+            .OrderBy(r => r.RankNo)
+            .ToList();
+
+        var liveApproval = await _context.Approvals
+            .AsNoTracking()
+            .Include(x => x.ApprovedByNavigation)
+            .Where(x => x.BatchId == liveBatch.BatchId && x.IsFinal && x.Status == ApprovalStatus.Approved)
+            .OrderByDescending(x => x.ApprovalDate)
+            .ThenByDescending(x => x.ApprovalId)
+            .FirstOrDefaultAsync();
+
+        Supplier? selectedSup = null;
+        if (snap.SelectedSupplierId.HasValue)
+        {
+            if (!frozenSuppliers.TryGetValue(snap.SelectedSupplierId.Value, out selectedSup))
+            {
+                selectedSup = new Supplier
+                {
+                    SupplierId = snap.SelectedSupplierId.Value,
+                    SupplierCode = snap.SelectedSupplierCode ?? string.Empty,
+                    SupplierName = snap.SelectedSupplierName ?? string.Empty
+                };
+            }
+        }
+
+        var resolvedApproverId = snap.ApprovedBy ?? liveApproval?.ApprovedBy ?? snapshotRow.CreatedBy ?? 0;
+
+        var approval = new Approval
+        {
+            ApprovalId = liveApproval?.ApprovalId ?? 0,
+            BatchId = liveBatch.BatchId,
+            SelectedSupplierId = snap.SelectedSupplierId ?? liveApproval?.SelectedSupplierId,
+            SelectedSupplier = selectedSup,
+            ApprovedBy = resolvedApproverId,
+            ApprovedByNavigation = new User
+            {
+                UserId = resolvedApproverId,
+                FullName = snap.ActorName
+                    ?? liveApproval?.ApprovedByNavigation?.FullName
+                    ?? snapshotRow.CreatedByNavigation?.FullName
+                    ?? string.Empty
+            },
+            ApprovalDate = snap.ApprovedAt ?? liveApproval?.ApprovalDate ?? snapshotRow.CreatedAt,
+            Notes = snap.Notes ?? liveApproval?.Notes,
+            Status = ApprovalStatus.Approved,
+            IsFinal = true
+        };
+
+        return new ReportData
+        {
+            Batch = frozenBatch,
+            Scores = scores,
+            AhpResult = ahpResult,
+            AhpWeights = ahpWeights,
+            AhpComparisons = ahpComparisons,
+            Ideals = ideals,
+            TopsisResults = topsisResults,
+            Approval = approval,
+            NormalizedMatrix = snap.NormalizedMatrix ?? new List<TOPSISMatrixRowViewModel>(),
+            WeightedMatrix = snap.WeightedMatrix ?? new List<TOPSISMatrixRowViewModel>(),
+            SensitivityAnalysis = snap.SensitivityAnalysis
+        };
     }
 
 

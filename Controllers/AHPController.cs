@@ -270,7 +270,8 @@ public class AHPController : Controller
     [Route(
         "EvaluationBatch/{batchId:int}/AHP/Calculate")]
     public async Task<IActionResult> Calculate(
-        int batchId)
+        int batchId,
+        string? rowVersion = null)
     {
         if (batchId <= 0)
         {
@@ -299,7 +300,8 @@ public class AHPController : Controller
             var result =
                 await _ahpService
                     .CalculateAsync(
-                        batchId);
+                        batchId,
+                        rowVersion);
 
 
             // =================================================
