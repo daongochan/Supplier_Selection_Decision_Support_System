@@ -68,7 +68,7 @@ public class CriteriaController : Controller
         {
             ModelState.AddModelError(
                 nameof(model.CriteriaCode),
-                "Mã tiêu chí đã tồn tại.");
+                "Criteria code already exists.");
         }
 
         if (!ModelState.IsValid)
@@ -90,7 +90,7 @@ public class CriteriaController : Controller
             await _criteriaService.CreateAsync(criterion);
 
             TempData["SuccessMessage"] =
-                "Tiêu chí đã được tạo thành công.";
+                "Criterion created successfully.";
 
             return RedirectToAction(nameof(Index));
         }
@@ -143,7 +143,7 @@ public class CriteriaController : Controller
         {
             ModelState.AddModelError(
                 nameof(model.CriteriaCode),
-                "Mã tiêu chí đã tồn tại.");
+                "Criteria code already exists.");
         }
 
         if (!ModelState.IsValid)
@@ -169,7 +169,7 @@ public class CriteriaController : Controller
             await _criteriaService.UpdateAsync(criterion);
 
             TempData["SuccessMessage"] =
-                "Tiêu chí đã được cập nhật.";
+                "Criterion updated successfully.";
 
             return RedirectToAction(nameof(Index));
         }
@@ -203,7 +203,7 @@ public class CriteriaController : Controller
             }
 
             TempData["SuccessMessage"] =
-                "Trạng thái tiêu chí đã được cập nhật.";
+                "Criterion status updated successfully.";
         }
         catch (InvalidOperationException ex)
         {
@@ -229,7 +229,7 @@ public class CriteriaController : Controller
         {
             ModelState.AddModelError(
                 nameof(model.CriteriaType),
-                "Loại tiêu chí không hợp lệ. Chỉ chấp nhận Benefit hoặc Cost.");
+                "Invalid criteria type. Only Benefit or Cost is allowed.");
         }
     }
 }

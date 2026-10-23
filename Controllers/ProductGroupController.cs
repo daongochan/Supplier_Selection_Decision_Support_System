@@ -202,23 +202,33 @@ public class ProductGroupController : Controller
             return NotFound();
         }
 
-        var allSuppliers = await _groupService.GetAllActiveSuppliersAsync();
-
+        var activeSuppliers = await _groupService.GetAllActiveSuppliersAsync();
         var selectedSupplierIds = group.Suppliers
             .Select(x => x.SupplierId)
             .ToHashSet();
+
+        var combinedSuppliers = new List<Supplier>(activeSuppliers);
+        foreach (var assigned in group.Suppliers)
+        {
+            if (!combinedSuppliers.Any(s => s.SupplierId == assigned.SupplierId))
+            {
+                combinedSuppliers.Add(assigned);
+            }
+        }
 
         var model = new ProductGroupSuppliersViewModel
         {
             GroupId = group.GroupId,
             GroupCode = group.GroupCode,
             GroupName = group.GroupName,
-            Suppliers = allSuppliers
+            Suppliers = combinedSuppliers
+                .OrderBy(x => x.SupplierCode)
                 .Select(x => new SupplierSelectionItemViewModel
                 {
                     SupplierId = x.SupplierId,
                     SupplierCode = x.SupplierCode,
                     SupplierName = x.SupplierName,
+                    Status = x.Status,
                     Selected = selectedSupplierIds.Contains(x.SupplierId)
                 })
                 .ToList()

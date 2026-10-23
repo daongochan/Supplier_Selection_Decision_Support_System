@@ -321,6 +321,55 @@ strong {
    INPUT
    ========================================================= */
 
+.ahp-select-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 96px;
+}
+
+.ahp-select {
+    width: 96px;
+    height: 38px;
+    box-sizing: border-box;
+    padding: 6px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    text-align-last: center;
+    cursor: pointer;
+    transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.ahp-select:hover {
+    background: var(--canvas-soft);
+    border-color: var(--brand-primary, #3b82f6);
+}
+
+.ahp-select:focus {
+    outline: none;
+    border-color: var(--brand-primary, #3b82f6);
+    background: var(--surface);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, .15);
+}
+
+.ahp-pair-explanation {
+    font-size: 11px;
+    line-height: 1.25;
+    color: var(--muted);
+    font-family: var(--font-sans);
+    max-width: 140px;
+    text-align: center;
+    min-height: 14px;
+}
+
 .ahp-input {
     width: 82px;
     height: 40px;

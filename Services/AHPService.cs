@@ -26,27 +26,7 @@ public class AHPService
     // =========================================================
 
     private static readonly HashSet<decimal> AllowedSaatyValues =
-        new()
-        {
-            1m,
-            2m,
-            3m,
-            4m,
-            5m,
-            6m,
-            7m,
-            8m,
-            9m,
-
-            0.5m,
-            0.3333m,
-            0.25m,
-            0.2m,
-            0.1667m,
-            0.1429m,
-            0.125m,
-            0.1111m
-        };
+        SaatyScale.AllowedDecimals;
 
     // =========================================================
     // CONSTRUCTOR
@@ -212,8 +192,25 @@ public class AHPService
             var anyChanged = false;
             foreach (var item in model.Comparisons)
             {
-                var value = Math.Round(item.Value, 4, MidpointRounding.AwayFromZero);
-                var inverseValue = Math.Round(1m / value, 4, MidpointRounding.AwayFromZero);
+                decimal value;
+                decimal inverseValue;
+
+                if (!string.IsNullOrWhiteSpace(item.ScaleCode) && SaatyScale.TryParse(item.ScaleCode, out var saatyParsed))
+                {
+                    value = saatyParsed.DirectValue;
+                    inverseValue = saatyParsed.ReciprocalValue;
+                }
+                else if (SaatyScale.TryFromDecimal(item.Value, out var saatyFromVal))
+                {
+                    value = saatyFromVal.DirectValue;
+                    inverseValue = saatyFromVal.ReciprocalValue;
+                }
+                else
+                {
+                    value = Math.Round(item.Value, 4, MidpointRounding.AwayFromZero);
+                    inverseValue = SaatyScale.GetReciprocalDecimal(value);
+                }
+
                 if (!existingMap.TryGetValue((item.CriteriaRowId, item.CriteriaColId), out var oldDirect) ||
                     oldDirect != value ||
                     !existingMap.TryGetValue((item.CriteriaColId, item.CriteriaRowId), out var oldInverse) ||
@@ -298,17 +295,24 @@ public class AHPService
 
                 foreach (var item in model.Comparisons)
                 {
-                    var value =
-                        Math.Round(
-                            item.Value,
-                            4,
-                            MidpointRounding.AwayFromZero);
+                    decimal value;
+                    decimal inverseValue;
 
-                    var inverseValue =
-                        Math.Round(
-                            1m / value,
-                            4,
-                            MidpointRounding.AwayFromZero);
+                    if (!string.IsNullOrWhiteSpace(item.ScaleCode) && SaatyScale.TryParse(item.ScaleCode, out var saatyParsed))
+                    {
+                        value = saatyParsed.DirectValue;
+                        inverseValue = saatyParsed.ReciprocalValue;
+                    }
+                    else if (SaatyScale.TryFromDecimal(item.Value, out var saatyFromVal))
+                    {
+                        value = saatyFromVal.DirectValue;
+                        inverseValue = saatyFromVal.ReciprocalValue;
+                    }
+                    else
+                    {
+                        value = Math.Round(item.Value, 4, MidpointRounding.AwayFromZero);
+                        inverseValue = SaatyScale.GetReciprocalDecimal(value);
+                    }
 
                     _context.AhppairwiseComparisons.Add(
                         new AhppairwiseComparison
@@ -866,7 +870,18 @@ public class AHPService
                     "Không cần nhập so sánh Criteria với chính nó.");
             }
 
-            ValidateComparisonValue(item.Value);
+            if (!string.IsNullOrWhiteSpace(item.ScaleCode))
+            {
+                if (!SaatyScale.TryParse(item.ScaleCode, out _))
+                {
+                    throw new BusinessRuleException(
+                        "Giá trị AHP phải thuộc thang Saaty 1–9 hoặc nghịch đảo tương ứng.");
+                }
+            }
+            else
+            {
+                ValidateComparisonValue(item.Value);
+            }
 
             if (!directedPairs.Add(
                     (item.CriteriaRowId,
@@ -908,7 +923,7 @@ public class AHPService
                 4,
                 MidpointRounding.AwayFromZero);
 
-        if (!AllowedSaatyValues.Contains(rounded))
+        if (!AllowedSaatyValues.Contains(rounded) && !SaatyScale.TryFromDecimal(rounded, out _))
         {
             throw new BusinessRuleException(
                 "Giá trị AHP phải thuộc thang Saaty " +

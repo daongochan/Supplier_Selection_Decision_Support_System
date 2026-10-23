@@ -1,4 +1,5 @@
 @model SupplierSelectionDSS.Models.AHPComparisonViewModel
+@using SupplierSelectionDSS.Constants
 
 @{
     ViewData["Title"] = "AHP Pairwise Comparison";
@@ -184,7 +185,7 @@
 
 <div class="alert alert-info mb-3" style="border-radius: var(--radius-md); padding: 14px 18px; border: 1px solid rgba(59, 130, 246, 0.35); background: rgba(59, 130, 246, 0.08);">
     <i class="bi bi-people-fill me-2 text-primary"></i>
-    <strong>Shared Batch Matrix:</strong> This evaluation batch uses a single shared AHP pairwise comparison matrix protected by optimistic concurrency control (<code>RowVersion</code>). Saving comparisons updates the batch-wide consensus matrix (see <code>docs/GROUP-AHP-PROPOSAL.md</code> for independent multi-expert ballot aggregation).
+    <strong>Shared Batch Matrix:</strong> This batch uses a shared comparison matrix. Changes saved by other users may require you to reload.
 </div>
 
 <div class="ahp-scale-card">
@@ -370,37 +371,46 @@
                                                 ? storedValue
                                                 : 0m;
 
+                                        var currentCode = existingValue > 0m
+                                            ? SaatyScale.FormatCanonicalFraction(existingValue)
+                                            : "";
 
                                         <input type="hidden"
                                                name="Comparisons[@comparisonIndex].CriteriaRowId"
                                                value="@rowCriterion.CriteriaId" />
 
-
                                         <input type="hidden"
                                                name="Comparisons[@comparisonIndex].CriteriaColId"
                                                value="@colCriterion.CriteriaId" />
 
-
-                                        <input type="number"
+                                        <input type="hidden"
                                                name="Comparisons[@comparisonIndex].Value"
-                                               value="@(existingValue == 0m
-                                                                                                   ? ""
-                                                                                                   : existingValue.ToString("0.####"))"
-                                               class="ahp-input"
-                                               aria-label="So sánh @rowCriterion.CriteriaName (@rowCriterion.CriteriaCode) với @colCriterion.CriteriaName (@colCriterion.CriteriaCode)"
+                                               value="@(existingValue == 0m ? "" : existingValue.ToString("0.####"))"
+                                               class="ahp-hidden-decimal"
                                                data-row-id="@rowCriterion.CriteriaId"
-                                               data-col-id="@colCriterion.CriteriaId"
-                                               min="0.1111"
-                                               max="9"
-                                               step="0.0001"
-                                               placeholder="—"
-                                               autocomplete="off" />
+                                               data-col-id="@colCriterion.CriteriaId" />
 
+                                        <div class="ahp-select-wrap">
+                                            <select name="Comparisons[@comparisonIndex].ScaleCode"
+                                                    class="ahp-select form-control"
+                                                    aria-label="Compare @rowCriterion.CriteriaName (@rowCriterion.CriteriaCode) with @colCriterion.CriteriaName (@colCriterion.CriteriaCode)"
+                                                    data-row-id="@rowCriterion.CriteriaId"
+                                                    data-col-id="@colCriterion.CriteriaId"
+                                                    data-row-name="@rowCriterion.CriteriaName"
+                                                    data-col-name="@colCriterion.CriteriaName">
+                                                <option value="" selected="@(string.IsNullOrEmpty(currentCode))">Select...</option>
+                                                @foreach (var entry in SaatyScale.Entries)
+                                                {
+                                                    <option value="@entry.Code" selected="@(currentCode == entry.Code)">@entry.Code</option>
+                                                }
+                                            </select>
 
-                                        <span class="ahp-input-help">
-                                            1–9 / inverse
-                                        </span>
-
+                                            <div class="ahp-pair-explanation"
+                                                 data-explanation-row="@rowCriterion.CriteriaId"
+                                                 data-explanation-col="@colCriterion.CriteriaId">
+                                                @(!string.IsNullOrEmpty(currentCode) ? SaatyScale.GetComparisonExplanation(rowCriterion.CriteriaName, colCriterion.CriteriaName, currentCode) : "")
+                                            </div>
+                                        </div>
 
                                         comparisonIndex++;
                                     }
@@ -409,35 +419,26 @@
                                         var inverseKey =
                                             $"{colCriterion.CriteriaId}_{rowCriterion.CriteriaId}";
 
-
-                                        if (
-                                            Model.Values.TryGetValue(
-                                                inverseKey,
-                                                out var upperValue)
-                                            &&
-                                            upperValue > 0)
+                                        if (Model.Values.TryGetValue(inverseKey, out var upperValue) && upperValue > 0)
                                         {
+                                            var reciprocalCode = SaatyScale.FormatCanonicalFraction(SaatyScale.GetReciprocalDecimal(upperValue));
                                             <span class="ahp-inverse-value"
-                                                  aria-label="Giá trị nghịch đảo của @colCriterion.CriteriaCode đối với @rowCriterion.CriteriaCode"
+                                                  aria-label="Reciprocal value of @colCriterion.CriteriaCode relative to @rowCriterion.CriteriaCode: @reciprocalCode"
                                                   data-source-row="@colCriterion.CriteriaId"
                                                   data-source-col="@rowCriterion.CriteriaId">
-
-                                                @FormatAHPValue(
-                                                    1m / upperValue)
-
+                                                @reciprocalCode
                                             </span>
                                         }
                                         else
                                         {
                                             <span class="ahp-empty"
-                                                  aria-label="Chưa nhập so sánh nghịch đảo"
+                                                  aria-label="No reciprocal value yet"
                                                   data-source-row="@colCriterion.CriteriaId"
                                                   data-source-col="@rowCriterion.CriteriaId">
                                                 —
                                             </span>
                                         }
                                     }
-
                                 </td>
                             }
 
@@ -914,95 +915,10 @@
 
 
 @functions {
-
-    public string FormatAHPValue(
-        decimal value)
+    public string FormatAHPValue(decimal value)
     {
-        var rounded =
-            Math.Round(
-                value,
-                4);
-
-
-        if (rounded == 1m)
-            return "1";
-
-
-        if (
-            Math.Abs(
-                rounded - 0.5m)
-            < 0.0001m)
-        {
-            return "1/2";
-        }
-
-
-        if (
-            Math.Abs(
-                rounded - 0.3333m)
-            < 0.0001m)
-        {
-            return "1/3";
-        }
-
-
-        if (
-            Math.Abs(
-                rounded - 0.25m)
-            < 0.0001m)
-        {
-            return "1/4";
-        }
-
-
-        if (
-            Math.Abs(
-                rounded - 0.2m)
-            < 0.0001m)
-        {
-            return "1/5";
-        }
-
-
-        if (
-            Math.Abs(
-                rounded - 0.1667m)
-            < 0.0001m)
-        {
-            return "1/6";
-        }
-
-
-        if (
-            Math.Abs(
-                rounded - 0.1429m)
-            < 0.0001m)
-        {
-            return "1/7";
-        }
-
-
-        if (
-            Math.Abs(
-                rounded - 0.125m)
-            < 0.0001m)
-        {
-            return "1/8";
-        }
-
-
-        if (
-            Math.Abs(
-                rounded - 0.1111m)
-            < 0.0001m)
-        {
-            return "1/9";
-        }
-
-
-        return rounded.ToString("0.####");
+        return SaatyScale.FormatCanonicalFraction(value);
     }
-
 }
 
 @section Scripts {

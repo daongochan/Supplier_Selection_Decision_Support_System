@@ -7,4 +7,6 @@ public class AHPComparisonInputItemViewModel
     public int CriteriaColId { get; set; }
 
     public decimal Value { get; set; }
+
+    public string? ScaleCode { get; set; }
 }
