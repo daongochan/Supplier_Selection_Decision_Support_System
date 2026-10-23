@@ -246,11 +246,17 @@ public class DashboardService
                     };
                 }
 
-                // Workflow Stepper Calculation
-                var hasScores = scoredSuppliersCount > 0;
-                var hasAhp = ahp != null && ahp.IsConsistent;
-                var hasTopsis = topsisResults.Any();
-                var hasApproval = approval != null && string.Equals(approval.Status, "Approved", StringComparison.OrdinalIgnoreCase);
+                // Workflow Stepper Calculation (aligned with BatchWorkflowReadiness)
+                var totalScoresCount = await _context.EvaluationScores
+                    .AsNoTracking()
+                    .CountAsync(x => x.BatchId == bId);
+                var expectedScoresCount = currentBatchEntity.TotalSuppliers * currentBatchEntity.Criteria.Count;
+
+                var hasScores = expectedScoresCount > 0 && totalScoresCount >= expectedScoresCount;
+                var hasAhp = ahp != null && ahp.IsConsistent && model.AhpCriteriaWeights.Count >= currentBatchEntity.Criteria.Count;
+                var hasTopsis = currentBatchEntity.TotalSuppliers > 0 && topsisResults.Count >= Math.Min(5, currentBatchEntity.TotalSuppliers);
+                var hasApproval = string.Equals(currentBatchEntity.Status, BatchStatus.Completed, StringComparison.OrdinalIgnoreCase)
+                    || (approval != null && string.Equals(approval.Status, "Approved", StringComparison.OrdinalIgnoreCase));
 
                 var workflow = new DashboardWorkflowProgressDto
                 {
@@ -264,32 +270,32 @@ public class DashboardService
                 if (hasApproval)
                 {
                     workflow.CurrentStepNumber = 5;
-                    workflow.CurrentStepName = "Phê duyệt";
-                    workflow.CurrentStepDescription = "Đợt đánh giá đã được phê duyệt và hoàn tất quyết định.";
+                    workflow.CurrentStepName = "Approval";
+                    workflow.CurrentStepDescription = "Evaluation batch has been approved and the final supplier decision is recorded.";
                 }
                 else if (hasTopsis)
                 {
                     workflow.CurrentStepNumber = 4;
-                    workflow.CurrentStepName = "So sánh & Đánh giá";
-                    workflow.CurrentStepDescription = "Đã tính toán TOPSIS, sẵn sàng phân tích so sánh và trình phê duyệt.";
+                    workflow.CurrentStepName = "Review & Decision";
+                    workflow.CurrentStepDescription = "TOPSIS ranking is complete and ready for comparative review and final approval.";
                 }
                 else if (hasAhp)
                 {
                     workflow.CurrentStepNumber = 3;
                     workflow.CurrentStepName = "TOPSIS";
-                    workflow.CurrentStepDescription = "Trọng số AHP đã sẵn sàng, tiếp tục tính toán xếp hạng TOPSIS.";
+                    workflow.CurrentStepDescription = "AHP criteria weights are consistent; proceed to calculate TOPSIS supplier ranking.";
                 }
                 else if (hasScores)
                 {
                     workflow.CurrentStepNumber = 2;
                     workflow.CurrentStepName = "AHP";
-                    workflow.CurrentStepDescription = "Đã có dữ liệu điểm đánh giá, tiếp tục so sánh cặp tiêu chí AHP.";
+                    workflow.CurrentStepDescription = "All supplier evaluation scores are entered; proceed to AHP pairwise comparison.";
                 }
                 else
                 {
                     workflow.CurrentStepNumber = 1;
-                    workflow.CurrentStepName = "Nhập dữ liệu";
-                    workflow.CurrentStepDescription = "Thu thập và nhập điểm đánh giá nhà cung cấp theo tiêu chí.";
+                    workflow.CurrentStepName = "Supplier Scoring";
+                    workflow.CurrentStepDescription = $"Enter supplier evaluation scores ({totalScoresCount}/{expectedScoresCount} cells completed).";
                 }
 
                 model.WorkflowProgress = workflow;
