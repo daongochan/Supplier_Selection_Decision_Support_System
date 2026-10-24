@@ -236,36 +236,37 @@ public class DecisionResultService
             .ThenBy(x => x.ApprovalId)
             .ToListAsync();
 
-        var latestTopsisCalculatedAt =
-            await _context.TopsisResults
-                .AsNoTracking()
-                .Where(
-                    x =>
-                        x.BatchId ==
-                        batchId)
-                .Select(
-                    x =>
-                        (DateTime?)x.CalculatedAt)
-                .OrderByDescending(
-                    x =>
-                        x)
-                .FirstOrDefaultAsync();
+        DateTime? latestTopsisCalculatedAt = null;
+        DateTime? latestScoreEvaluatedAt = null;
+        DateTime? latestAhpCalculatedAt = null;
 
-        var latestScoreEvaluatedAt =
-            await _context.EvaluationScores
-                .AsNoTracking()
-                .Where(x => x.BatchId == batchId)
-                .Select(x => (DateTime?)x.EvaluatedAt)
-                .OrderByDescending(x => x)
-                .FirstOrDefaultAsync();
+        var latestApproval = allApprovals.LastOrDefault();
+        if (latestApproval != null && !latestApproval.IsFinal)
+        {
+            latestTopsisCalculatedAt =
+                await _context.TopsisResults
+                    .AsNoTracking()
+                    .Where(x => x.BatchId == batchId)
+                    .Select(x => (DateTime?)x.CalculatedAt)
+                    .OrderByDescending(x => x)
+                    .FirstOrDefaultAsync();
 
-        var latestAhpCalculatedAt =
-            await _context.Ahpresults
-                .AsNoTracking()
-                .Where(x => x.BatchId == batchId)
-                .Select(x => (DateTime?)x.CalculatedAt)
-                .OrderByDescending(x => x)
-                .FirstOrDefaultAsync();
+            latestScoreEvaluatedAt =
+                await _context.EvaluationScores
+                    .AsNoTracking()
+                    .Where(x => x.BatchId == batchId)
+                    .Select(x => (DateTime?)x.EvaluatedAt)
+                    .OrderByDescending(x => x)
+                    .FirstOrDefaultAsync();
+
+            latestAhpCalculatedAt =
+                await _context.Ahpresults
+                    .AsNoTracking()
+                    .Where(x => x.BatchId == batchId)
+                    .Select(x => (DateTime?)x.CalculatedAt)
+                    .OrderByDescending(x => x)
+                    .FirstOrDefaultAsync();
+        }
 
         var currentRoundCounter = 1;
         for (var idx = 0; idx < allApprovals.Count; idx++)
@@ -348,6 +349,34 @@ public class DecisionResultService
         return model;
     }
 
+
+
+    // =========================================================
+    // AUDIT LOG HELPER (LIGHTWEIGHT HEADER LOOKUP)
+    // =========================================================
+
+    public async Task<(string SupplierCode, string SupplierName, int? RankNo, decimal? ClosenessCoefficient)>
+        GetSupplierAuditHeaderAsync(int batchId, int supplierId)
+    {
+        var supplier = await _context.Suppliers
+            .AsNoTracking()
+            .Where(x => x.SupplierId == supplierId)
+            .Select(x => new { x.SupplierCode, x.SupplierName })
+            .FirstOrDefaultAsync();
+
+        var topsis = await _context.TopsisResults
+            .AsNoTracking()
+            .Where(x => x.BatchId == batchId && x.SupplierId == supplierId)
+            .Select(x => new { x.RankNo, x.ClosenessCoefficient })
+            .FirstOrDefaultAsync();
+
+        return (
+            supplier?.SupplierCode ?? $"SUP-{supplierId}",
+            supplier?.SupplierName ?? $"Supplier #{supplierId}",
+            topsis?.RankNo,
+            topsis?.ClosenessCoefficient
+        );
+    }
 
 
     // =========================================================

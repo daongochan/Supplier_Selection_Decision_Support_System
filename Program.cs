@@ -235,7 +235,7 @@ builder.Services
                     {
                         cache.Set(cacheKey, liveUser, new MemoryCacheEntryOptions
                         {
-                            AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(20),
+                            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5),
                             Size = 1
                         });
                     }

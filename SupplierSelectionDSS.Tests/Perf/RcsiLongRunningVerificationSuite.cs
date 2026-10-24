@@ -28,7 +28,7 @@ public class RcsiLongRunningVerificationSuite
 
     private static readonly string TargetConnectionString =
         Environment.GetEnvironmentVariable("DSS_TARGET_CONNECTION_STRING") ??
-        "Server=.;Database=SupplierSelectionDSS;Trusted_Connection=True;TrustServerCertificate=True;Connect Timeout=30";
+        "Server=lpc:.;Database=SupplierSelectionDSS;Trusted_Connection=True;TrustServerCertificate=True;Connect Timeout=30";
 
     public RcsiLongRunningVerificationSuite(ITestOutputHelper output)
     {

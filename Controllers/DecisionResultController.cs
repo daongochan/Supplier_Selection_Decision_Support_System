@@ -177,19 +177,11 @@ public class DecisionResultController : Controller
 
             try
             {
-                var result =
+                var (supCode, supName, rankNo, cc) =
                     await _service
-                        .GetResultAsync(
-                            batchId);
-
-
-                var selectedSupplier =
-                    result?.Ranking
-                        .FirstOrDefault(
-                            x =>
-                                x.SupplierId ==
-                                supplierId);
-
+                        .GetSupplierAuditHeaderAsync(
+                            batchId,
+                            supplierId);
 
                 var newValue =
                     JsonSerializer.Serialize(
@@ -205,17 +197,16 @@ public class DecisionResultController : Controller
                                 supplierId,
 
                             SupplierCode =
-                                selectedSupplier?.SupplierCode,
+                                supCode,
 
                             SupplierName =
-                                selectedSupplier?.SupplierName,
+                                supName,
 
                             RankNo =
-                                selectedSupplier?.RankNo,
+                                rankNo,
 
                             ClosenessCoefficient =
-                                selectedSupplier
-                                    ?.ClosenessCoefficient,
+                                cc,
 
                             Status =
                                 ApprovalStatus.Approved,
@@ -248,7 +239,7 @@ public class DecisionResultController : Controller
                         null,
                         newValue,
                         $"Phê duyệt nhà cung cấp " +
-                        $"{selectedSupplier?.SupplierCode ?? supplierId.ToString()} " +
+                        $"{supCode} " +
                         $"cho Batch #{batchId}.");
             }
             catch
