@@ -1,10 +1,10 @@
-# AGENTS.md — Quy Chuẩn Dành Cho AI Agent & Nhà Phát Triển
+# AGENTS.md — Quy chuẩn dành cho AI Agents & Nhà phát triển
 
 Tài liệu này quy định các nguyên tắc, quy ước phát triển và phạm vi kỹ thuật bắt buộc khi làm việc trên dự án **Supplier Selection Decision Support System (DSS)**.
 
 ---
 
-## 1. Lệnh Thực Thi Cơ Bản
+## 1. Lệnh thực thi cơ bản
 
 - **Build ứng dụng:**
   ```bash
@@ -25,7 +25,7 @@ Tài liệu này quy định các nguyên tắc, quy ước phát triển và ph
 
 ---
 
-## 2. Cấu Trúc Dự Án & Tham Chiếu
+## 2. Cấu trúc dự án & Tham chiếu
 
 - `SupplierSelectionDSS.csproj`: Dự án ASP.NET Core MVC chính (`net10.0`).
 - `SupplierSelectionDSS.Tests/`: Dự án kiểm thử xUnit (`net10.0`). Đặt nội bộ trong thư mục repo.
@@ -34,8 +34,7 @@ Tài liệu này quy định các nguyên tắc, quy ước phát triển và ph
 
 ---
 
-## 3. Quy Ước Bắt Buộc
-
+## 3. Quy ước bắt buộc
 1. **Language & Terminology:**
    - Primary UI language (`<html lang="en">`, navigation, workflow steppers, page headers, table headers, confirmation dialogs): **English**.
    - Code identifiers (variables, methods, classes, DB schema, commit messages): **English**.
@@ -49,7 +48,7 @@ Tài liệu này quy định các nguyên tắc, quy ước phát triển và ph
 
 ---
 
-## 4. Những Thứ Tuyệt Đối Không Được Phép Đụng Vào
+## 4. Những thứ tuyệt đối không được phép đụng vào
 
 - **KHÔNG** chỉnh sửa hoặc tự ý cập nhật các thư viện bên thứ ba trong `wwwroot/lib/` (Bootstrap, FontAwesome, Chart.js...).
 - **KHÔNG** chạy các câu lệnh SQL phá hủy dữ liệu (`DROP TABLE`, `TRUNCATE`, `DELETE`) trên môi trường thực của người dùng khi chưa có chỉ định rõ ràng.
