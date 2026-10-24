@@ -1,3 +1,12 @@
+<!-- ARCHIVE_HEADER -->
+> [!NOTE]
+> **ARCHIVED DOCUMENT — SUPERSEDED**
+> **Archived Date:** 2026-10-24  
+> **Base Commit:** \d5b98db2b8b732bf0ce5491793aa73ba9136b678\  
+> **Status:** Historical point-in-time document preserved for traceability. The active canonical documentation is located in \docs/\ (\DESIGN-SYSTEM.md\, \ARCHITECTURE.md\, \ALGORITHMS.md\, \WORKFLOW-AND-PERMISSIONS.md\, \docs/qa/\).
+
+---
+
 # Hướng dẫn Dọn dẹp Lịch sử Git (Git History Cleanup Guide)
 
 Tài liệu này cung cấp quy trình chuẩn kỹ thuật để dọn dẹp các tệp tin rác, lịch sử nhạy cảm hoặc chuỗi dữ liệu cũ trong lịch sử Git nếu nhóm phát triển có nhu cầu thực hiện trong tương lai.

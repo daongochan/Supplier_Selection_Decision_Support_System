@@ -1,3 +1,12 @@
+<!-- PROPOSAL_HEADER -->
+> [!IMPORTANT]
+> **STATUS: PROPOSAL / NOT IMPLEMENTED**
+> This document describes a proposed architectural extension for Multi-Expert Group AHP.
+> The current system uses a single shared AHP pairwise matrix per evaluation batch.
+> This feature is NOT currently implemented in the codebase.
+
+---
+
 # ĐỀ XUẤT KIẾN TRÚC GROUP AHP (HỘI ĐỒNG ĐA CHUYÊN GIA)
 ## Hệ thống Hỗ trợ Ra Quyết định Lựa chọn Nhà Cung Cấp (SupplierSelectionDSS)
 

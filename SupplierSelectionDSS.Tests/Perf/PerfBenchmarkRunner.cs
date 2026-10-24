@@ -251,7 +251,7 @@ public class PerfBenchmarkRunner
         if (ShouldWritePerfFiles())
         {
             var projectDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
-            var outDir = Path.Combine(projectDir, "tools", "perf");
+            var outDir = Path.Combine(projectDir, "docs", "qa", "evidence", "performance");
             Directory.CreateDirectory(outDir);
             var jsonPath = Path.Combine(outDir, outputFileName);
             File.WriteAllText(jsonPath, JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true }));
@@ -259,7 +259,7 @@ public class PerfBenchmarkRunner
         }
         else
         {
-            _output.WriteLine("Skipped writing JSON to tools/perf (set DSS_WRITE_PERF_FILES=1 to persist results).");
+            _output.WriteLine("Skipped writing JSON to docs/qa/evidence/performance (set DSS_WRITE_PERF_FILES=1 to persist results).");
         }
 
         return results;

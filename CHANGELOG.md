@@ -4,6 +4,41 @@ Toàn bộ các thay đổi quan trọng về kiến trúc, thuật toán, bảo
 
 ---
 
+## [1.5.1] - 2026-10-24
+
+### Repository Cleanup, Build Determinism & Test Hygiene Hardening
+
+- **Deterministic CSS & Asset Pipeline:**
+  - Tách triệt để reset và utilities khỏi tệp xuất xưởng thành nguồn độc lập `wwwroot/css/base/utilities.css`.
+  - Chuyển bộ đóng gói sang `tools/assets/bundle_css.py` với quy tắc nguồn cố định, UTF-8, LF line endings và cờ kiểm tra `--check`. Khắc phục triệt để lỗi không tái lập (non-idempotent) khi chạy bundler.
+  - Tái tạo `wwwroot/css/site.css` đồng bộ 100% mã băm SHA-256, tích hợp đầy đủ các design tokens mới (`--shadow-elevated`, `--brand-primary`, `--primary`, `--shadow-sm`).
+  - Chuyển `tools/perf/localize_fonts.py` sang `tools/assets/localize_fonts.py`, loại bỏ đường dẫn máy cá nhân cứng (`D:\DEAN\Projects\...`), ghim phiên bản và giấy phép nguồn mở (Bootstrap Icons MIT, Source Serif 4 OFL 1.1), bổ sung chế độ kiểm tra ngoại tuyến `--check`.
+  - Thiết lập shim tương thích ngược có cảnh báo deprecation tại `tools/perf/bundle_css.py` và `tools/perf/localize_fonts.py`.
+- **Chuẩn Hóa Cơ Sở Dữ Liệu & Một Nguồn Sự Thật Duy Nhất (Single Source of Truth):**
+  - Xác nhận `database/01_schema.sql` là nguồn sự thật duy nhất cho schema (18 bảng, 7 triggers, 2 views, 21 indexes) và `database/02_seed.sql` là nguồn duy nhất cho dữ liệu khởi tạo phát triển (băm BCrypt cost 11).
+  - Loại bỏ hoàn toàn dữ liệu seed chứa mật khẩu placeholder `<hash>` khỏi `Run_All.sql` và chuyển hướng tệp tham chiếu cũ `09_Seed_Data.sql` về `02_seed.sql`.
+  - Hiện thực hóa runner triển khai Production thực tế tại `database/scripts/Run_Production.sql` sử dụng lệnh SQLCMD `:r` kèm cơ chế fail-fast `:On Error exit`.
+  - Bảo toàn và ghi chép rõ ràng điều kiện áp dụng các bản vá trong `database/patches/` phục vụ nâng cấp database đang vận hành mà không mất dữ liệu.
+  - Tăng cường công cụ `tools/verify/verify_schema_sync.py` kiểm tra đối chiếu chi tiết từng cột của 18 bảng giữa schema tổng hợp và các script module.
+  - Tham số hóa máy chủ trong `tools/perf/setup_perf_db.py`, thêm cờ `-b`, thiết lập chốt an toàn nghiêm ngặt chỉ cho phép thao tác trên các database kiểm thử có hậu tố `_Perf` hoặc `_Test`.
+- **Bảo Vệ Kiểm Thử Tích Hợp & CI/CD Pipeline:**
+  - Khắc phục lỗi rò rỉ database tạm trong `SqlServerConcurrencyAndTriggerTests`, bảo đảm `DisposeAsync` luôn dọn dẹp sạch sẽ database kiểm thử ngay cả khi quá trình áp dụng schema ban đầu thất bại.
+  - Chấm dứt hiện tượng hiển thị kết quả kiểm thử xanh giả khi thiếu SQL Server; bổ sung cơ chế kiểm tra môi trường `EnsureSqlAvailable()` xuất thông báo skip minh bạch và bắt buộc fail khi có biến `DSS_REQUIRE_SQL=1`.
+  - Gắn nhãn `[Trait("Category", "SqlServer")]` và `[Trait("Category", "Integration")]` phân định rõ ràng các tầng kiểm thử.
+  - Cập nhật workflow CI (`.github/workflows/ci.yml`) bổ sung job chạy dịch vụ SQL Server 2022 container thực tế, bước kiểm tra sai lệch CSS bundle (`bundle_css.py --check`), bước kiểm tra font ngoại tuyến (`localize_fonts.py --check`) và kiểm tra vệ sinh đóng gói `dotnet publish`.
+  - Khai báo `UserSecretsId` ổn định (`dss-supplier-selection-system-2026`) và đồng bộ `Version=1.5.0` trong `SupplierSelectionDSS.csproj`.
+  - Cấu hình `DefaultItemExcludes` ngăn chặn các thư mục test, docs, database, tools và artifacts bị đóng gói nhầm khi phát hành.
+  - Gộp mapping chuỗi trạng thái `EvaluationBatchStatus` sang hằng số chuẩn `BatchStatus` kèm bộ kiểm thử xác nhận 1-1.
+- **Tổ Chức Lại Tài Liệu & Bằng Chứng Benchmark:**
+  - Hợp nhất toàn bộ quy chuẩn giao diện vào tài liệu `docs/DESIGN-SYSTEM.md`.
+  - Thiết lập mục lục điều hướng trung tâm tại `docs/README.md`.
+  - Di chuyển các bản kế hoạch đã hoàn thành và báo cáo audit thời điểm vào `docs/archive/` kèm banner ghi nhận commit gốc và trạng thái superseded.
+  - Di chuyển đề xuất Group AHP sang `docs/proposals/GROUP-AHP-PROPOSAL.md` kèm thông báo chưa triển khai trong mã nguồn hiện hành.
+  - Di chuyển các tệp kết quả đo lường benchmark sang `docs/qa/evidence/performance/`.
+  - Viết lại toàn diện `README.md` ở thư mục gốc phản ánh chính xác 100% hiện trạng mã nguồn.
+
+---
+
 ## [1.5.0] - 2026-10-24
 
 ### Full-Sweep QA Audit & Blank Screen (P0) Remediation
@@ -139,7 +174,7 @@ Toàn bộ các thay đổi quan trọng về kiến trúc, thuật toán, bảo
   - **Khóa đơn vị đo tiêu chí đang sử dụng (C6):** Ngăn chặn chỉnh sửa thuộc tính `Unit` trên các tiêu chí đã có điểm đánh giá hoặc dữ liệu AHP/TOPSIS.
   - **Tái sử dụng báo cáo sẵn có (A5):** Cung cấp nút tải tức thì báo cáo PDF/Excel đã sinh kèm nút "Tạo lại" khi cần cập nhật.
 - **Đề xuất Kiến trúc Hội đồng Đa Chuyên gia (Group AHP Proposal):**
-  - Soạn thảo tài liệu thiết kế học thuật `docs/GROUP-AHP-PROPOSAL.md` theo phương pháp Trung bình nhân (Geometric Mean - AIJ của Thomas L. Saaty), gồm thiết kế DDL 2 bảng `AHPEvaluatorAssignments` và `AHPEvaluatorComparisons`, công thức toán học và chỉ số đồng thuận nhóm.
+  - Soạn thảo tài liệu thiết kế học thuật `docs/proposals/GROUP-AHP-PROPOSAL.md` theo phương pháp Trung bình nhân (Geometric Mean - AIJ của Thomas L. Saaty), gồm thiết kế DDL 2 bảng `AHPEvaluatorAssignments` và `AHPEvaluatorComparisons`, công thức toán học và chỉ số đồng thuận nhóm.
 - **Đồng bộ Cơ sở dữ liệu & Kiểm thử:**
   - Đồng bộ 100% CSDL qua bản vá `database/patches/20261022_round3_indexes_and_snapshots.sql`, cập nhật `01_schema.sql` và `database/scripts/*`.
   - Đạt 100% qua công cụ kiểm tra `python tools/verify/verify_schema_sync.py` (18 bảng, 21 chỉ mục, 7 triggers, 2 views).
