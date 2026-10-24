@@ -10,44 +10,72 @@ using SupplierSelectionDSS.Exceptions;
 using SupplierSelectionDSS.Models;
 using SupplierSelectionDSS.Services;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace SupplierSelectionDSS.Tests.Integration;
 
 public class SqlServerConcurrencyAndTriggerTests : IAsyncLifetime
 {
+    private readonly ITestOutputHelper _output;
     private readonly string _dbName = "SupplierSelectionDSS_Test_" + Guid.NewGuid().ToString("N")[..12];
     private string _masterConnString = string.Empty;
     private string _testConnString = string.Empty;
     private bool _sqlAvailable;
+    private bool _databaseCreated;
+    private Exception? _initException;
+
+    public SqlServerConcurrencyAndTriggerTests(ITestOutputHelper output)
+    {
+        _output = output;
+    }
 
     public async Task InitializeAsync()
     {
-        var baseServer = Environment.GetEnvironmentVariable("DSS_TEST_SQL_SERVER") ?? ".";
-        _masterConnString = $"Server={baseServer};Database=master;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True;Connect Timeout=5";
-        _testConnString = $"Server={baseServer};Database={_dbName};Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True;Connect Timeout=10";
+        var baseConnStr = Environment.GetEnvironmentVariable("DSS_TEST_CONNECTION_STRING");
+        if (!string.IsNullOrWhiteSpace(baseConnStr))
+        {
+            var builder = new SqlConnectionStringBuilder(baseConnStr);
+            builder.InitialCatalog = "master";
+            _masterConnString = builder.ConnectionString;
+            builder.InitialCatalog = _dbName;
+            _testConnString = builder.ConnectionString;
+        }
+        else
+        {
+            var baseServer = Environment.GetEnvironmentVariable("DSS_TEST_SQL_SERVER") ?? ".";
+            _masterConnString = $"Server={baseServer};Database=master;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True;Connect Timeout=5";
+            _testConnString = $"Server={baseServer};Database={_dbName};Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True;Connect Timeout=10";
+        }
 
         try
         {
-            await using var conn = new SqlConnection(_masterConnString);
-            await conn.OpenAsync();
-            await using (var cmd = conn.CreateCommand())
+            await using (var conn = new SqlConnection(_masterConnString))
             {
+                await conn.OpenAsync();
+                await using var cmd = conn.CreateCommand();
                 cmd.CommandText = $"CREATE DATABASE [{_dbName}];";
                 await cmd.ExecuteNonQueryAsync();
             }
 
+            _databaseCreated = true;
+
             await ApplySchemaToTestDatabaseAsync();
             _sqlAvailable = true;
         }
-        catch
+        catch (Exception ex)
         {
+            _initException = ex;
             _sqlAvailable = false;
+            if (Environment.GetEnvironmentVariable("DSS_REQUIRE_SQL") == "1")
+            {
+                throw new InvalidOperationException($"SQL Server initialization failed under DSS_REQUIRE_SQL=1: {ex.Message}", ex);
+            }
         }
     }
 
     public async Task DisposeAsync()
     {
-        if (!_sqlAvailable)
+        if (!_databaseCreated)
         {
             return;
         }
@@ -122,10 +150,26 @@ END";
         return new ApplicationDbContext(options);
     }
 
-    [Fact]
-    public async Task SqlServer_F03_TriggersBlockChildMutations_WhenBatchIsCompletedOrCancelled_And_RowVersionDetectsConcurrentWrite()
+    private bool EnsureSqlAvailable()
     {
         if (!_sqlAvailable)
+        {
+            if (Environment.GetEnvironmentVariable("DSS_REQUIRE_SQL") == "1")
+            {
+                throw new InvalidOperationException($"SQL Server is required by DSS_REQUIRE_SQL=1 but failed to initialize test database: {_initException?.Message}", _initException);
+            }
+            _output.WriteLine($"[SKIPPED] Test skipped because SQL Server is not available: {_initException?.Message}");
+            return false;
+        }
+        return true;
+    }
+
+    [Fact]
+    [Trait("Category", "SqlServer")]
+    [Trait("Category", "Integration")]
+    public async Task SqlServer_F03_TriggersBlockChildMutations_WhenBatchIsCompletedOrCancelled_And_RowVersionDetectsConcurrentWrite()
+    {
+        if (!EnsureSqlAvailable())
         {
             return;
         }
@@ -267,9 +311,11 @@ END";
     }
 
     [Fact]
+    [Trait("Category", "SqlServer")]
+    [Trait("Category", "Integration")]
     public async Task SqlServer_F10_ConcurrentAdminDemotions_NeverLeaveZeroActiveAdministrators()
     {
-        if (!_sqlAvailable)
+        if (!EnsureSqlAvailable())
         {
             return;
         }

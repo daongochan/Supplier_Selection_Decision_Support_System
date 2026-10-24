@@ -4,8 +4,9 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>1.2.0</Version>
-    <DefaultItemExcludes>$(DefaultItemExcludes);SupplierSelectionDSS.Tests\**</DefaultItemExcludes>
+    <Version>1.5.1</Version>
+    <UserSecretsId>dss-supplier-selection-system-2026</UserSecretsId>
+    <DefaultItemExcludes>$(DefaultItemExcludes);SupplierSelectionDSS.Tests\**;docs\**;tools\**;database\**;artifacts\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
