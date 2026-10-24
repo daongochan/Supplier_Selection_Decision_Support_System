@@ -64,81 +64,103 @@ public class BatchWorkflowReadinessService
 
     public async Task<BatchWorkflowReadiness?> GetReadinessAsync(int batchId)
     {
-        var raw = await _context.EvaluationBatches
+        var batch = await _context.EvaluationBatches
             .AsNoTracking()
-            .Where(b => b.BatchId == batchId)
-            .Select(b => new
+            .Where(x => x.BatchId == batchId)
+            .Select(x => new
             {
-                b.BatchId,
-                b.BatchCode,
-                b.BatchName,
-                b.Status,
-                b.RowVersion,
-                SupplierCount = b.Suppliers.Count,
-                CriteriaCount = b.Criteria.Count,
-                ScoreCount = b.EvaluationScores.Count,
-                ActualPairs = b.AhppairwiseComparisons.Count(c => c.CriteriaRowId != c.CriteriaColId),
-                HasAhpResult = b.Ahpresult != null,
-                IsAhpConsistent = b.Ahpresult != null && b.Ahpresult.IsConsistent,
-                AhpCrValue = b.Ahpresult != null ? (decimal?)b.Ahpresult.Crvalue : null,
-                AhpWeightsCount = b.AhpcriteriaWeights.Count,
-                TopsisCount = b.TopsisResults.Count,
-                HasValidRanks = b.TopsisResults.Count > 0 && b.TopsisResults.Count == b.Suppliers.Count && b.TopsisResults.All(r => r.RankNo > 0),
-                HasFinalApproval = b.Approvals.Any(a => a.IsFinal && a.Status == ApprovalStatus.Approved),
-                LatestApproval = b.Approvals
-                    .OrderByDescending(a => a.ApprovalDate)
-                    .ThenByDescending(a => a.ApprovalId)
-                    .Select(a => new { a.Status, a.IsFinal })
-                    .FirstOrDefault()
+                x.BatchId,
+                x.BatchCode,
+                x.BatchName,
+                x.Status,
+                x.RowVersion,
+                SupplierCount = x.Suppliers.Count,
+                CriteriaCount = x.Criteria.Count
             })
             .FirstOrDefaultAsync();
 
-        if (raw == null)
+        if (batch == null)
         {
             return null;
         }
 
-        var supplierCount = raw.SupplierCount;
-        var criteriaCount = raw.CriteriaCount;
+        var scoreCount = await _context.EvaluationScores
+            .Where(x => x.BatchId == batchId)
+            .CountAsync();
+
+        var ahp = await _context.Ahpresults
+            .AsNoTracking()
+            .Where(x => x.BatchId == batchId)
+            .Select(x => new { x.IsConsistent, x.Crvalue })
+            .FirstOrDefaultAsync();
+
+        var ahpWeightsCount = await _context.AhpcriteriaWeights
+            .Where(x => x.BatchId == batchId)
+            .CountAsync();
+
+        var pairwiseCount = await _context.AhppairwiseComparisons
+            .Where(x => x.BatchId == batchId && x.CriteriaRowId != x.CriteriaColId)
+            .CountAsync();
+
+        var topsisResults = await _context.TopsisResults
+            .AsNoTracking()
+            .Where(x => x.BatchId == batchId)
+            .Select(x => x.RankNo)
+            .ToListAsync();
+
+        var latestApproval = await _context.Approvals
+            .AsNoTracking()
+            .Where(x => x.BatchId == batchId)
+            .OrderByDescending(x => x.ApprovalDate)
+            .ThenByDescending(x => x.ApprovalId)
+            .Select(x => new { x.Status, x.IsFinal })
+            .FirstOrDefaultAsync();
+
+        var hasFinalApproval = await _context.Approvals
+            .AnyAsync(x => x.BatchId == batchId && x.IsFinal && x.Status == ApprovalStatus.Approved);
+
+        var supplierCount = batch.SupplierCount;
+        var criteriaCount = batch.CriteriaCount;
         var expectedScores = supplierCount * criteriaCount;
 
         var isSetupComplete = supplierCount >= 2 && criteriaCount >= 2;
-        var isScoresComplete = isSetupComplete && expectedScores > 0 && raw.ScoreCount == expectedScores;
+        var isScoresComplete = isSetupComplete && expectedScores > 0 && scoreCount == expectedScores;
         var expectedPairs = criteriaCount >= 2 ? criteriaCount * (criteriaCount - 1) / 2 : 0;
-        var hasCompleteAhpWeights = criteriaCount >= 2 && (raw.AhpWeightsCount == criteriaCount || (raw.HasAhpResult && raw.AhpWeightsCount == 0));
+        var hasCompleteAhpWeights = criteriaCount >= 2 && (ahpWeightsCount == criteriaCount || (ahp != null && ahpWeightsCount == 0));
+        var hasValidRanks = topsisResults.Count > 0 && topsisResults.Count == supplierCount && topsisResults.All(r => r > 0);
 
-        var isCancelled = string.Equals(raw.Status, BatchStatus.Cancelled, StringComparison.OrdinalIgnoreCase);
-        var isCompleted = string.Equals(raw.Status, BatchStatus.Completed, StringComparison.OrdinalIgnoreCase) || raw.HasFinalApproval;
-        var isDraft = string.Equals(raw.Status, BatchStatus.Draft, StringComparison.OrdinalIgnoreCase);
-        var isEvaluating = string.Equals(raw.Status, BatchStatus.Evaluating, StringComparison.OrdinalIgnoreCase);
+        var isCancelled = string.Equals(batch.Status, BatchStatus.Cancelled, StringComparison.OrdinalIgnoreCase);
+        var isCompleted = string.Equals(batch.Status, BatchStatus.Completed, StringComparison.OrdinalIgnoreCase) || hasFinalApproval;
+        var isDraft = string.Equals(batch.Status, BatchStatus.Draft, StringComparison.OrdinalIgnoreCase);
+        var isEvaluating = string.Equals(batch.Status, BatchStatus.Evaluating, StringComparison.OrdinalIgnoreCase);
 
         var readiness = new BatchWorkflowReadiness
         {
-            BatchId = raw.BatchId,
-            BatchCode = raw.BatchCode,
-            BatchName = raw.BatchName,
-            BatchStatus = raw.Status,
-            RowVersion = BatchConcurrencyHelper.ToBase64(raw.RowVersion),
+            BatchId = batch.BatchId,
+            BatchCode = batch.BatchCode,
+            BatchName = batch.BatchName,
+            BatchStatus = batch.Status,
+            RowVersion = BatchConcurrencyHelper.ToBase64(batch.RowVersion),
             SupplierCount = supplierCount,
             CriteriaCount = criteriaCount,
             ExpectedScoreCount = expectedScores,
-            ActualScoreCount = raw.ScoreCount,
+            ActualScoreCount = scoreCount,
             IsSetupComplete = isSetupComplete,
             IsScoresComplete = isScoresComplete,
             ExpectedPairwiseCount = expectedPairs,
-            ActualPairwiseCount = raw.ActualPairs,
-            HasAhpResult = raw.HasAhpResult,
+            ActualPairwiseCount = pairwiseCount,
+            HasAhpResult = ahp != null,
             HasCompleteAhpWeights = hasCompleteAhpWeights,
-            IsAhpConsistent = raw.IsAhpConsistent,
-            AhpCrValue = raw.AhpCrValue,
-            TopsisResultCount = raw.TopsisCount,
-            HasValidTopsisRanks = raw.HasValidRanks,
+            IsAhpConsistent = ahp?.IsConsistent == true,
+            AhpCrValue = ahp?.Crvalue,
+            TopsisResultCount = topsisResults.Count,
+            HasValidTopsisRanks = hasValidRanks,
             IsCompleted = isCompleted,
             IsCancelled = isCancelled,
             IsEvaluating = isEvaluating,
             IsDraft = isDraft,
-            LatestDecisionStatus = raw.LatestApproval?.Status,
-            HasFinalApproval = raw.HasFinalApproval || isCompleted
+            LatestDecisionStatus = latestApproval?.Status,
+            HasFinalApproval = hasFinalApproval || isCompleted
         };
 
         PopulateStepDetails(readiness);
