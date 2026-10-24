@@ -32,7 +32,7 @@ public class PerfBenchmarkRunner
 {
     private readonly ITestOutputHelper _output;
     private const string PerfConnectionString =
-        "Server=.;Database=SupplierSelectionDSS_Perf;Trusted_Connection=True;TrustServerCertificate=True;Connect Timeout=3";
+        "Server=.;Database=SupplierSelectionDSS_Perf;Trusted_Connection=True;TrustServerCertificate=True;Connect Timeout=30";
 
     public PerfBenchmarkRunner(ITestOutputHelper output)
     {
@@ -53,8 +53,9 @@ public class PerfBenchmarkRunner
             || string.Equals(flag, "true", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static bool IsPerfDbAvailable()
+    private static bool IsPerfDbAvailable(out string error)
     {
+        error = string.Empty;
         try
         {
             using var conn = new SqlConnection(PerfConnectionString);
@@ -64,10 +65,97 @@ public class PerfBenchmarkRunner
             var count = (int)(cmd.ExecuteScalar() ?? 0);
             return count > 0;
         }
-        catch
+        catch (Exception ex)
         {
+            error = ex.ToString();
             return false;
         }
+    }
+
+    [Fact]
+    [Trait("Category", "Performance")]
+    public void TestConnectionProtocols()
+    {
+        if (!IsPerfBenchmarkEnabled()) return;
+
+        var serverOptions = new[]
+        {
+            ("Dot (LPC / Default)", "Server=.;Database=SupplierSelectionDSS_Perf;Trusted_Connection=True;TrustServerCertificate=True;Connect Timeout=15"),
+            ("TCP Loopback", "Server=127.0.0.1;Database=SupplierSelectionDSS_Perf;Trusted_Connection=True;TrustServerCertificate=True;Connect Timeout=15"),
+            ("Named Pipe", @"Server=np:\\.\pipe\sql\query;Database=SupplierSelectionDSS_Perf;Trusted_Connection=True;TrustServerCertificate=True;Connect Timeout=15")
+        };
+
+        foreach (var (name, connStr) in serverOptions)
+        {
+            var times = new List<double>();
+            for (int i = 0; i < 5; i++)
+            {
+                var sw = Stopwatch.StartNew();
+                try
+                {
+                    using var conn = new SqlConnection(connStr);
+                    conn.Open();
+                    sw.Stop();
+                    times.Add(sw.Elapsed.TotalMilliseconds);
+                }
+                catch (Exception ex)
+                {
+                    sw.Stop();
+                    _output.WriteLine($"[{name}] Iteration {i} failed after {sw.Elapsed.TotalMilliseconds:F1}ms: {ex.Message}");
+                }
+            }
+
+            if (times.Any())
+            {
+                times.Sort();
+                _output.WriteLine($"[{name}] Cold: {times.First():F1}ms | Median: {CalculatePercentile(times, 0.5):F1}ms | p95: {CalculatePercentile(times, 0.95):F1}ms");
+            }
+        }
+
+        using (var conn = new SqlConnection(PerfConnectionString))
+        {
+            conn.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT TOP 10 BatchId, BatchCode, Status FROM EvaluationBatches ORDER BY BatchId";
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                _output.WriteLine($"Batch {reader.GetInt32(0)}: {reader.GetString(1)} ({reader.GetString(2)})");
+            }
+        }
+    }
+
+    [Fact]
+    [Trait("Category", "Performance")]
+    public void TestDashboardQueryComparison()
+    {
+        if (!IsPerfBenchmarkEnabled()) return;
+
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseSqlServer(PerfConnectionString)
+            .Options;
+
+        using var db = new ApplicationDbContext(options);
+
+        const int bId = 1;
+
+        var query = db.EvaluationBatches
+            .AsNoTracking()
+            .Where(x => x.BatchId == bId)
+            .Select(x => new
+            {
+                x.BatchId,
+                x.BatchCode,
+                x.BatchName,
+                GroupCode = x.Group != null ? x.Group.GroupCode : string.Empty,
+                GroupName = x.Group != null ? x.Group.GroupName : "Chưa chỉ định",
+                x.Status,
+                TotalSuppliers = x.Suppliers.Count,
+                x.CreatedAt
+            });
+
+        _output.WriteLine("=== APPROACH B SQL ===");
+        _output.WriteLine(query.ToQueryString());
     }
 
     public static double CalculatePercentile(IReadOnlyList<double> sortedValues, double percentile)
@@ -117,9 +205,9 @@ public class PerfBenchmarkRunner
             return;
         }
 
-        if (!IsPerfDbAvailable())
+        if (!IsPerfDbAvailable(out var error))
         {
-            throw new InvalidOperationException("DSS_RUN_PERF=1 was specified, but database SupplierSelectionDSS_Perf is unavailable or empty.");
+            throw new InvalidOperationException($"DSS_RUN_PERF=1 was specified, but database SupplierSelectionDSS_Perf is unavailable or empty: {error}");
         }
 
         var results = await ExecuteBenchmarkSuiteAsync("BASELINE", "baseline_results.json");
@@ -136,9 +224,9 @@ public class PerfBenchmarkRunner
             return;
         }
 
-        if (!IsPerfDbAvailable())
+        if (!IsPerfDbAvailable(out var error))
         {
-            throw new InvalidOperationException("DSS_RUN_PERF=1 was specified, but database SupplierSelectionDSS_Perf is unavailable or empty.");
+            throw new InvalidOperationException($"DSS_RUN_PERF=1 was specified, but database SupplierSelectionDSS_Perf is unavailable or empty: {error}");
         }
 
         var results = await ExecuteBenchmarkSuiteAsync("POST-OPTIMIZATION", "post_results.json");
@@ -179,6 +267,11 @@ public class PerfBenchmarkRunner
 
             // Consistent warm-up across ALL endpoints (including AuditLog)
             var warmRes = await client.GetAsync(url);
+            if (!warmRes.IsSuccessStatusCode)
+            {
+                var body = await warmRes.Content.ReadAsStringAsync();
+                _output.WriteLine($"[ERROR] Warmup failed for {url} with status {warmRes.StatusCode}: {body}");
+            }
             Assert.Equal(HttpStatusCode.OK, warmRes.StatusCode);
 
             const int iterations = 5;
