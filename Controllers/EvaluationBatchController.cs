@@ -510,7 +510,7 @@ public class EvaluationBatchController : Controller
 
         try
         {
-            var batch = await _batchService.GetDetailAsync(id);
+            var batch = await _batchService.GetByIdAsync(id);
             if (batch == null)
             {
                 return NotFound();

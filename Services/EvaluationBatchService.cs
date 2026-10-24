@@ -738,6 +738,17 @@ public class EvaluationBatchService
 
 
     // =========================================================
+    // GET BY ID (LIGHTWEIGHT HEADER ONLY)
+    // =========================================================
+
+    public async Task<EvaluationBatch?> GetByIdAsync(int id)
+    {
+        return await _context.EvaluationBatches
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.BatchId == id);
+    }
+
+    // =========================================================
     // DETAIL
     // =========================================================
 

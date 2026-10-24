@@ -98,12 +98,16 @@ Khi nâng cấp ứng dụng trên database đã chứa dữ liệu nghiệp v�
 |---|---|---|---|
 | 1 | [20261022_add_rowversion.sql](patches/20261022_add_rowversion.sql) | Bổ sung cột `RowVersion` (`rowversion`/`timestamp`) vào `EvaluationBatches` phục vụ Optimistic Concurrency Control. | Bảng `EvaluationBatches` đã tồn tại. Tự kiểm tra qua `sys.columns`. |
 | 2 | [20261022_round3_indexes_and_snapshots.sql](patches/20261022_round3_indexes_and_snapshots.sql) | Tạo bảng `BatchRoundSnapshots` và 4 chỉ mục tối ưu (`IX_EvaluationBatches_CreatedAt`, `IX_Reports_BatchID_GeneratedAt`, `IX_Approvals_BatchID_ApprovalDate`, `IX_AuditLogs_ActionTime`). | Đã áp dụng bản vá 1. Tự kiểm tra qua `sys.tables` và `sys.indexes`. |
+| 3 | [20261024_enable_read_committed_snapshot.sql](patches/20261024_enable_read_committed_snapshot.sql) | Bật Read Committed Snapshot Isolation (RCSI) với tùy chọn `WITH NO_WAIT` để triệt tiêu tình trạng reader-writer blocking gây timeout 60s trên SQL Server. | Database `SupplierSelectionDSS` đã tồn tại. Tự kiểm tra qua `sys.databases.is_read_committed_snapshot_on`. Có kèm script hoàn tác riêng biệt `20261024_enable_read_committed_snapshot_rollback.sql`. |
 
 **Lệnh áp dụng bản vá:**
 ```powershell
 sqlcmd -S . -E -C -b -i database/patches/20261022_add_rowversion.sql
 sqlcmd -S . -E -C -b -i database/patches/20261022_round3_indexes_and_snapshots.sql
+sqlcmd -S . -E -C -b -i database/patches/20261024_enable_read_committed_snapshot.sql
 ```
+
+*(Kèm theo script hoàn tác an toàn: `database/patches/20261024_enable_read_committed_snapshot_rollback.sql`)*
 
 Các bản vá đều có tính chất **idempotent** (an toàn khi chạy lại nhiều lần, không làm mất bản ghi hiện có).
 

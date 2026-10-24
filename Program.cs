@@ -26,6 +26,7 @@ QuestPDF.Settings.License = LicenseType.Community;
 builder.Services.Configure<PerformanceDiagnosticsOptions>(
     builder.Configuration.GetSection(PerformanceDiagnosticsOptions.SectionName));
 builder.Services.AddSingleton<PerformanceCommandInterceptor>();
+builder.Services.AddSingleton<InFlightLockDiagnosticsSampler>();
 
 // Memory cache with size limit for security components (LoginAttemptService, etc.)
 builder.Services.AddMemoryCache(options =>

@@ -27,4 +27,16 @@ public class PerformanceDiagnosticsOptions
     /// Default: 100 ms.
     /// </summary>
     public double SlowQueryThresholdMs { get; set; } = 100.0;
+
+    /// <summary>
+    /// If true, actively samples SQL locks and blocking chains for in-flight requests exceeding threshold.
+    /// Default: true.
+    /// </summary>
+    public bool EnableInFlightLockDiagnostics { get; set; } = true;
+
+    /// <summary>
+    /// Threshold in seconds before active lock sampling is triggered for an in-flight request.
+    /// Default: 5.0 seconds.
+    /// </summary>
+    public double InFlightLockSamplingThresholdSeconds { get; set; } = 5.0;
 }

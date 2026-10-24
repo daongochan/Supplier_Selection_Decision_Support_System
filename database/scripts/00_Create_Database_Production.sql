@@ -64,7 +64,8 @@ BEGIN
     COLLATE Vietnamese_CI_AS;
 
     ALTER DATABASE [$(DatabaseName)] SET RECOVERY FULL;
-    PRINT N'Database [$(DatabaseName)] created successfully with RECOVERY FULL.';
+    ALTER DATABASE [$(DatabaseName)] SET READ_COMMITTED_SNAPSHOT ON;
+    PRINT N'Database [$(DatabaseName)] created successfully with RECOVERY FULL and READ_COMMITTED_SNAPSHOT ON.';
 END
 GO
 

@@ -87,10 +87,14 @@ def main() -> int:
                 return 1
         print("  -> Scenario b (zero business tables in master/model/msdb) PASSED.")
 
-        # Check recovery model
+        # Check recovery model & RCSI
         rec_out = execute_query(f"SELECT recovery_model_desc FROM sys.databases WHERE name = '{fresh_db}';")
         assert "FULL" in rec_out, f"Expected RECOVERY FULL, got:\n{rec_out}"
         print("  -> Target database recovery model verified as FULL.")
+
+        rcsi_out = execute_query(f"SELECT is_read_committed_snapshot_on FROM sys.databases WHERE name = '{fresh_db}';")
+        assert "1" in rcsi_out, f"Expected is_read_committed_snapshot_on = 1, got:\n{rcsi_out}"
+        print("  -> Target database RCSI verified as ON (1).")
 
         # -------------------------------------------------------------
         # Test c: Re-running on existing DB must be rejected

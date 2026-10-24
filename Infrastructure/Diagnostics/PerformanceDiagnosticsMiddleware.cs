@@ -11,15 +11,18 @@ public class PerformanceDiagnosticsMiddleware
     private readonly RequestDelegate _next;
     private readonly ILogger<PerformanceDiagnosticsMiddleware> _logger;
     private readonly PerformanceDiagnosticsOptions _options;
+    private readonly InFlightLockDiagnosticsSampler _lockSampler;
 
     public PerformanceDiagnosticsMiddleware(
         RequestDelegate next,
         ILogger<PerformanceDiagnosticsMiddleware> logger,
-        IOptions<PerformanceDiagnosticsOptions> options)
+        IOptions<PerformanceDiagnosticsOptions> options,
+        InFlightLockDiagnosticsSampler lockSampler)
     {
         _next = next;
         _logger = logger;
         _options = options.Value;
+        _lockSampler = lockSampler;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -38,6 +41,9 @@ public class PerformanceDiagnosticsMiddleware
         };
         RequestDiagnosticsContext.Current = diag;
         context.Items["RequestDiagnostics"] = diag;
+
+        using var completedCts = new System.Threading.CancellationTokenSource();
+        _lockSampler.StartMonitoring(diag.TraceIdentifier, diag.Method, diag.Path, completedCts.Token);
 
         var sw = Stopwatch.StartNew();
 
@@ -62,6 +68,7 @@ public class PerformanceDiagnosticsMiddleware
         }
         finally
         {
+            try { completedCts.Cancel(); } catch { }
             sw.Stop();
             diag.TotalDurationMs = sw.Elapsed.TotalMilliseconds;
             diag.StatusCode = context.Response.StatusCode;
