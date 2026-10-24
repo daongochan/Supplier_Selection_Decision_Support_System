@@ -34,285 +34,179 @@ public class TOPSISService
     // GET TOPSIS WORKSPACE
     // =========================================================
 
-    public async Task<TOPSISViewModel?>
-        GetWorkspaceAsync(
-            int batchId)
+    public async Task<TOPSISViewModel?> GetWorkspaceAsync(
+        int batchId,
+        bool includeSensitivity = true)
     {
-        var batch =
-            await _context.EvaluationBatches
-                .AsNoTracking()
-                .AsSplitQuery()
-                .Include(x => x.Suppliers)
-                .Include(x => x.Criteria)
-                .FirstOrDefaultAsync(
-                    x => x.BatchId == batchId);
-
+        var batch = await _context.EvaluationBatches
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(x => x.Suppliers)
+            .Include(x => x.Criteria)
+            .FirstOrDefaultAsync(x => x.BatchId == batchId);
 
         if (batch == null)
         {
             return null;
         }
 
+        var ahpResult = await _context.Ahpresults
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.BatchId == batchId);
 
-        var model =
-            new TOPSISViewModel
-            {
-                BatchId =
-                    batch.BatchId,
+        var weightRecords = await _context.AhpcriteriaWeights
+            .AsNoTracking()
+            .Where(x => x.BatchId == batchId)
+            .ToListAsync();
 
-                BatchCode =
-                    batch.BatchCode,
+        var scores = await _context.EvaluationScores
+            .AsNoTracking()
+            .Where(x => x.BatchId == batchId)
+            .ToListAsync();
 
-                BatchName =
-                    batch.BatchName,
+        var ideals = await _context.TopsisIdealSolutions
+            .AsNoTracking()
+            .Where(x => x.BatchId == batchId)
+            .ToListAsync();
 
-                Status =
-                    batch.Status,
+        var results = await _context.TopsisResults
+            .AsNoTracking()
+            .Include(x => x.Supplier)
+            .Where(x => x.BatchId == batchId)
+            .OrderBy(x => x.RankNo)
+            .ToListAsync();
 
-                RowVersion =
-                    BatchConcurrencyHelper.ToBase64(batch.RowVersion)
-            };
+        return BuildWorkspaceFromLoadedData(batch, ahpResult, weightRecords, scores, ideals, results, includeSensitivity);
+    }
 
+    public TOPSISViewModel BuildWorkspaceFromLoadedData(
+        EvaluationBatch batch,
+        Ahpresult? ahpResult,
+        List<AhpcriteriaWeight> weightRecords,
+        List<EvaluationScore> scores,
+        List<TopsisIdealSolution> ideals,
+        List<TopsisResult> results,
+        bool includeSensitivity = true)
+    {
+        var weightMap = weightRecords.ToDictionary(
+            x => x.CriteriaId,
+            x => x.WeightValue);
+
+        return BuildWorkspaceFromLoadedData(batch, ahpResult, weightMap, scores, ideals, results, includeSensitivity);
+    }
+
+    public TOPSISViewModel BuildWorkspaceFromLoadedData(
+        EvaluationBatch batch,
+        Ahpresult? ahpResult,
+        IReadOnlyDictionary<int, decimal> weightMap,
+        List<EvaluationScore> scores,
+        List<TopsisIdealSolution> ideals,
+        List<TopsisResult> results,
+        bool includeSensitivity = true)
+    {
+        var model = new TOPSISViewModel
+        {
+            BatchId = batch.BatchId,
+            BatchCode = batch.BatchCode,
+            BatchName = batch.BatchName,
+            Status = batch.Status,
+            RowVersion = BatchConcurrencyHelper.ToBase64(batch.RowVersion)
+        };
 
         // =====================================================
         // AHP RESULT
         // =====================================================
-
-        var ahpResult =
-            await _context.Ahpresults
-                .AsNoTracking()
-                .FirstOrDefaultAsync(
-                    x => x.BatchId == batchId);
-
-
-        model.HasAHPResult =
-            ahpResult != null;
-
-
+        model.HasAHPResult = ahpResult != null;
         if (ahpResult != null)
         {
-            model.IsAHPConsistent =
-                ahpResult.IsConsistent;
-
-            model.AHPConsistencyRatio =
-                (double)ahpResult.Crvalue;
+            model.IsAHPConsistent = ahpResult.IsConsistent;
+            model.AHPConsistencyRatio = (double)ahpResult.Crvalue;
         }
-
-
-        // =====================================================
-        // AHP WEIGHTS
-        // =====================================================
-
-        var weightRecords =
-            await _context.AhpcriteriaWeights
-                .AsNoTracking()
-                .Where(
-                    x => x.BatchId == batchId)
-                .ToListAsync();
-
-
-        var weightMap =
-            weightRecords
-                .ToDictionary(
-                    x => x.CriteriaId,
-                    x => x.WeightValue);
-
 
         // =====================================================
         // CRITERIA
         // =====================================================
-
-        model.Criteria =
-            batch.Criteria
-                .OrderBy(
-                    x => x.CriteriaCode)
-                .Select(
-                    x =>
-                        new TOPSISCriteriaViewModel
-                        {
-                            CriteriaId =
-                                x.CriteriaId,
-
-                            CriteriaCode =
-                                x.CriteriaCode,
-
-                            CriteriaName =
-                                x.CriteriaName,
-
-                            CriteriaType =
-                                x.CriteriaType,
-
-                            Unit =
-                                x.Unit,
-
-                            Weight =
-                                weightMap.TryGetValue(
-                                    x.CriteriaId,
-                                    out var weight)
-                                    ? weight
-                                    : 0m
-                        })
-                .ToList();
-
+        model.Criteria = batch.Criteria
+            .OrderBy(x => x.CriteriaCode)
+            .Select(x => new TOPSISCriteriaViewModel
+            {
+                CriteriaId = x.CriteriaId,
+                CriteriaCode = x.CriteriaCode,
+                CriteriaName = x.CriteriaName,
+                CriteriaType = x.CriteriaType,
+                Unit = x.Unit,
+                Weight = weightMap.TryGetValue(x.CriteriaId, out var weight) ? weight : 0m
+            })
+            .ToList();
 
         // =====================================================
         // EVALUATION SCORES
         // =====================================================
-
-        var scores =
-            await _context.EvaluationScores
-                .AsNoTracking()
-                .Where(
-                    x => x.BatchId == batchId)
-                .ToListAsync();
-
-        var scoreMap =
-            scores.ToDictionary(
-                x => (x.SupplierId, x.CriteriaId),
-                x => x.ScoreValue);
-
+        var scoreMap = scores.ToDictionary(
+            x => (x.SupplierId, x.CriteriaId),
+            x => x.ScoreValue);
 
         // =====================================================
         // SUPPLIERS
         // =====================================================
-
-        foreach (
-            var supplier
-            in batch.Suppliers
-                .OrderBy(
-                    x => x.SupplierCode))
+        foreach (var supplier in batch.Suppliers.OrderBy(x => x.SupplierCode))
         {
-            var row =
-                new TOPSISEvaluationRowViewModel
-                {
-                    SupplierId =
-                        supplier.SupplierId,
-
-                    SupplierCode =
-                        supplier.SupplierCode,
-
-                    SupplierName =
-                        supplier.SupplierName
-                };
-
-
-            foreach (
-                var criterion
-                in model.Criteria)
+            var row = new TOPSISEvaluationRowViewModel
             {
-                if (scoreMap.TryGetValue(
-                    (supplier.SupplierId, criterion.CriteriaId),
-                    out var scoreValue))
+                SupplierId = supplier.SupplierId,
+                SupplierCode = supplier.SupplierCode,
+                SupplierName = supplier.SupplierName
+            };
+
+            foreach (var criterion in model.Criteria)
+            {
+                if (scoreMap.TryGetValue((supplier.SupplierId, criterion.CriteriaId), out var scoreValue))
                 {
-                    row.Scores[
-                        criterion.CriteriaId] =
-                        scoreValue;
+                    row.Scores[criterion.CriteriaId] = scoreValue;
                 }
             }
-
 
             model.Suppliers.Add(row);
         }
 
-
         // =====================================================
         // PREVIOUS PIS / NIS
         // =====================================================
-
-        var ideals =
-            await _context.TopsisIdealSolutions
-                .AsNoTracking()
-                .Where(
-                    x => x.BatchId == batchId)
-                .ToListAsync();
-
-
-        var idealMap =
-            ideals.ToDictionary(
-                x => x.CriteriaId);
-
-
-        foreach (var criterion
-            in model.Criteria)
+        var idealMap = ideals.ToDictionary(x => x.CriteriaId);
+        foreach (var criterion in model.Criteria)
         {
-            if (!idealMap.TryGetValue(
-                criterion.CriteriaId,
-                out var ideal))
+            if (!idealMap.TryGetValue(criterion.CriteriaId, out var ideal))
             {
                 continue;
             }
 
-
-            model.IdealSolutions.Add(
-                new TOPSISIdealViewModel
-                {
-                    CriteriaId =
-                        criterion.CriteriaId,
-
-                    CriteriaCode =
-                        criterion.CriteriaCode,
-
-                    CriteriaName =
-                        criterion.CriteriaName,
-
-                    CriteriaType =
-                        criterion.CriteriaType,
-
-                    Unit =
-                        criterion.Unit,
-
-                    PISValue =
-                        ideal.Pisvalue,
-
-                    NISValue =
-                        ideal.Nisvalue
-                });
+            model.IdealSolutions.Add(new TOPSISIdealViewModel
+            {
+                CriteriaId = criterion.CriteriaId,
+                CriteriaCode = criterion.CriteriaCode,
+                CriteriaName = criterion.CriteriaName,
+                CriteriaType = criterion.CriteriaType,
+                Unit = criterion.Unit,
+                PISValue = ideal.Pisvalue,
+                NISValue = ideal.Nisvalue
+            });
         }
-
 
         // =====================================================
         // PREVIOUS RANKING
         // =====================================================
-
-        var results =
-            await _context.TopsisResults
-                .AsNoTracking()
-                .Include(
-                    x => x.Supplier)
-                .Where(
-                    x => x.BatchId == batchId)
-                .OrderBy(
-                    x => x.RankNo)
-                .ToListAsync();
-
-
-        foreach (var result
-            in results)
+        foreach (var result in results)
         {
-            model.Ranking.Add(
-                new TOPSISRankingViewModel
-                {
-                    SupplierId =
-                        result.SupplierId,
-
-                    SupplierCode =
-                        result.Supplier.SupplierCode,
-
-                    SupplierName =
-                        result.Supplier.SupplierName,
-
-                    DistanceToPIS =
-                        result.DistanceToPis,
-
-                    DistanceToNIS =
-                        result.DistanceToNis,
-
-                    ClosenessCoefficient =
-                        result.ClosenessCoefficient,
-
-                    RankNo =
-                        result.RankNo
-                });
+            model.Ranking.Add(new TOPSISRankingViewModel
+            {
+                SupplierId = result.SupplierId,
+                SupplierCode = result.Supplier?.SupplierCode ?? string.Empty,
+                SupplierName = result.Supplier?.SupplierName ?? string.Empty,
+                DistanceToPIS = result.DistanceToPis,
+                DistanceToNIS = result.DistanceToNis,
+                ClosenessCoefficient = result.ClosenessCoefficient,
+                RankNo = result.RankNo
+            });
         }
 
         // =====================================================
@@ -387,20 +281,23 @@ public class TOPSISService
                     model.WeightedMatrix.Add(weightRow);
                 }
 
-                var top = model.Ranking.OrderBy(x => x.RankNo).FirstOrDefault();
-                if (top != null)
+                if (includeSensitivity)
                 {
-                    model.SensitivityAnalysis = _sensitivityService.Analyze(
-                        model.BatchId,
-                        model.BatchCode,
-                        dMatrix,
-                        wArray,
-                        cTypes,
-                        model.Criteria,
-                        model.Suppliers,
-                        top.SupplierCode,
-                        top.SupplierName,
-                        top.ClosenessCoefficient);
+                    var top = model.Ranking.OrderBy(x => x.RankNo).FirstOrDefault();
+                    if (top != null)
+                    {
+                        model.SensitivityAnalysis = _sensitivityService.Analyze(
+                            model.BatchId,
+                            model.BatchCode,
+                            dMatrix,
+                            wArray,
+                            cTypes,
+                            model.Criteria,
+                            model.Suppliers,
+                            top.SupplierCode,
+                            top.SupplierName,
+                            top.ClosenessCoefficient);
+                    }
                 }
             }
         }

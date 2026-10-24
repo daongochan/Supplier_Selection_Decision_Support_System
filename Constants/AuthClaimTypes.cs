@@ -18,3 +18,11 @@ public static class AuthClaimTypes
         return Convert.ToHexString(bytes.AsSpan(0, 16));
     }
 }
+
+public record AuthUserValidationSnapshot(
+    int UserId,
+    string Username,
+    string FullName,
+    string Role,
+    string Status,
+    string PasswordHash);

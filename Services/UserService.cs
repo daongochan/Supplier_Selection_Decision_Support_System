@@ -30,10 +30,14 @@ public class UserService
     };
 
 
+    private readonly Microsoft.Extensions.Caching.Memory.IMemoryCache? _cache;
+
     public UserService(
-        ApplicationDbContext context)
+        ApplicationDbContext context,
+        Microsoft.Extensions.Caching.Memory.IMemoryCache? cache = null)
     {
         _context = context;
+        _cache = cache;
     }
 
 
@@ -443,6 +447,8 @@ public class UserService
                     {
                         await transaction.CommitAsync();
                     }
+
+                    _cache?.Remove($"AuthUserSnapshot_{model.UserId}");
                 }
                 catch
                 {
@@ -548,6 +554,8 @@ public class UserService
                     {
                         await transaction.CommitAsync();
                     }
+
+                    _cache?.Remove($"AuthUserSnapshot_{id}");
                     return user;
                 }
                 catch

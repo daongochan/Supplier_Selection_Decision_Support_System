@@ -243,9 +243,6 @@ public class AuditLogService
             : await query
                 .OrderByDescending(
                     x =>
-                        x.ActionTime)
-                .ThenByDescending(
-                    x =>
                         x.LogId)
                 .Skip(skip)
                 .Take(pageSize)

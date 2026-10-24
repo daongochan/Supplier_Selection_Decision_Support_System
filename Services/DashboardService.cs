@@ -107,8 +107,8 @@ public class DashboardService
         {
             var bId = targetBatchId.Value;
 
-            // Load batch header and criteria via projection to avoid Cartesian product and entity overhead
-            var currentBatchEntity = await _context.EvaluationBatches
+            // Load batch header and criteria via separate projections to avoid Cartesian product
+            var currentBatchHeader = await _context.EvaluationBatches
                 .AsNoTracking()
                 .Where(x => x.BatchId == bId)
                 .Select(x => new
@@ -120,39 +120,54 @@ public class DashboardService
                     GroupName = x.Group != null ? x.Group.GroupName : "Chưa chỉ định",
                     x.Status,
                     TotalSuppliers = x.Suppliers.Count,
-                    x.CreatedAt,
-                    Criteria = x.Criteria.OrderBy(c => c.CriteriaCode).Select(c => new
+                    x.CreatedAt
+                })
+                .FirstOrDefaultAsync();
+
+            if (currentBatchHeader != null)
+            {
+                var currentBatchCriteria = await _context.EvaluationBatches
+                    .AsNoTracking()
+                    .Where(b => b.BatchId == bId)
+                    .SelectMany(b => b.Criteria)
+                    .OrderBy(c => c.CriteriaCode)
+                    .Select(c => new
                     {
                         c.CriteriaId,
                         c.CriteriaCode,
                         c.CriteriaName,
                         c.CriteriaType,
                         c.Unit
-                    }).ToList()
-                })
-                .FirstOrDefaultAsync();
+                    })
+                    .ToListAsync();
 
-            if (currentBatchEntity != null)
-            {
-                var scoredSuppliersCount = await _context.EvaluationScores
+                // Consolidate evaluation score metrics in a single query
+                var batchScores = await _context.EvaluationScores
                     .AsNoTracking()
                     .Where(x => x.BatchId == bId)
-                    .Select(x => x.SupplierId)
-                    .Distinct()
-                    .CountAsync();
+                    .Select(s => new
+                    {
+                        s.SupplierId,
+                        s.CriteriaId,
+                        s.ScoreValue
+                    })
+                    .ToListAsync();
+
+                var scoredSuppliersCount = batchScores.Select(x => x.SupplierId).Distinct().Count();
+                var totalScoresCount = batchScores.Count;
 
                 model.CurrentBatch = new DashboardCurrentBatchViewModel
                 {
-                    BatchId = currentBatchEntity.BatchId,
-                    BatchCode = currentBatchEntity.BatchCode,
-                    BatchName = currentBatchEntity.BatchName,
-                    GroupCode = currentBatchEntity.GroupCode,
-                    GroupName = currentBatchEntity.GroupName,
-                    Status = currentBatchEntity.Status,
-                    TotalSuppliers = currentBatchEntity.TotalSuppliers,
+                    BatchId = currentBatchHeader.BatchId,
+                    BatchCode = currentBatchHeader.BatchCode,
+                    BatchName = currentBatchHeader.BatchName,
+                    GroupCode = currentBatchHeader.GroupCode,
+                    GroupName = currentBatchHeader.GroupName,
+                    Status = currentBatchHeader.Status,
+                    TotalSuppliers = currentBatchHeader.TotalSuppliers,
                     ScoredSuppliers = scoredSuppliersCount,
-                    TotalCriteria = currentBatchEntity.Criteria.Count,
-                    CreatedAt = currentBatchEntity.CreatedAt
+                    TotalCriteria = currentBatchCriteria.Count,
+                    CreatedAt = currentBatchHeader.CreatedAt
                 };
 
                 // AHP Result for Current Batch
@@ -206,7 +221,7 @@ public class DashboardService
                         SupplierId = r.SupplierId,
                         SupplierCode = r.Supplier?.SupplierCode ?? string.Empty,
                         SupplierName = r.Supplier?.SupplierName ?? "NCC #" + r.SupplierId,
-                        GroupName = currentBatchEntity.GroupName,
+                        GroupName = currentBatchHeader.GroupName,
                         ClosenessCoefficient = r.ClosenessCoefficient,
                         DistanceToPis = r.DistanceToPis,
                         DistanceToNis = r.DistanceToNis,
@@ -247,15 +262,12 @@ public class DashboardService
                 }
 
                 // Workflow Stepper Calculation (aligned with BatchWorkflowReadiness)
-                var totalScoresCount = await _context.EvaluationScores
-                    .AsNoTracking()
-                    .CountAsync(x => x.BatchId == bId);
-                var expectedScoresCount = currentBatchEntity.TotalSuppliers * currentBatchEntity.Criteria.Count;
+                var expectedScoresCount = currentBatchHeader.TotalSuppliers * currentBatchCriteria.Count;
 
                 var hasScores = expectedScoresCount > 0 && totalScoresCount >= expectedScoresCount;
-                var hasAhp = ahp != null && ahp.IsConsistent && model.AhpCriteriaWeights.Count >= currentBatchEntity.Criteria.Count;
-                var hasTopsis = currentBatchEntity.TotalSuppliers > 0 && topsisResults.Count >= Math.Min(5, currentBatchEntity.TotalSuppliers);
-                var hasApproval = string.Equals(currentBatchEntity.Status, BatchStatus.Completed, StringComparison.OrdinalIgnoreCase)
+                var hasAhp = ahp != null && ahp.IsConsistent && model.AhpCriteriaWeights.Count >= currentBatchCriteria.Count;
+                var hasTopsis = currentBatchHeader.TotalSuppliers > 0 && topsisResults.Count >= Math.Min(5, currentBatchHeader.TotalSuppliers);
+                var hasApproval = string.Equals(currentBatchHeader.Status, BatchStatus.Completed, StringComparison.OrdinalIgnoreCase)
                     || (approval != null && string.Equals(approval.Status, "Approved", StringComparison.OrdinalIgnoreCase));
 
                 var workflow = new DashboardWorkflowProgressDto
@@ -301,21 +313,10 @@ public class DashboardService
                 model.WorkflowProgress = workflow;
 
                 // Radar Comparison for Top 3 Suppliers (Normalized 0-100 scale)
-                if (topsisResults.Count >= 2 && currentBatchEntity.Criteria.Any())
+                if (topsisResults.Count >= 2 && currentBatchCriteria.Any())
                 {
                     var topSuppliers = topsisResults.Take(3).ToList();
-                    var criteriaList = currentBatchEntity.Criteria;
-
-                    var batchScores = await _context.EvaluationScores
-                        .AsNoTracking()
-                        .Where(x => x.BatchId == bId)
-                        .Select(s => new
-                        {
-                            s.SupplierId,
-                            s.CriteriaId,
-                            s.ScoreValue
-                        })
-                        .ToListAsync();
+                    var criteriaList = currentBatchCriteria;
 
                     var radar = new DashboardRadarComparisonDto
                     {
@@ -426,7 +427,7 @@ public class DashboardService
         // =========================================================
         model.RecentActivities = await _context.AuditLogs
             .AsNoTracking()
-            .OrderByDescending(x => x.ActionTime)
+            .OrderByDescending(x => x.LogId)
             .Take(5)
             .Select(l => new DashboardActivityItemDto
             {

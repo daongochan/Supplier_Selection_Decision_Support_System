@@ -792,7 +792,19 @@ public class ReportService
             Approval = approval
         };
 
-        var topsisWs = await _topsisService.GetWorkspaceAsync(batchId);
+        var weightMap = (from c in batch.Criteria
+                         join w in ahpWeights on c.CriteriaCode equals w.CriteriaCode
+                         select new { c.CriteriaId, w.WeightValue })
+                        .ToDictionary(x => x.CriteriaId, x => x.WeightValue);
+
+        var topsisWs = _topsisService.BuildWorkspaceFromLoadedData(
+            batch,
+            ahpResult,
+            weightMap,
+            scores,
+            ideals,
+            topsis,
+            includeSensitivity: true);
         if (topsisWs != null)
         {
             reportData.NormalizedMatrix = topsisWs.NormalizedMatrix;

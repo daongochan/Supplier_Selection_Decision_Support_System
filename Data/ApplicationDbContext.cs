@@ -7,13 +7,43 @@ namespace SupplierSelectionDSS.Data;
 
 public partial class ApplicationDbContext : DbContext
 {
+    private readonly Microsoft.Extensions.Caching.Memory.IMemoryCache? _cache;
+
     public ApplicationDbContext()
     {
     }
 
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+    public ApplicationDbContext(
+        DbContextOptions<ApplicationDbContext> options,
+        Microsoft.Extensions.Caching.Memory.IMemoryCache? cache = null)
         : base(options)
     {
+        _cache = cache;
+    }
+
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        InvalidateUserSnapshots();
+        return await base.SaveChangesAsync(cancellationToken);
+    }
+
+    public override int SaveChanges()
+    {
+        InvalidateUserSnapshots();
+        return base.SaveChanges();
+    }
+
+    private void InvalidateUserSnapshots()
+    {
+        if (_cache == null) return;
+
+        foreach (var entry in ChangeTracker.Entries<User>())
+        {
+            if (entry.State == EntityState.Modified || entry.State == EntityState.Deleted)
+            {
+                _cache.Remove($"AuthUserSnapshot_{entry.Entity.UserId}");
+            }
+        }
     }
 
     public virtual DbSet<AhpcriteriaWeight> AhpcriteriaWeights { get; set; }
