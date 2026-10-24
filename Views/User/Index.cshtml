@@ -1,7 +1,7 @@
 @model SupplierSelectionDSS.Models.UserIndexViewModel
 
 @{
-    ViewData["Title"] = "Người dùng";
+    ViewData["Title"] = "Users";
 
     var activePercent = Model.TotalUsers > 0 
         ? (Model.ActiveUsers * 100.0 / Model.TotalUsers).ToString("0.#") 
@@ -23,15 +23,15 @@
      ========================================================= -->
 <div class="page-header">
     <div>
-        <h1 class="page-title">Người dùng</h1>
+        <h1 class="page-title">Users</h1>
         <p class="page-description">
-            Quản lý danh sách tài khoản, phân quyền vai trò và trạng thái truy cập hệ thống DSS.
+            Manage user accounts, roles, and access status across the system.
         </p>
     </div>
 
     <a asp-action="Create" class="btn-primary">
         <i class="bi bi-person-plus"></i>
-        <span>Thêm người dùng</span>
+        <span>Add User</span>
     </a>
 </div>
 
@@ -39,14 +39,14 @@
      KPI SUMMARY GRID (100% GENUINE DATABASE METRICS)
      ========================================================= -->
 <div class="user-kpi-grid">
-    <!-- Card 1: Tổng người dùng -->
+    <!-- Card 1: Total Users -->
     <div class="user-kpi-card">
         <div class="user-kpi-content">
-            <span class="user-kpi-label">Tổng tài khoản</span>
+            <span class="user-kpi-label">Total Users</span>
             <span class="user-kpi-value">@Model.TotalUsers.ToString("N0")</span>
             <div class="user-kpi-meta">
                 <span class="kpi-meta-pill pill-blue">
-                    <i class="bi bi-people"></i> Tài khoản hệ thống
+                    <i class="bi bi-people"></i> System Accounts
                 </span>
             </div>
         </div>
@@ -55,14 +55,14 @@
         </div>
     </div>
 
-    <!-- Card 2: Đang hoạt động -->
+    <!-- Card 2: Active -->
     <div class="user-kpi-card">
         <div class="user-kpi-content">
-            <span class="user-kpi-label">Đang hoạt động</span>
+            <span class="user-kpi-label">Active</span>
             <span class="user-kpi-value">@Model.ActiveUsers.ToString("N0")</span>
             <div class="user-kpi-meta">
                 <span class="kpi-meta-pill pill-green">
-                    <i class="bi bi-check2"></i> @activePercent% tổng số
+                    <i class="bi bi-check2"></i> @activePercent% of total
                 </span>
             </div>
         </div>
@@ -71,14 +71,14 @@
         </div>
     </div>
 
-    <!-- Card 3: Đang bị khóa -->
+    <!-- Card 3: Locked -->
     <div class="user-kpi-card">
         <div class="user-kpi-content">
-            <span class="user-kpi-label">Đang bị khóa</span>
+            <span class="user-kpi-label">Locked</span>
             <span class="user-kpi-value">@Model.LockedUsers.ToString("N0")</span>
             <div class="user-kpi-meta">
                 <span class="kpi-meta-pill pill-amber">
-                    <i class="bi bi-lock"></i> @lockedPercent% tổng số
+                    <i class="bi bi-lock"></i> @lockedPercent% of total
                 </span>
             </div>
         </div>
@@ -87,14 +87,14 @@
         </div>
     </div>
 
-    <!-- Card 4: Ngừng hoạt động -->
+    <!-- Card 4: Inactive -->
     <div class="user-kpi-card">
         <div class="user-kpi-content">
-            <span class="user-kpi-label">Ngừng hoạt động</span>
+            <span class="user-kpi-label">Inactive</span>
             <span class="user-kpi-value">@Model.InactiveUsers.ToString("N0")</span>
             <div class="user-kpi-meta">
                 <span class="kpi-meta-pill pill-muted">
-                    <i class="bi bi-person-slash"></i> @inactivePercent% tổng số
+                    <i class="bi bi-person-slash"></i> @inactivePercent% of total
                 </span>
             </div>
         </div>
@@ -113,63 +113,63 @@
 
         <!-- 1. Keyword Search -->
         <div class="filter-field">
-            <label for="keyword">Tìm kiếm</label>
+            <label for="keyword">Search</label>
             <input id="keyword"
                    name="keyword"
                    value="@Model.Keyword"
                    class="form-control"
-                   placeholder="Tên đăng nhập, họ tên, email, SĐT..." />
+                   placeholder="Username, full name, email, phone..." />
         </div>
 
         <!-- 2. Role Dropdown -->
         <div class="filter-field">
-            <label for="role">Vai trò</label>
+            <label for="role">Role</label>
             <select id="role" name="role" class="form-control">
                 <option value="All" selected="@(string.IsNullOrEmpty(Model.Role) || Model.Role == "All")">
-                    Tất cả vai trò
+                    All Roles
                 </option>
                 <option value="Administrator" selected="@(Model.Role == "Administrator")">
-                    Quản trị viên (Admin)
+                    Administrator
                 </option>
                 <option value="PurchasingStaff" selected="@(Model.Role == "PurchasingStaff")">
-                    Nhân viên mua hàng
+                    Purchasing Staff
                 </option>
                 <option value="Expert" selected="@(Model.Role == "Expert")">
-                    Chuyên gia đánh giá
+                    Expert
                 </option>
                 <option value="Manager" selected="@(Model.Role == "Manager")">
-                    Quản lý / Lãnh đạo
+                    Manager
                 </option>
             </select>
         </div>
 
         <!-- 3. Status Dropdown -->
         <div class="filter-field">
-            <label for="status">Trạng thái</label>
+            <label for="status">Status</label>
             <select id="status" name="status" class="form-control">
                 <option value="All" selected="@(string.IsNullOrEmpty(Model.Status) || Model.Status == "All")">
-                    Tất cả trạng thái
+                    All Statuses
                 </option>
                 <option value="Active" selected="@(Model.Status == "Active")">
-                    Đang hoạt động
+                    Active
                 </option>
                 <option value="Locked" selected="@(Model.Status == "Locked")">
-                    Đang bị khóa
+                    Locked
                 </option>
                 <option value="Inactive" selected="@(Model.Status == "Inactive")">
-                    Ngừng hoạt động
+                    Inactive
                 </option>
             </select>
         </div>
 
         <!-- 4. Filter Action Buttons (Same height 42px) -->
         <div class="filter-actions">
-            <button type="submit" class="btn-primary" title="Tìm kiếm">
-                Tìm kiếm
+            <button type="submit" class="btn-primary" title="Search">
+                Search
             </button>
 
-            <a asp-action="Index" class="btn-outline" title="Đặt lại bộ lọc">
-                Đặt lại
+            <a asp-action="Index" class="btn-outline" title="Reset filters">
+                Reset
             </a>
         </div>
     </form>
@@ -185,13 +185,13 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th style="width: 140px;">Tên đăng nhập</th>
-                        <th style="min-width: 220px;">Họ và tên</th>
-                        <th style="width: 170px;">Vai trò</th>
-                        <th style="min-width: 210px;">Thông tin liên hệ</th>
-                        <th style="width: 160px;">Đăng nhập cuối</th>
-                        <th style="width: 140px;">Trạng thái</th>
-                        <th style="width: 70px; text-align: center;">Thao tác</th>
+                        <th style="width: 140px;">Username</th>
+                        <th style="min-width: 220px;">Full Name</th>
+                        <th style="width: 170px;">Role</th>
+                        <th style="min-width: 210px;">Contact Information</th>
+                        <th style="width: 160px;">Last Login</th>
+                        <th style="width: 140px;">Status</th>
+                        <th style="width: 70px; text-align: center;">Actions</th>
                     </tr>
                 </thead>
 
@@ -199,45 +199,45 @@
                     @foreach (var user in Model.Users)
                     {
                         <tr>
-                            <!-- Tên đăng nhập -->
+                            <!-- Username -->
                             <td>
                                 <span class="user-code-badge">@user.Username</span>
                             </td>
 
-                            <!-- Họ và tên + Ngày khởi tạo -->
+                            <!-- Full Name + Created Date -->
                             <td>
                                 <div class="user-name-cell">
                                     <a asp-action="Edit" asp-route-id="@user.UserId" class="user-name-link">
                                         @user.FullName
                                     </a>
                                     <span class="user-created-tag">
-                                        <i class="bi bi-clock"></i> Tạo @user.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")
+                                        <i class="bi bi-clock"></i> Created @user.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")
                                     </span>
                                 </div>
                             </td>
 
-                            <!-- Vai trò -->
+                            <!-- Role -->
                             <td>
                                 @switch (user.Role)
                                 {
                                     case "Administrator":
                                         <span class="role-badge role-admin">
-                                            <i class="bi bi-shield-lock"></i> Quản trị viên
+                                            <i class="bi bi-shield-lock"></i> Administrator
                                         </span>
                                         break;
                                     case "PurchasingStaff":
                                         <span class="role-badge role-staff">
-                                            <i class="bi bi-cart3"></i> Nhân viên mua hàng
+                                            <i class="bi bi-cart3"></i> Purchasing Staff
                                         </span>
                                         break;
                                     case "Expert":
                                         <span class="role-badge role-expert">
-                                            <i class="bi bi-award"></i> Chuyên gia
+                                            <i class="bi bi-award"></i> Expert
                                         </span>
                                         break;
                                     case "Manager":
                                         <span class="role-badge role-manager">
-                                            <i class="bi bi-briefcase"></i> Quản lý
+                                            <i class="bi bi-briefcase"></i> Manager
                                         </span>
                                         break;
                                     default:
@@ -248,7 +248,7 @@
                                 }
                             </td>
 
-                            <!-- Thông tin liên hệ (Email, SĐT) -->
+                            <!-- Contact Information (Email, Phone) -->
                             <td>
                                 <div class="user-contact-cell">
                                     @if (!string.IsNullOrWhiteSpace(user.Email))
@@ -272,7 +272,7 @@
                                 </div>
                             </td>
 
-                            <!-- Đăng nhập cuối -->
+                            <!-- Last Login -->
                             <td>
                                 @if (user.LastLoginAt.HasValue)
                                 {
@@ -282,33 +282,33 @@
                                 }
                                 else
                                 {
-                                    <span class="text-muted">Chưa đăng nhập</span>
+                                    <span class="text-muted">Never Signed In</span>
                                 }
                             </td>
 
-                            <!-- Trạng thái -->
+                            <!-- Status -->
                             <td>
                                 @switch (user.Status)
                                 {
                                     case "Active":
-                                        <span class="status-pill status-active">Hoạt động</span>
+                                        <span class="status-pill status-active">Active</span>
                                         break;
                                     case "Locked":
-                                        <span class="status-pill status-locked">Đã khóa</span>
+                                        <span class="status-pill status-locked">Locked</span>
                                         break;
                                     default:
-                                        <span class="status-pill status-inactive">Ngừng hoạt động</span>
+                                        <span class="status-pill status-inactive">Inactive</span>
                                         break;
                                 }
                             </td>
 
-                            <!-- Thao tác dropdown [ ⋯ ] -->
+                            <!-- Actions dropdown [ ⋯ ] -->
                             <td style="text-align: center;">
                                 <div class="user-actions-dropdown">
                                     <button type="button"
                                             class="btn-action-dots"
-                                            aria-label="Thao tác cho @user.FullName"
-                                            title="Thao tác">
+                                            aria-label="Actions for @user.FullName"
+                                            title="Actions">
                                         <i class="bi bi-three-dots-vertical"></i>
                                     </button>
 
@@ -317,7 +317,7 @@
                                            asp-route-id="@user.UserId"
                                            class="user-action-item">
                                             <i class="bi bi-pencil"></i>
-                                            <span>Chỉnh sửa</span>
+                                            <span>Edit</span>
                                         </a>
 
                                         <div class="user-action-divider"></div>
@@ -331,22 +331,22 @@
                                             {
                                                 <button type="submit"
                                                         class="user-action-item text-danger"
-                                                        data-dss-confirm="Bạn có chắc chắn muốn ngừng hoạt động tài khoản '@user.Username'?"
-                                                        data-dss-title="Xác nhận ngừng hoạt động"
-                                                        data-dss-btn-text="Ngừng hoạt động">
+                                                        data-dss-confirm="Are you sure you want to deactivate user '@user.Username'?"
+                                                        data-dss-title="Confirm Deactivation"
+                                                        data-dss-btn-text="Deactivate">
                                                     <i class="bi bi-slash-circle"></i>
-                                                    <span>Ngừng hoạt động</span>
+                                                    <span>Deactivate</span>
                                                 </button>
                                             }
                                             else
                                             {
                                                 <button type="submit"
                                                         class="user-action-item text-success"
-                                                        data-dss-confirm="Bạn có chắc chắn muốn kích hoạt lại tài khoản '@user.Username'?"
-                                                        data-dss-title="Xác nhận kích hoạt"
-                                                        data-dss-btn-text="Kích hoạt">
+                                                        data-dss-confirm="Are you sure you want to reactivate user '@user.Username'?"
+                                                        data-dss-title="Confirm Activation"
+                                                        data-dss-btn-text="Activate">
                                                     <i class="bi bi-check-circle"></i>
-                                                    <span>Kích hoạt tài khoản</span>
+                                                    <span>Activate User</span>
                                                 </button>
                                             }
                                         </form>
@@ -367,19 +367,19 @@
             <div style="font-size: 40px; color: var(--muted); margin-bottom: 12px;">
                 <i class="bi bi-search"></i>
             </div>
-            <h3>Không tìm thấy người dùng nào</h3>
+            <h3>No users found</h3>
             <p>
-                Không có tài khoản người dùng nào phù hợp với điều kiện tìm kiếm hoặc bộ lọc hiện tại.
-                Vui lòng thử lại với từ khóa hoặc bộ lọc khác.
+                No user accounts match the current search criteria or filters.
+                Please try again with different keywords or filters.
             </p>
             <div style="display: flex; gap: 10px; justify-content: center; margin-top: 16px;">
                 <a asp-action="Index" class="btn-outline">
                     <i class="bi bi-arrow-counterclockwise"></i>
-                    <span>Xóa bộ lọc</span>
+                    <span>Reset Filters</span>
                 </a>
                 <a asp-action="Create" class="btn-primary">
                     <i class="bi bi-person-plus"></i>
-                    <span>Thêm người dùng mới</span>
+                    <span>Add User</span>
                 </a>
             </div>
         </div>

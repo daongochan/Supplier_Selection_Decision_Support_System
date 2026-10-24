@@ -44,7 +44,7 @@ public class TOPSISController : Controller
     {
         if (batchId <= 0)
         {
-            TempData["WarningMessage"] = "Vui lòng chọn một đợt đánh giá để xem kết quả xếp hạng TOPSIS.";
+            TempData["WarningMessage"] = "Please select an evaluation batch to view TOPSIS rankings.";
             return RedirectToAction("Index", "EvaluationBatch");
         }
 
@@ -57,7 +57,7 @@ public class TOPSISController : Controller
 
         if (model == null)
         {
-            TempData["WarningMessage"] = $"Không tìm thấy đợt đánh giá với ID = {batchId}.";
+            TempData["WarningMessage"] = $"Evaluation batch with ID = {batchId} not found.";
             return RedirectToAction("Index", "EvaluationBatch");
         }
 
@@ -82,7 +82,7 @@ public class TOPSISController : Controller
         if (batchId <= 0)
         {
             TempData["ErrorMessage"] =
-                "Evaluation Batch không hợp lệ.";
+                "Invalid evaluation batch.";
 
 
             return RedirectToAction(
@@ -193,10 +193,10 @@ public class TOPSISController : Controller
 
 
                 var description =
-                    $"Tính TOPSIS cho Batch #{batchId} thành công. " +
-                    $"Supplier: {supplierCount}; " +
+                    $"TOPSIS calculation for Batch #{batchId} completed successfully. " +
+                    $"Suppliers: {supplierCount}; " +
                     $"Criteria: {criteriaCount}; " +
-                    $"Ranking: {rankingCount}.";
+                    $"Rankings: {rankingCount}.";
 
 
                 await _auditLogService
@@ -219,7 +219,7 @@ public class TOPSISController : Controller
 
 
             TempData["SuccessMessage"] =
-                "TOPSIS đã được tính toán và xếp hạng nhà cung cấp thành công.";
+                "TOPSIS calculated and suppliers ranked successfully.";
         }
         catch (BusinessRuleException ex)
         {
@@ -238,7 +238,7 @@ public class TOPSISController : Controller
                 "Lỗi khi tính toán TOPSIS cho đợt {BatchId}.",
                 batchId);
             TempData["ErrorMessage"] =
-                "Có lỗi xảy ra trong quá trình tính toán TOPSIS. Vui lòng thử lại sau.";
+                "An error occurred during TOPSIS calculation. Please try again later.";
         }
 
 

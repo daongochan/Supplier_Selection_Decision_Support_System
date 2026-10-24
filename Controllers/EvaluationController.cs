@@ -43,7 +43,7 @@ public class EvaluationController : Controller
     {
         if (batchId <= 0)
         {
-            TempData["WarningMessage"] = "Vui lòng chọn một đợt đánh giá để nhập bảng điểm.";
+            TempData["WarningMessage"] = "Please select an evaluation batch to enter evaluation scores.";
             return RedirectToAction("Index", "EvaluationBatch");
         }
 
@@ -56,7 +56,7 @@ public class EvaluationController : Controller
 
         if (model == null)
         {
-            TempData["WarningMessage"] = $"Không tìm thấy đợt đánh giá với ID = {batchId}.";
+            TempData["WarningMessage"] = $"Evaluation batch with ID = {batchId} not found.";
             return RedirectToAction("Index", "EvaluationBatch");
         }
 
@@ -161,7 +161,7 @@ public class EvaluationController : Controller
 
 
             TempData["SuccessMessage"] =
-                "Dữ liệu đánh giá đã được lưu.";
+                "Evaluation data has been saved.";
 
 
             // =================================================
@@ -213,9 +213,9 @@ public class EvaluationController : Controller
 
 
                 var description =
-                    $"Lưu dữ liệu Evaluation cho Batch #{model.BatchId}. " +
-                    $"Tổng số ô có giá trị: {scoreCellCount}. " +
-                    $"Số ô thay đổi: {changedCellCount}.";
+                    $"Save evaluation data for Batch #{model.BatchId}. " +
+                    $"Total score cells: {scoreCellCount}. " +
+                    $"Changed cells: {changedCellCount}.";
 
 
                 await _auditLogService
@@ -257,7 +257,7 @@ public class EvaluationController : Controller
                 "Lỗi khi lưu bảng điểm đánh giá cho đợt {BatchId}.",
                 model.BatchId);
             TempData["ErrorMessage"] =
-                "Có lỗi xảy ra trong quá trình lưu bảng điểm. Vui lòng thử lại sau.";
+                "An error occurred while saving the evaluation scores. Please try again later.";
         }
 
 

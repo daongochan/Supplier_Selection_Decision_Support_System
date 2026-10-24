@@ -1,7 +1,7 @@
 @model SupplierSelectionDSS.Models.SupplierFormViewModel
 
 @{
-    ViewData["Title"] = "Chỉnh sửa nhà cung cấp";
+    ViewData["Title"] = "Edit Supplier";
 }
 
 <div class="page-header">
@@ -9,15 +9,15 @@
     <div>
 
         <div class="page-eyebrow">
-            NHÀ CUNG CẤP
+            SUPPLIER
         </div>
 
         <h1 class="page-title">
-            Chỉnh sửa nhà cung cấp
+            Edit Supplier
         </h1>
 
         <p class="page-description">
-            Cập nhật thông tin nhà cung cấp trong hệ thống.
+            Update supplier information in the system.
         </p>
 
     </div>
@@ -45,13 +45,13 @@
 
             <!-- 1. Enterprise Identity -->
             <div class="form-section">
-                <div class="form-section-title">Thông tin doanh nghiệp</div>
-                <div class="form-section-desc">Mã định danh và tên pháp lý của nhà cung cấp</div>
+                <div class="form-section-title">Enterprise Information</div>
+                <div class="form-section-desc">Identification code and legal name of the supplier</div>
             </div>
 
             <div class="form-group">
                 <label asp-for="SupplierCode" class="required-field">
-                    Mã nhà cung cấp
+                    Supplier Code
                 </label>
                 <input asp-for="SupplierCode"
                        class="form-control"
@@ -61,7 +61,7 @@
 
             <div class="form-group">
                 <label asp-for="SupplierName" class="required-field">
-                    Tên nhà cung cấp
+                    Supplier Name
                 </label>
                 <input asp-for="SupplierName"
                        class="form-control"
@@ -71,7 +71,7 @@
 
             <div class="form-group">
                 <label asp-for="TaxCode">
-                    Mã số thuế
+                    Tax Code
                 </label>
                 <input asp-for="TaxCode"
                        class="form-control"
@@ -80,7 +80,7 @@
 
             <div class="form-group">
                 <label asp-for="BusinessField">
-                    Lĩnh vực kinh doanh
+                    Business Field
                 </label>
                 <input asp-for="BusinessField"
                        class="form-control"
@@ -89,13 +89,13 @@
 
             <!-- 2. Contact Information -->
             <div class="form-section">
-                <div class="form-section-title">Thông tin liên hệ</div>
-                <div class="form-section-desc">Đầu mối làm việc và các kênh liên lạc trực tiếp</div>
+                <div class="form-section-title">Contact Information</div>
+                <div class="form-section-desc">Key contact person and direct communication channels</div>
             </div>
 
             <div class="form-group">
                 <label asp-for="ContactPerson">
-                    Người liên hệ
+                    Contact Person
                 </label>
                 <input asp-for="ContactPerson"
                        class="form-control"
@@ -114,7 +114,7 @@
 
             <div class="form-group">
                 <label asp-for="Phone">
-                    Số điện thoại
+                    Phone
                 </label>
                 <input asp-for="Phone"
                        class="form-control"
@@ -132,13 +132,13 @@
 
             <!-- 3. Address & Terms -->
             <div class="form-section">
-                <div class="form-section-title">Địa chỉ & Điều khoản</div>
-                <div class="form-section-desc">Địa chỉ trụ sở và các điều khoản giao dịch mặc định</div>
+                <div class="form-section-title">Address & Terms</div>
+                <div class="form-section-desc">Headquarters address and default transaction terms</div>
             </div>
 
             <div class="form-group form-group-full">
                 <label asp-for="Address">
-                    Địa chỉ
+                    Address
                 </label>
                 <input asp-for="Address"
                        class="form-control"
@@ -147,7 +147,7 @@
 
             <div class="form-group form-group-full">
                 <label asp-for="PaymentTerms">
-                    Điều khoản thanh toán
+                    Payment Terms
                 </label>
                 <textarea asp-for="PaymentTerms"
                           class="form-control"
@@ -161,12 +161,12 @@
 
             <a asp-action="Index"
                class="btn-outline">
-                Hủy bỏ
+                Cancel
             </a>
 
             <button type="submit"
                     class="btn-primary">
-                Lưu thay đổi
+                Save Changes
             </button>
 
         </div>

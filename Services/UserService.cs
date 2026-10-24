@@ -243,7 +243,7 @@ public class UserService
                 model.Password))
         {
             throw new InvalidOperationException(
-                "Mật khẩu là bắt buộc khi tạo tài khoản.");
+                "Password is required when creating an account.");
         }
 
 
@@ -256,7 +256,7 @@ public class UserService
                 username))
         {
             throw new InvalidOperationException(
-                "Username đã tồn tại.");
+                "Username already exists.");
         }
 
 
@@ -343,7 +343,7 @@ public class UserService
                     if (user == null)
                     {
                         throw new KeyNotFoundException(
-                            "Không tìm thấy người dùng.");
+                            "User not found.");
                     }
 
                     var username =
@@ -355,7 +355,7 @@ public class UserService
                             model.UserId))
                     {
                         throw new InvalidOperationException(
-                            "Username đã tồn tại.");
+                            "Username already exists.");
                     }
 
                     user.Username =
@@ -370,7 +370,7 @@ public class UserService
                             StringComparison.OrdinalIgnoreCase))
                     {
                         throw new InvalidOperationException(
-                            "Bạn không thể khóa hoặc vô hiệu hóa chính tài khoản đang đăng nhập.");
+                            "You cannot lock or deactivate your own account.");
                     }
 
                     var isCurrentlyActiveAdmin =
@@ -393,7 +393,7 @@ public class UserService
                         if (activeAdminCount <= 1)
                         {
                             throw new InvalidOperationException(
-                                "Không thể vô hiệu hóa hoặc hạ quyền Administrator đang hoạt động cuối cùng của hệ thống.");
+                                "Cannot deactivate or demote the system's last active Administrator.");
                         }
                     }
 
@@ -435,7 +435,7 @@ public class UserService
                         if (remainingActiveAdmins < 1)
                         {
                             throw new InvalidOperationException(
-                                "Không thể vô hiệu hóa hoặc hạ quyền Administrator đang hoạt động cuối cùng của hệ thống.");
+                                "Cannot deactivate or demote the system's last active Administrator.");
                         }
                     }
 
@@ -498,12 +498,12 @@ public class UserService
                     var user = await _context.Users.FirstOrDefaultAsync(x => x.UserId == id);
                     if (user == null)
                     {
-                        throw new KeyNotFoundException("Không tìm thấy người dùng.");
+                        throw new KeyNotFoundException("User not found.");
                     }
 
                     if (user.UserId == currentUserId)
                     {
-                        throw new InvalidOperationException("Bạn không thể thay đổi trạng thái của chính tài khoản đang đăng nhập.");
+                        throw new InvalidOperationException("You cannot change the status of your own account.");
                     }
 
                     var isDeactivatingActiveAdmin =
@@ -518,7 +518,7 @@ public class UserService
 
                         if (activeAdminCount <= 1)
                         {
-                            throw new InvalidOperationException("Không thể vô hiệu hóa Administrator cuối cùng của hệ thống.");
+                            throw new InvalidOperationException("Cannot deactivate the system's last active Administrator.");
                         }
                     }
 
@@ -540,7 +540,7 @@ public class UserService
                             .CountAsync(x => x.Role == UserRole.Administrator && x.Status == EntityStatus.Active);
                         if (remainingActiveAdmins < 1)
                         {
-                            throw new InvalidOperationException("Không thể vô hiệu hóa Administrator cuối cùng của hệ thống.");
+                            throw new InvalidOperationException("Cannot deactivate the system's last active Administrator.");
                         }
                     }
 
@@ -579,7 +579,7 @@ public class UserService
                 role))
         {
             throw new InvalidOperationException(
-                "Vai trò người dùng không hợp lệ.");
+                "Invalid user role.");
         }
     }
 
@@ -592,7 +592,7 @@ public class UserService
                 status))
         {
             throw new InvalidOperationException(
-                "Trạng thái tài khoản không hợp lệ.");
+                "Invalid account status.");
         }
     }
 

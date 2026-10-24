@@ -64,7 +64,7 @@ public class ProductGroupController : Controller
         {
             ModelState.AddModelError(
                 nameof(model.GroupCode),
-                "Mã nhóm hàng đã tồn tại.");
+                "Group code already exists.");
         }
 
         if (!ModelState.IsValid)
@@ -84,7 +84,7 @@ public class ProductGroupController : Controller
             await _groupService.CreateAsync(group);
 
             TempData["SuccessMessage"] =
-                "Nhóm hàng đã được tạo thành công.";
+                "Product group created successfully.";
 
             return RedirectToAction(nameof(Index));
         }
@@ -128,7 +128,7 @@ public class ProductGroupController : Controller
         {
             ModelState.AddModelError(
                 nameof(model.GroupCode),
-                "Mã nhóm hàng đã tồn tại.");
+                "Group code already exists.");
         }
 
         if (!ModelState.IsValid)
@@ -152,7 +152,7 @@ public class ProductGroupController : Controller
             await _groupService.UpdateAsync(group);
 
             TempData["SuccessMessage"] =
-                "Nhóm hàng đã được cập nhật.";
+                "Product group updated successfully.";
 
             return RedirectToAction(nameof(Index));
         }
@@ -181,7 +181,7 @@ public class ProductGroupController : Controller
             }
 
             TempData["SuccessMessage"] =
-                "Trạng thái nhóm hàng đã được cập nhật.";
+                "Product group status updated successfully.";
 
             return RedirectToAction(nameof(Index));
         }
@@ -255,7 +255,7 @@ public class ProductGroupController : Controller
             }
 
             TempData["SuccessMessage"] =
-                "Danh sách nhà cung cấp của nhóm đã được cập nhật.";
+                "Group suppliers updated successfully.";
 
             return RedirectToAction(nameof(Suppliers), new { id });
         }

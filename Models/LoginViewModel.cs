@@ -4,16 +4,16 @@ namespace SupplierSelectionDSS.Models;
 
 public class LoginViewModel
 {
-    [Required(ErrorMessage = "Vui lòng nhập tên đăng nhập.")]
-    [Display(Name = "Tên đăng nhập")]
+    [Required(ErrorMessage = "Please enter your username.")]
+    [Display(Name = "Username")]
     public string Username { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Vui lòng nhập mật khẩu.")]
+    [Required(ErrorMessage = "Please enter your password.")]
     [DataType(DataType.Password)]
-    [Display(Name = "Mật khẩu")]
+    [Display(Name = "Password")]
     public string Password { get; set; } = string.Empty;
 
-    [Display(Name = "Ghi nhớ đăng nhập")]
+    [Display(Name = "Remember me")]
     public bool RememberMe { get; set; }
 
     public string? ReturnUrl { get; set; }

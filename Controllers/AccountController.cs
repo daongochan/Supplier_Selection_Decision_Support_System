@@ -84,7 +84,7 @@ public class AccountController : Controller
         {
             ModelState.AddModelError(
                 string.Empty,
-                $"Tài khoản tạm thời bị khóa do nhập sai mật khẩu nhiều lần. Vui lòng thử lại sau {remainingMinutes} phút.");
+                $"Account temporarily locked due to multiple failed login attempts. Please try again after {remainingMinutes} minutes.");
 
             _logger.LogWarning("IP {Ip} đang trong thời gian lockout đối với tài khoản {Username}", remoteIp, sanitizedUser);
             return View(model);
@@ -119,13 +119,13 @@ public class AccountController : Controller
                 AuditActions.LoginFailed,
                 nameof(User),
                 user?.UserId,
-                description: $"Đăng nhập thất bại từ IP {remoteIp} cho tài khoản '{sanitizedUser}' (lần thử thứ {attempts}).");
+                description: $"Failed login attempt from IP {remoteIp} for username '{sanitizedUser}' (attempt {attempts}).");
 
             _logger.LogWarning("Đăng nhập thất bại từ IP {Ip} cho tài khoản '{Username}'. Lần sai liên tiếp: {Attempts}", remoteIp, sanitizedUser, attempts);
 
             ModelState.AddModelError(
                 string.Empty,
-                "Tên đăng nhập hoặc mật khẩu không chính xác.");
+                "Invalid username or password.");
 
             return View(model);
         }
@@ -138,13 +138,13 @@ public class AccountController : Controller
                 AuditActions.LoginFailed,
                 nameof(User),
                 user.UserId,
-                description: $"Đăng nhập bị từ chối do trạng thái tài khoản là '{user.Status}'.");
+                description: $"Login rejected due to account status '{user.Status}'.");
 
             _logger.LogWarning("Đăng nhập bị từ chối cho tài khoản '{Username}' với trạng thái {Status}", sanitizedUser, user.Status);
 
             ModelState.AddModelError(
                 string.Empty,
-                "Tài khoản hiện không hoạt động hoặc đã bị khóa. Vui lòng liên hệ quản trị viên.");
+                "Account is currently inactive or locked. Please contact your administrator.");
 
             return View(model);
         }
@@ -188,7 +188,7 @@ public class AccountController : Controller
             AuditActions.LoginSuccess,
             nameof(User),
             user.UserId,
-            description: $"Đăng nhập thành công với vai trò '{user.Role}'.");
+            description: $"Successful login with role '{user.Role}'.");
 
         _logger.LogInformation("Người dùng {Username} (ID {UserId}, Role {Role}) đăng nhập thành công.", user.Username, user.UserId, user.Role);
 

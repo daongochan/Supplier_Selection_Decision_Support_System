@@ -388,7 +388,7 @@ public class SupplierService
                 supplier.SupplierCode))
         {
             throw new ArgumentException(
-                "Mã nhà cung cấp không được để trống.",
+                "Supplier code cannot be empty.",
                 nameof(supplier));
         }
 
@@ -398,7 +398,7 @@ public class SupplierService
                 supplier.SupplierName))
         {
             throw new ArgumentException(
-                "Tên nhà cung cấp không được để trống.",
+                "Supplier name cannot be empty.",
                 nameof(supplier));
         }
 
@@ -408,7 +408,7 @@ public class SupplierService
                 supplier.SupplierCode))
         {
             throw new InvalidOperationException(
-                "Mã nhà cung cấp đã tồn tại.");
+                "Supplier code already exists.");
         }
 
 
@@ -444,7 +444,7 @@ public class SupplierService
                 supplier.SupplierCode))
         {
             throw new ArgumentException(
-                "Mã nhà cung cấp không được để trống.",
+                "Supplier code cannot be empty.",
                 nameof(supplier));
         }
 
@@ -454,7 +454,7 @@ public class SupplierService
                 supplier.SupplierName))
         {
             throw new ArgumentException(
-                "Tên nhà cung cấp không được để trống.",
+                "Supplier name cannot be empty.",
                 nameof(supplier));
         }
 
@@ -465,7 +465,7 @@ public class SupplierService
                 supplier.SupplierId))
         {
             throw new InvalidOperationException(
-                "Mã nhà cung cấp đã tồn tại.");
+                "Supplier code already exists.");
         }
 
 
@@ -480,7 +480,7 @@ public class SupplierService
         if (existingSupplier == null)
         {
             throw new KeyNotFoundException(
-                "Không tìm thấy nhà cung cấp.");
+                "Supplier not found.");
         }
 
 

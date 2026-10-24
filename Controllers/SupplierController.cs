@@ -157,7 +157,7 @@ public class SupplierController : Controller
         {
             ModelState.AddModelError(
                 nameof(model.SupplierCode),
-                "Mã nhà cung cấp đã tồn tại.");
+                "Supplier code already exists.");
         }
 
 
@@ -210,7 +210,7 @@ public class SupplierController : Controller
 
 
             TempData["SuccessMessage"] =
-                "Nhà cung cấp đã được tạo thành công.";
+                "Supplier created successfully.";
 
 
             return RedirectToAction(
@@ -322,7 +322,7 @@ public class SupplierController : Controller
         {
             ModelState.AddModelError(
                 nameof(model.SupplierCode),
-                "Mã nhà cung cấp đã tồn tại.");
+                "Supplier code already exists.");
         }
 
 
@@ -392,7 +392,7 @@ public class SupplierController : Controller
 
 
             TempData["SuccessMessage"] =
-                "Thông tin nhà cung cấp đã được cập nhật.";
+                "Supplier updated successfully.";
 
 
             return RedirectToAction(
@@ -450,7 +450,7 @@ public class SupplierController : Controller
 
 
             TempData["SuccessMessage"] =
-                "Trạng thái nhà cung cấp đã được cập nhật.";
+                "Supplier status updated successfully.";
         }
         catch (
             InvalidOperationException ex)

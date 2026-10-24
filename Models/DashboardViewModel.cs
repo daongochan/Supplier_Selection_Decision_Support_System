@@ -182,9 +182,9 @@ public class DashboardWorkflowProgressDto
 
     public int CurrentStepNumber { get; set; } = 1;
 
-    public string CurrentStepName { get; set; } = "Nhập dữ liệu";
+    public string CurrentStepName { get; set; } = "Data Entry";
 
-    public string CurrentStepDescription { get; set; } = "Thu thập và nhập điểm đánh giá theo tiêu chí.";
+    public string CurrentStepDescription { get; set; } = "Collect and enter evaluation scores according to criteria.";
 
     public int OverallPercent => CurrentStepNumber switch
     {
@@ -246,7 +246,7 @@ public class DashboardSystemInfoDto
 
     public string DatabaseType { get; set; } = "Microsoft SQL Server";
 
-    public string SystemStatus { get; set; } = "Sẵn sàng (Online)";
+    public string SystemStatus { get; set; } = "Ready (Online)";
 }
 
 public class DashboardApprovalDto
@@ -280,5 +280,5 @@ public class DashboardActivityItemDto
 
     public DateTime ActionTime { get; set; }
 
-    public string UserName { get; set; } = "Hệ thống";
+    public string UserName { get; set; } = "System";
 }

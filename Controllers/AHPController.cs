@@ -45,7 +45,7 @@ public class AHPController : Controller
     {
         if (batchId <= 0)
         {
-            TempData["WarningMessage"] = "Vui lòng chọn một đợt đánh giá để thực hiện phân tích ma trận AHP.";
+            TempData["WarningMessage"] = "Please select an evaluation batch to perform AHP matrix analysis.";
             return RedirectToAction("Index", "EvaluationBatch");
         }
 
@@ -58,7 +58,7 @@ public class AHPController : Controller
 
         if (model == null)
         {
-            TempData["WarningMessage"] = $"Không tìm thấy đợt đánh giá với ID = {batchId}.";
+            TempData["WarningMessage"] = $"Evaluation batch with ID = {batchId} not found.";
             return RedirectToAction("Index", "EvaluationBatch");
         }
 
@@ -89,7 +89,7 @@ public class AHPController : Controller
         if (model == null)
         {
             TempData["ErrorMessage"] =
-                "Dữ liệu ma trận AHP không hợp lệ.";
+                "Invalid AHP matrix data.";
 
 
             return RedirectToAction(
@@ -156,7 +156,7 @@ public class AHPController : Controller
 
 
             TempData["SuccessMessage"] =
-                "Ma trận so sánh AHP đã được lưu.";
+                "AHP comparison matrix has been saved.";
 
 
             // =================================================
@@ -208,8 +208,8 @@ public class AHPController : Controller
 
 
                 var description =
-                    $"Lưu ma trận so sánh AHP cho Batch #{batchId}. " +
-                    $"Số cặp so sánh trực tiếp: {comparisonCount / 2}.";
+                    $"Save AHP comparison matrix for Batch #{batchId}. " +
+                    $"Direct pairwise comparisons: {comparisonCount / 2}.";
 
 
                 await _auditLogService
@@ -249,7 +249,7 @@ public class AHPController : Controller
                 "Lỗi khi lưu ma trận AHP cho đợt {BatchId}.",
                 batchId);
             TempData["ErrorMessage"] =
-                "Có lỗi xảy ra trong quá trình lưu ma trận AHP. Vui lòng thử lại sau.";
+                "An error occurred while saving the AHP matrix. Please try again later.";
         }
 
 
@@ -329,11 +329,11 @@ public class AHPController : Controller
 
                 var description =
                     result.IsConsistent
-                        ? $"Tính AHP cho Batch #{batchId} thành công. " +
+                        ? $"AHP calculation for Batch #{batchId} completed successfully. " +
                           $"CR = {result.CRValue:0.0000}. " +
-                          "Ma trận đạt tính nhất quán."
-                        : $"Tính AHP cho Batch #{batchId} hoàn tất nhưng " +
-                          $"ma trận chưa đạt tính nhất quán. " +
+                          "Matrix is consistent."
+                        : $"AHP calculation for Batch #{batchId} completed, but " +
+                          $"matrix is inconsistent. " +
                           $"CR = {result.CRValue:0.0000}.";
 
 
@@ -359,17 +359,17 @@ public class AHPController : Controller
             if (result.IsConsistent)
             {
                 TempData["SuccessMessage"] =
-                    $"AHP đã được tính toán thành công. " +
+                    $"AHP calculated successfully. " +
                     $"CR = {result.CRValue:0.0000}. " +
-                    "Ma trận đạt tính nhất quán.";
+                    "The matrix is consistent.";
             }
             else
             {
                 TempData["ErrorMessage"] =
-                    $"AHP đã được tính toán nhưng ma trận " +
-                    $"chưa đạt tính nhất quán. " +
+                    $"AHP calculated, but the matrix " +
+                    $"is inconsistent. " +
                     $"CR = {result.CRValue:0.0000}. " +
-                    "Vui lòng xem lại các so sánh cặp.";
+                    "Please review the pairwise comparisons.";
             }
         }
         catch (
@@ -391,7 +391,7 @@ public class AHPController : Controller
                 "Lỗi khi tính toán AHP cho đợt {BatchId}.",
                 batchId);
             TempData["ErrorMessage"] =
-                "Có lỗi xảy ra trong quá trình tính toán AHP. Vui lòng thử lại sau.";
+                "An error occurred during AHP calculation. Please try again later.";
         }
 
 

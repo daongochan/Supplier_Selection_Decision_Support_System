@@ -174,7 +174,7 @@ public class SecurityAndHardeningTests : IDisposable
         // Khi chỉ còn 1 admin active, hạ quyền phải ném ngoại lệ bảo vệ hệ thống
         var act = async () => await userService.UpdateAsync(model, currentUserId: 1);
         await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*Administrator đang hoạt động cuối cùng*");
+            .WithMessage("*last active Administrator*");
     }
 
     [Fact]
@@ -205,7 +205,7 @@ public class SecurityAndHardeningTests : IDisposable
 
         var act = async () => await userService.UpdateAsync(model, currentUserId: 99);
         await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*Administrator đang hoạt động cuối cùng*");
+            .WithMessage("*last active Administrator*");
     }
 
     [Fact]
