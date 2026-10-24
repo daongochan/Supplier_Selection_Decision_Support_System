@@ -12,19 +12,17 @@
 <div class="page-header">
 
     <div>
-
         <div class="page-eyebrow">
             PRODUCT GROUPS
         </div>
 
         <h1 class="page-title">
-            Assign Suppliers: @Model.GroupName
+            Assign Suppliers
         </h1>
 
         <p class="page-description">
-            Select suppliers authorized to supply products or services in this product group.
+            Select suppliers authorized to supply products or services for product group <strong>@Model.GroupName</strong>.
         </p>
-
     </div>
 
     <a asp-action="Index" class="btn-outline" id="btnBackToGroups">
@@ -34,7 +32,7 @@
 
 </div>
 
-<div class="form-card" style="max-width: 1040px;">
+<div class="assign-suppliers-container">
 
     <form asp-action="Suppliers" method="post" id="supplierAssignmentForm">
 
@@ -42,14 +40,32 @@
 
         <input type="hidden" name="id" value="@Model.GroupId" />
 
-        <div class="assignment-header" style="margin-bottom: 20px;">
-            <div>
+        <!-- Group Context & Selection Summary Header -->
+        <div class="assign-group-header">
+            <div class="assign-group-meta">
                 <span class="card-label">
-                    Group Code: @Model.GroupCode
+                    PRODUCT GROUP
                 </span>
-                <h2 class="card-title" style="margin-top: 4px;">
-                    Available Suppliers Catalog
-                </h2>
+                <div class="assign-group-title">
+                    <span class="group-code-badge">
+                        @Model.GroupCode
+                    </span>
+                    <strong class="assign-group-name">
+                        @Model.GroupName
+                    </strong>
+                </div>
+            </div>
+
+            <div class="assign-selection-summary">
+                <span class="card-label">
+                    CURRENT SELECTION
+                </span>
+                <div>
+                    <span id="selectedCountBadge" class="selection-count-badge">
+                        <i class="bi bi-check2-circle"></i>
+                        <span id="selectedCountNumber">@initialSelectedCount</span> of @Model.Suppliers.Count selected
+                    </span>
+                </div>
             </div>
         </div>
 
@@ -64,27 +80,26 @@
                        autocomplete="off" />
             </div>
 
-            <div class="assign-badge-actions">
-                <span id="selectedCountBadge" class="selection-count-badge">
-                    <i class="bi bi-check2-circle"></i>
-                    <span id="selectedCountNumber">@initialSelectedCount</span> of @Model.Suppliers.Count selected
-                </span>
-
-                <button type="button" class="btn-outline btn-sm" id="btnSelectAllVisible" style="height: 36px;">
-                    Select Visible
+            <div class="assign-bulk-actions">
+                <button type="button" class="btn-outline" id="btnSelectAllVisible">
+                    <i class="bi bi-check-all"></i>
+                    <span>Select Visible</span>
                 </button>
 
-                <button type="button" class="btn-outline btn-sm" id="btnClearSelection" style="height: 36px;">
-                    Clear All
+                <button type="button" class="btn-outline" id="btnClearSelection">
+                    <i class="bi bi-x-lg"></i>
+                    <span>Clear All</span>
                 </button>
             </div>
         </div>
 
         @if (Model.Suppliers.Any(s => s.IsInactiveAssigned))
         {
-            <div class="alert alert-warning mb-3" style="border-radius: var(--radius-md); padding: 12px 16px; border: 1px solid rgba(245, 158, 11, 0.35); background: rgba(245, 158, 11, 0.08); font-size: 13px;">
-                <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
-                <strong>Note:</strong> Some suppliers below are currently inactive in the directory but remain assigned to this group. You may keep or unassign them as needed.
+            <div class="assign-inactive-notice">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <div>
+                    <strong>Notice:</strong> Some suppliers below are currently inactive in the directory but remain assigned to this product group. You may keep or unassign them as needed.
+                </div>
             </div>
         }
 
@@ -106,7 +121,7 @@
                     </div>
 
                     <div class="supplier-assign-info">
-                        <div class="supplier-assign-title">
+                        <div class="supplier-assign-main">
                             <span class="supplier-code-badge">
                                 @supplier.SupplierCode
                             </span>
@@ -114,14 +129,22 @@
                             <strong class="supplier-name-text">
                                 @supplier.SupplierName
                             </strong>
-
-                            @if (supplier.IsInactiveAssigned)
-                            {
-                                <span class="badge-inactive" title="This supplier is currently marked Inactive in the system catalog.">
-                                    <i class="bi bi-pause-circle"></i> Inactive
-                                </span>
-                            }
                         </div>
+                    </div>
+
+                    <div class="supplier-assign-status">
+                        @if (supplier.IsInactiveAssigned)
+                        {
+                            <span class="badge-inactive" title="This supplier is currently marked Inactive in the system catalog.">
+                                <i class="bi bi-pause-circle"></i> Inactive
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="status-pill status-active">
+                                Active
+                            </span>
+                        }
                     </div>
 
                 </label>
@@ -132,26 +155,34 @@
         @if (!Model.Suppliers.Any())
         {
             <div class="empty-state">
-                <div style="font-size: 40px; color: var(--muted); margin-bottom: 12px;">
+                <div class="empty-state-icon">
                     <i class="bi bi-building-x"></i>
                 </div>
-                <h3>No suppliers available</h3>
+                <h3>
+                    No suppliers available
+                </h3>
                 <p>
                     Please create and activate suppliers in the directory before assigning them to this product group.
                 </p>
             </div>
         }
 
-        <div class="form-actions">
+        <div class="assign-footer">
 
-            <a asp-action="Index" class="btn-outline" id="btnCancelAssignment">
-                Cancel
-            </a>
+            <div class="assign-footer-info">
+                <span>Configure supplier participation for this product group. Changes take effect immediately upon saving.</span>
+            </div>
 
-            <button type="submit" class="btn-primary" id="btnSaveAssignment">
-                <i class="bi bi-check-lg"></i>
-                <span>Save Assignments</span>
-            </button>
+            <div class="assign-footer-actions">
+                <a asp-action="Index" class="btn-outline" id="btnCancelAssignment">
+                    Cancel
+                </a>
+
+                <button type="submit" class="btn-primary" id="btnSaveAssignment">
+                    <i class="bi bi-check-lg"></i>
+                    <span>Save Assignments</span>
+                </button>
+            </div>
 
         </div>
 

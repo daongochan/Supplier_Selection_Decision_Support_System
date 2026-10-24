@@ -2,7 +2,7 @@
 @model SupplierSelectionDSS.Data.Entities.EvaluationBatch
 
 @{
-    ViewData["Title"] = "Evaluation Batch";
+    ViewData["Title"] = "Evaluation Batch - " + Model.BatchCode;
 
     var isAdmin =
         User.IsInRole("Administrator");
@@ -83,7 +83,6 @@
         readiness.IsCompleted;
 }
 
-
 <!-- =========================================================
      PAGE HEADER
      ========================================================= -->
@@ -91,7 +90,6 @@
 <div class="page-header evaluation-batch-header">
 
     <div>
-
         <div class="page-eyebrow">
             EVALUATION BATCH
         </div>
@@ -103,33 +101,20 @@
         <p class="page-description">
             @Model.BatchName
         </p>
-
     </div>
 
-
     <div class="evaluation-batch-header-actions">
-
-        <span class="status-pill
-            status-@Model.Status.ToLowerInvariant()">
-
+        <span class="status-pill status-@Model.Status.ToLowerInvariant()">
             @Model.Status
-
         </span>
 
-
-        <a asp-action="Index"
-           class="btn-outline">
-
-            Back
-
+        <a asp-action="Index" class="btn-outline">
+            <i class="bi bi-arrow-left"></i>
+            <span>Back to Batches</span>
         </a>
-
     </div>
 
 </div>
-
-
-
 
 <!-- =========================================================
      WORKFLOW STEPPER
@@ -137,923 +122,597 @@
 
 <div class="batch-workflow">
 
-    <!-- =====================================================
-         01 SETUP
-         ===================================================== -->
-
-    <div class="batch-workflow-step
-        @(supplierCount >= 2 &&
-          criteriaCount >= 2
-            ? "batch-step-complete"
-            : "batch-step-current")">
-
+    <!-- 01 SETUP -->
+    <div class="batch-workflow-step @(supplierCount >= 2 && criteriaCount >= 2 ? "batch-step-complete" : "batch-step-current")">
         <div class="batch-workflow-number">
             01
         </div>
-
-
         <div class="batch-workflow-content">
-
-            <span>
-                Setup
-            </span>
-
-            <small>
-                @supplierCount suppliers ·
-                @criteriaCount criteria
-            </small>
-
+            <span>Setup</span>
+            <small>@supplierCount suppliers · @criteriaCount criteria</small>
         </div>
-
     </div>
-
 
     <div class="batch-workflow-line"></div>
 
-
-    <!-- =====================================================
-         02 EVALUATION
-         ===================================================== -->
-
-    <div class="batch-workflow-step
-        @(evaluationComplete
-            ? "batch-step-complete"
-            : Model.Status == "Evaluating"
-                ? "batch-step-current"
-                : "batch-step-disabled")">
-
+    <!-- 02 EVALUATION -->
+    <div class="batch-workflow-step @(evaluationComplete ? "batch-step-complete" : Model.Status == "Evaluating" ? "batch-step-current" : "batch-step-disabled")">
         <div class="batch-workflow-number">
             02
         </div>
-
-
         <div class="batch-workflow-content">
-
-            <span>
-                Evaluation
-            </span>
-
-            <small>
-                @evaluationScoreCount /
-                @expectedEvaluationScoreCount
-            </small>
-
+            <span>Evaluation</span>
+            <small>@evaluationScoreCount / @expectedEvaluationScoreCount</small>
         </div>
-
     </div>
-
 
     <div class="batch-workflow-line"></div>
 
-
-    <!-- =====================================================
-         03 AHP
-         ===================================================== -->
-
-    <div class="batch-workflow-step
-        @(ahpConsistent
-            ? "batch-step-complete"
-            : evaluationComplete
-                ? "batch-step-current"
-                : "batch-step-disabled")">
-
+    <!-- 03 AHP -->
+    <div class="batch-workflow-step @(ahpConsistent ? "batch-step-complete" : evaluationComplete ? (ahpResultExists ? "batch-step-warning" : "batch-step-current") : "batch-step-disabled")">
         <div class="batch-workflow-number">
             03
         </div>
-
-
         <div class="batch-workflow-content">
-
-            <span>
-                AHP
-            </span>
-
+            <span>AHP</span>
             <small>
-
                 @if (ahpResultExists)
                 {
-                    @: CR @(
-                        (ahpCR ?? 0m).ToString("0.0000")
-                    )
-                    }
+                    @:CR @((ahpCR ?? 0m).ToString("0.0000"))
+                }
                 else
-                    {
-                        @: Criteria weights
-                    }
+                {
+                    @:Criteria weights
+                }
+            </small>
+        </div>
+    </div>
 
-                </small>
+    <div class="batch-workflow-line"></div>
 
+    <!-- 04 TOPSIS -->
+    <div class="batch-workflow-step @(topsisComplete ? "batch-step-complete" : (ahpConsistent && !isCompleted) ? "batch-step-current" : "batch-step-disabled")">
+        <div class="batch-workflow-number">
+            04
+        </div>
+        <div class="batch-workflow-content">
+            <span>TOPSIS</span>
+            <small>
+                @if (topsisComplete)
+                {
+                    @:@topsisResultCount results
+                }
+                else
+                {
+                    @:Supplier ranking
+                }
+            </small>
+        </div>
+    </div>
+
+    <div class="batch-workflow-line"></div>
+
+    <!-- 05 RESULT -->
+    <div class="batch-workflow-step @(isCompleted ? "batch-step-complete" : (topsisComplete && !isCompleted) ? "batch-step-current" : "batch-step-disabled")">
+        <div class="batch-workflow-number">
+            05
+        </div>
+        <div class="batch-workflow-content">
+            <span>Result</span>
+            <small>@(isCompleted ? "Approved" : "Decision")</small>
+        </div>
+    </div>
+
+</div>
+
+<!-- =========================================================
+     SUMMARY GRID (4 OVERVIEW CARDS)
+     ========================================================= -->
+
+<div class="batch-summary-grid">
+
+    <!-- Product Group -->
+    <div class="batch-summary-card">
+        <span class="card-label">
+            PRODUCT GROUP
+        </span>
+        <strong class="batch-summary-value-text">
+            @Model.Group.GroupCode
+        </strong>
+        <span class="batch-summary-meta">
+            @Model.Group.GroupName
+        </span>
+    </div>
+
+    <!-- Suppliers -->
+    <div class="batch-summary-card">
+        <span class="card-label">
+            SUPPLIERS
+        </span>
+        <strong class="batch-summary-value">
+            @supplierCount.ToString("00")
+        </strong>
+        <span class="batch-summary-meta">
+            Participating suppliers
+        </span>
+    </div>
+
+    <!-- Criteria -->
+    <div class="batch-summary-card">
+        <span class="card-label">
+            CRITERIA
+        </span>
+        <strong class="batch-summary-value">
+            @criteriaCount.ToString("00")
+        </strong>
+        <span class="batch-summary-meta">
+            Evaluation criteria
+        </span>
+    </div>
+
+    <!-- Period -->
+    <div class="batch-summary-card">
+        <span class="card-label">
+            PERIOD
+        </span>
+        <div class="batch-period-display">
+            <div class="batch-period-row">
+                <span class="batch-period-label">Start:</span>
+                <span class="batch-period-date">@(Model.StartDate.HasValue ? Model.StartDate.Value.ToString("dd/MM/yyyy") : "Not set")</span>
             </div>
+            <div class="batch-period-row">
+                <span class="batch-period-label">End:</span>
+                <span class="batch-period-date">@(Model.EndDate.HasValue ? Model.EndDate.Value.ToString("dd/MM/yyyy") : "Not set")</span>
+            </div>
+        </div>
+    </div>
 
+</div>
+
+<!-- =========================================================
+     CURRENT ACTION & WORKFLOW COMMAND
+     ========================================================= -->
+
+<div class="batch-action-card">
+
+    <div class="batch-action-content">
+
+        <div class="page-eyebrow">
+            DECISION WORKFLOW
         </div>
 
+        @if (Model.Status == "Draft")
+        {
+            <h2>
+                Ready to start.
+            </h2>
+            <p>
+                The evaluation scope has been configured. After verifying participating suppliers and criteria, start the evaluation workflow.
+            </p>
+        }
+        else if (!evaluationComplete)
+        {
+            <h2>
+                Complete supplier evaluation.
+            </h2>
+            <p>
+                Entered <strong>@evaluationScoreCount</strong> / <strong>@expectedEvaluationScoreCount</strong> evaluation scores. Continue scoring suppliers against each criterion.
+            </p>
+        }
+        else if (!ahpResultExists)
+        {
+            <h2>
+                Complete AHP.
+            </h2>
+            <p>
+                The evaluation score matrix is complete. Enter pairwise comparisons and calculate AHP to determine criteria weights.
+            </p>
+        }
+        else if (!ahpConsistent)
+        {
+            <h2>
+                Review AHP consistency.
+            </h2>
+            <p>
+                Current Consistency Ratio is <strong>@((ahpCR ?? 0m).ToString("0.0000"))</strong>. Adjust the pairwise matrix so that CR ≤ 0.10 before running TOPSIS.
+            </p>
+        }
+        else if (!topsisComplete)
+        {
+            <h2>
+                Calculate TOPSIS.
+            </h2>
+            <p>
+                AHP consistency is satisfied. You can now apply AHP weights to rank candidate suppliers using TOPSIS.
+            </p>
+        }
+        else if (isCompleted)
+        {
+            <h2>
+                Evaluation completed.
+            </h2>
+            <p>
+                The final supplier selection decision for this batch has been approved.
+            </p>
+        }
+        else
+        {
+            <h2>
+                Review final result.
+            </h2>
+            <p>
+                TOPSIS ranking is complete. Proceed to Decision Result to review and approve the final supplier.
+            </p>
+        }
 
-        <div class="batch-workflow-line"></div>
-
-
-        <!-- =====================================================
-         04 TOPSIS
-         ===================================================== -->
-
-        <div class="batch-workflow-step
-            @(topsisComplete
-                ? "batch-step-complete"
-                : ahpConsistent
-                    ? "batch-step-current"
-                    : "batch-step-disabled")">
-
-            <div class="batch-workflow-number">
-                04
-            </div>
-
-
-            <div class="batch-workflow-content">
-
-                <span>
-                    TOPSIS
-                </span>
-
-                <small>
-
-                    @if (topsisComplete)
-                    {
-                        @: @topsisResultCount results
-                    }
-                    else
-                    {
-                        @:Supplier ranking
-                    }
-
-                </small>
-
-            </div>
-
-        </div>
-
-
-        <div class="batch-workflow-line"></div>
-
-
-        <!-- =====================================================
-         05 RESULT
-         ===================================================== -->
-
-        <div class="batch-workflow-step
-            @(isCompleted
-                ? "batch-step-complete"
-                : topsisComplete
-                    ? "batch-step-current"
-                    : "batch-step-disabled")">
-
-            <div class="batch-workflow-number">
-                05
-            </div>
-
-
-            <div class="batch-workflow-content">
-
-                <span>
-                    Result
-                </span>
-
-                <small>
-                    Decision
-                </small>
-
-            </div>
-
+        <div class="batch-workflow-status-note">
+            <i class="bi bi-diagram-3"></i>
+            <span class="status-note-label">Status:</span>
+            <span class="status-note-text">
+                @if (Model.Status == "Cancelled")
+                {
+                    <text>Cancelled &middot; Evaluation batch was cancelled</text>
+                }
+                else if (isCompleted)
+                {
+                    <text>Completed &middot; Decision approved</text>
+                }
+                else if (!evaluationComplete)
+                {
+                    <text>Evaluation &middot; @evaluationScoreCount / @expectedEvaluationScoreCount scores</text>
+                }
+                else if (!ahpResultExists)
+                {
+                    <text>AHP &middot; Waiting for calculation</text>
+                }
+                else if (!ahpConsistent)
+                {
+                    <text>AHP &middot; CR = @((ahpCR ?? 0m).ToString("0.0000")) (Requires revision)</text>
+                }
+                else if (!topsisComplete)
+                {
+                    <text>TOPSIS &middot; Ready</text>
+                }
+                else
+                {
+                    <text>Result &middot; Waiting for decision</text>
+                }
+            </span>
         </div>
 
     </div>
 
-
-    <!-- =========================================================
-     SUMMARY
-     ========================================================= -->
-
-    <div class="batch-summary-grid">
-
-
-        <!-- Product Group -->
-
-        <div class="surface-card batch-summary-card">
-
-            <span class="card-label">
-                PRODUCT GROUP
-            </span>
-
-            <strong class="batch-summary-value-text">
-                @Model.Group.GroupCode
-            </strong>
-
-            <span class="batch-summary-meta">
-                @Model.Group.GroupName
-            </span>
-
-        </div>
-
-
-        <!-- Suppliers -->
-
-        <div class="surface-card batch-summary-card">
-
-            <span class="card-label">
-                SUPPLIERS
-            </span>
-
-            <strong class="batch-summary-value">
-                @supplierCount.ToString("00")
-            </strong>
-
-            <span class="batch-summary-meta">
-                Participating suppliers
-            </span>
-
-        </div>
-
-
-        <!-- Criteria -->
-
-        <div class="surface-card batch-summary-card">
-
-            <span class="card-label">
-                CRITERIA
-            </span>
-
-            <strong class="batch-summary-value">
-                @criteriaCount.ToString("00")
-            </strong>
-
-            <span class="batch-summary-meta">
-                Evaluation criteria
-            </span>
-
-        </div>
-
-
-        <!-- Period -->
-
-        <div class="surface-card batch-summary-card">
-
-            <span class="card-label">
-                PERIOD
-            </span>
-
-            <strong class="batch-summary-value-text">
-
-                @if (Model.StartDate.HasValue)
-                {
-                    @Model.StartDate.Value.ToString("dd/MM/yyyy")
-                }
-                else
-                {
-                    @: Not set
-                }
-
-            </strong>
-
-            <span class="batch-summary-meta">
-
-                @if (Model.EndDate.HasValue)
-                {
-                    @Model.EndDate.Value.ToString("dd/MM/yyyy")
-                }
-
-            </span>
-
-        </div>
-
-    </div>
-
-    <!-- =========================================================
-     CURRENT ACTION
-     ========================================================= -->
-
-    <div class="batch-action-card">
-
-        <div class="batch-action-content">
-
-            <div class="page-eyebrow">
-                DECISION WORKFLOW
-            </div>
-
-
-            @if (Model.Status == "Draft")
-            {
-                <h2>
-                    Ready to start.
-                </h2>
-
-                <p>
-                    The evaluation scope has been configured. After verifying participating suppliers and criteria, start the evaluation workflow.
-                </p>
-            }
-            else if (!evaluationComplete)
-            {
-                <h2>
-                    Complete supplier evaluation.
-                </h2>
-
-                <p>
-                    Entered
-                    <strong>
-                        @evaluationScoreCount
-                    </strong>
-                    /
-                    <strong>
-                        @expectedEvaluationScoreCount
-                    </strong>
-                    evaluation scores.
-                </p>
-            }
-            else if (!ahpResultExists)
-            {
-                <h2>
-                    Complete AHP.
-                </h2>
-
-                <p>
-                    The evaluation score matrix is complete. Enter pairwise comparisons and calculate AHP to determine criteria weights.
-                </p>
-            }
-            else if (!ahpConsistent)
-            {
-                <h2>
-                    Review AHP consistency.
-                </h2>
-
-                <p>
-                    Current Consistency Ratio is
-                    <strong>
-                        @((ahpCR ?? 0m).ToString("0.0000"))
-                    </strong>.
-                    Adjust the pairwise matrix so that CR ≤ 0.10 before running TOPSIS.
-                </p>
-            }
-            else if (!topsisComplete)
-            {
-                <h2>
-                    Calculate TOPSIS.
-                </h2>
-
-                <p>
-                    AHP consistency is satisfied. You can now apply AHP weights to rank candidate suppliers using TOPSIS.
-                </p>
-            }
-            else if (isCompleted)
-            {
-                <h2>
-                    Evaluation completed.
-                </h2>
-
-                <p>
-                    The final supplier selection decision for this batch has been approved.
-                </p>
-            }
-            else
-            {
-                <h2>
-                    Review final result.
-                </h2>
-
-                <p>
-                    TOPSIS ranking is complete. Proceed to Decision Result to review and approve the final supplier.
-                </p>
-            }
-
-        </div>
-
-
-        <div class="batch-action-buttons">
-
-
-            <!-- =================================================
-             01. DRAFT → START
-             ================================================= -->
-            @if (
-                        Model.Status == "Draft" &&
-                        canEvaluate)
-            {
-                <form asp-action="Start"
-                      method="post"
-                      style="margin:0;">
-
-                    @Html.AntiForgeryToken()
-
-                    <input type="hidden"
-                           name="id"
-                           value="@Model.BatchId" />
-                    <input type="hidden"
-                           name="rowVersion"
-                           value="@readiness.RowVersion" />
-
-                    <button type="submit"
-                            class="btn-primary"
-                            data-dss-confirm="Are you sure you want to start the evaluation workflow for batch '@Model.BatchName'?"
-                            data-dss-title="Start Evaluation"
-                            data-dss-btn-text="Start"
-                            data-dss-type="primary">
-
-                        Start Evaluation
-
-                        <i class="bi bi-arrow-right"></i>
-
-                    </button>
-
-                </form>
-            }
-
-
-            <!-- =================================================
-             02. EVALUATION
-             ================================================= -->
-            @if (
-                        Model.Status == "Evaluating" &&
-                        !evaluationComplete &&
-                        canEvaluate)
-            {
-                <a asp-controller="Evaluation"
-                   asp-action="Index"
-                   asp-route-batchId="@Model.BatchId"
-                   class="btn-primary">
-
-                    Evaluation
-
+    <div class="batch-action-buttons">
+
+        <!-- 01. DRAFT -> START -->
+        @if (Model.Status == "Draft" && canEvaluate)
+        {
+            <form asp-action="Start" method="post" style="margin:0;">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.BatchId" />
+                <input type="hidden" name="rowVersion" value="@readiness.RowVersion" />
+
+                <button type="submit"
+                        class="btn-primary"
+                        data-dss-confirm="Are you sure you want to start the evaluation workflow for batch '@Model.BatchName'?"
+                        data-dss-title="Start Evaluation"
+                        data-dss-btn-text="Start"
+                        data-dss-type="primary">
+                    <span>Start Evaluation</span>
                     <i class="bi bi-arrow-right"></i>
+                </button>
+            </form>
+        }
 
-                </a>
-            }
+        <!-- 02. EVALUATION -->
+        @if (Model.Status == "Evaluating" && !evaluationComplete && canEvaluate)
+        {
+            <a asp-controller="Evaluation"
+               asp-action="Index"
+               asp-route-batchId="@Model.BatchId"
+               class="btn-primary">
+                <span>Evaluation</span>
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        }
 
+        <!-- 03. AHP -->
+        @if (Model.Status == "Evaluating" && evaluationComplete && !ahpConsistent && canAHP)
+        {
+            <a asp-controller="AHP"
+               asp-action="Index"
+               asp-route-batchId="@Model.BatchId"
+               class="btn-primary">
+                <span>AHP</span>
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        }
 
-            <!-- =================================================
-             03. AHP
-             ================================================= -->
-            @if (
-                        Model.Status == "Evaluating" &&
-                        evaluationComplete &&
-                        !ahpConsistent &&
-                        canAHP)
-            {
-                <a asp-controller="AHP"
-                   asp-action="Index"
-                   asp-route-batchId="@Model.BatchId"
-                   class="btn-outline">
+        <!-- 04. TOPSIS -->
+        @if (Model.Status == "Evaluating" && ahpConsistent && !topsisComplete && canTOPSIS)
+        {
+            <a asp-controller="TOPSIS"
+               asp-action="Index"
+               asp-route-batchId="@Model.BatchId"
+               class="btn-primary">
+                <span>TOPSIS</span>
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        }
 
-                    AHP
+        <!-- 05. RESULT (Before completion) -->
+        @if (topsisComplete && !isCompleted && canResult)
+        {
+            <a asp-controller="DecisionResult"
+               asp-action="Index"
+               asp-route-batchId="@Model.BatchId"
+               class="btn-primary">
+                <span>Result</span>
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        }
 
-                    <i class="bi bi-arrow-right"></i>
-
-                </a>
-            }
-
-
-            <!-- =================================================
-             04. TOPSIS
-             ================================================= -->
-            @if (
-                        Model.Status == "Evaluating" &&
-                        ahpConsistent &&
-                        !topsisComplete &&
-                        canTOPSIS)
-            {
-                <a asp-controller="TOPSIS"
-                   asp-action="Index"
-                   asp-route-batchId="@Model.BatchId"
-                   class="btn-primary">
-
-                    TOPSIS
-
-                    <i class="bi bi-arrow-right"></i>
-
-                </a>
-            }
-
-
-            <!-- =================================================
-             05. RESULT (Before completion)
-             ================================================= -->
-            @if (
-                        topsisComplete &&
-                        !isCompleted &&
-                        canResult)
+        <!-- COMPLETED (After final approval) -->
+        @if (isCompleted)
+        {
+            @if (canResult)
             {
                 <a asp-controller="DecisionResult"
                    asp-action="Index"
                    asp-route-batchId="@Model.BatchId"
-                   class="btn-primary">
-
-                    Result
-
+                   class="btn-outline">
+                    <span>Result</span>
                     <i class="bi bi-arrow-right"></i>
+                </a>
 
+                <a asp-controller="DecisionResult"
+                   asp-action="Index"
+                   asp-route-batchId="@Model.BatchId"
+                   asp-fragment="final-approval"
+                   class="@(canReport ? "btn-outline" : "btn-primary")">
+                    <span>View Decision</span>
+                    <i class="bi bi-arrow-right"></i>
                 </a>
             }
 
-
-            <!-- =================================================
-             COMPLETED (After final approval)
-             ================================================= -->
-            @if (isCompleted)
+            @if (canReport)
             {
-                @if (canResult)
-                {
-                    <a asp-controller="DecisionResult"
-                       asp-action="Index"
-                       asp-route-batchId="@Model.BatchId"
-                       class="btn-outline">
-
-                        Result
-
-                        <i class="bi bi-arrow-right"></i>
-
-                    </a>
-
-                    <a asp-controller="DecisionResult"
-                       asp-action="Index"
-                       asp-route-batchId="@Model.BatchId"
-                       asp-fragment="final-approval"
-                       class="@(canReport ? "btn-outline" : "btn-primary")">
-
-                        View Decision
-
-                        <i class="bi bi-arrow-right"></i>
-
-                    </a>
-                }
-
-
-                @if (canReport)
-                {
-                    <a asp-controller="Report"
-                       asp-action="Index"
-                       asp-route-batchId="@Model.BatchId"
-                       class="btn-primary">
-
-                        <i class="bi bi-file-earmark-bar-graph"></i>
-
-                        Reports
-
-                        <i class="bi bi-arrow-right"></i>
-
-                    </a>
-                }
+                <a asp-controller="Report"
+                   asp-action="Index"
+                   asp-route-batchId="@Model.BatchId"
+                   class="btn-primary">
+                    <i class="bi bi-file-earmark-bar-graph"></i>
+                    <span>Reports</span>
+                    <i class="bi bi-arrow-right"></i>
+                </a>
             }
+        }
 
+        <!-- 06. CANCEL BATCH -->
+        @if ((Model.Status == "Draft" || Model.Status == "Evaluating") && (isAdmin || isPurchasing))
+        {
+            <form asp-action="Cancel" method="post" style="margin:0;">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.BatchId" />
+                <input type="hidden" name="rowVersion" value="@readiness.RowVersion" />
 
-            <!-- =================================================
-             06. CANCEL BATCH
-             ================================================= -->
-            @if ((Model.Status == "Draft" || Model.Status == "Evaluating") && (isAdmin || isPurchasing))
-            {
-                <form asp-action="Cancel"
-                      method="post"
-                      style="margin:0;">
-
-                    @Html.AntiForgeryToken()
-
-                    <input type="hidden"
-                           name="id"
-                           value="@Model.BatchId" />
-                    <input type="hidden"
-                           name="rowVersion"
-                           value="@readiness.RowVersion" />
-
-                    <button type="submit"
-                            class="btn-outline text-danger border-danger"
-                            data-dss-confirm="Are you sure you want to cancel evaluation batch '@Model.BatchName'? This action cannot be undone."
-                            data-dss-title="Cancel Evaluation Batch"
-                            data-dss-btn-text="Cancel Batch"
-                            data-dss-type="danger">
-
-                        <i class="bi bi-x-circle me-1"></i> Cancel Batch
-
-                    </button>
-
-                </form>
-            }
-
-        </div>
+                <button type="submit"
+                        class="btn-cancel-batch"
+                        data-dss-confirm="Are you sure you want to cancel evaluation batch '@Model.BatchName'? This action cannot be undone."
+                        data-dss-title="Cancel Evaluation Batch"
+                        data-dss-btn-text="Cancel Batch"
+                        data-dss-type="danger">
+                    <i class="bi bi-x-circle"></i>
+                    <span>Cancel Batch</span>
+                </button>
+            </form>
+        }
 
     </div>
 
-    <!-- =========================================================
-     WORKFLOW STATUS
+</div>
+
+<!-- =========================================================
+     EVALUATION SCOPE: SUPPLIERS
      ========================================================= -->
 
-    <div class="batch-workflow-status-note">
+<div class="dashboard-section">
 
-        <strong>
-            Workflow:
-        </strong>
+    <div class="section-heading">
+        <div>
+            <div class="page-eyebrow">
+                EVALUATION SCOPE
+            </div>
 
+            <h2 class="section-title">
+                Participating Suppliers
+                <span class="section-count-badge">@supplierCount</span>
+            </h2>
+        </div>
+    </div>
 
-        @if (Model.Status == "Cancelled")
+    <div class="table-card">
+
+        @if (Model.Suppliers.Any())
         {
-            @: Cancelled · Evaluation batch was cancelled
-        }
-        else if (isCompleted)
-        {
-            @: Completed · Decision approved
-        }
-        else if (!evaluationComplete)
-        {
-            @: Evaluation · @evaluationScoreCount / @expectedEvaluationScoreCount scores
-        }
-        else if (!ahpResultExists)
-        {
-            @: AHP · Waiting for calculation
-        }
-        else if (!ahpConsistent)
-        {
-            @: AHP · CR = @((ahpCR ?? 0m).ToString("0.0000"))
-        }
-        else if (!topsisComplete)
-        {
-            @: TOPSIS · Ready
+            <div class="data-table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 140px;">
+                                Code
+                            </th>
+                            <th>
+                                Supplier Name
+                            </th>
+                            <th style="width: 140px;">
+                                Status
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var supplier in Model.Suppliers.OrderBy(x => x.SupplierCode))
+                        {
+                            <tr>
+                                <td>
+                                    <span class="batch-code-badge">
+                                        @supplier.SupplierCode
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <strong>
+                                        @supplier.SupplierName
+                                    </strong>
+                                </td>
+
+                                <td>
+                                    <span class="status-pill status-@supplier.Status.ToLowerInvariant()">
+                                        @supplier.Status
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         }
         else
         {
-            @: Result · Waiting for decision
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="bi bi-building-x"></i>
+                </div>
+                <h3>
+                    No suppliers.
+                </h3>
+                <p>
+                    No participating suppliers have been assigned to this batch.
+                </p>
+            </div>
         }
 
     </div>
 
+</div>
 
-    <!-- =========================================================
-     SUPPLIERS
+<!-- =========================================================
+     EVALUATION SCOPE: CRITERIA
      ========================================================= -->
 
-    <div class="dashboard-section">
+<div class="dashboard-section">
 
-        <div class="section-heading">
-
-            <div>
-
-                <div class="page-eyebrow">
-                    SCOPE
-                </div>
-
-                <h2 class="section-title">
-                    Suppliers
-                </h2>
-
+    <div class="section-heading">
+        <div>
+            <div class="page-eyebrow">
+                EVALUATION SCOPE
             </div>
 
+            <h2 class="section-title">
+                Evaluation Criteria
+                <span class="section-count-badge">@criteriaCount</span>
+            </h2>
         </div>
+    </div>
 
+    <div class="table-card">
 
-        <div class="table-card">
+        @if (Model.Criteria.Any())
+        {
+            <div class="data-table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 140px;">
+                                Code
+                            </th>
+                            <th>
+                                Criteria Name
+                            </th>
+                            <th style="width: 160px;">
+                                Type
+                            </th>
+                            <th style="width: 120px;">
+                                Unit
+                            </th>
+                        </tr>
+                    </thead>
 
-            @if (Model.Suppliers.Any())
-            {
-                <div class="data-table-wrapper">
-
-                    <table class="data-table">
-
-                        <thead>
-
+                    <tbody>
+                        @foreach (var criterion in Model.Criteria.OrderBy(x => x.CriteriaCode))
+                        {
                             <tr>
+                                <td>
+                                    <span class="batch-code-badge">
+                                        @criterion.CriteriaCode
+                                    </span>
+                                </td>
 
-                                <th>
-                                    Code
-                                </th>
+                                <td>
+                                    <strong>
+                                        @criterion.CriteriaName
+                                    </strong>
 
-                                <th>
-                                    Supplier
-                                </th>
-
-                                <th>
-                                    Status
-                                </th>
-
-                            </tr>
-
-                        </thead>
-
-
-                        <tbody>
-
-                            @foreach (
-                                var supplier
-                                in Model.Suppliers
-                                    .OrderBy(
-                                        x =>
-                                            x.SupplierCode))
-                            {
-                                <tr>
-
-                                    <td>
-
-                                        <strong>
-                                            @supplier.SupplierCode
-                                        </strong>
-
-                                    </td>
-
-
-                                    <td>
-
-                                        <strong>
-                                            @supplier.SupplierName
-                                        </strong>
-
-                                    </td>
-
-
-                                    <td>
-
-                                        <span class="status-pill
-                                            status-@supplier.Status
-                                            .ToLowerInvariant()">
-
-                                            @supplier.Status
-
+                                    @if (!string.IsNullOrWhiteSpace(criterion.Description))
+                                    {
+                                        <span class="table-muted">
+                                            @criterion.Description
                                         </span>
+                                    }
+                                </td>
 
-                                    </td>
+                                <td>
+                                    @if (criterion.CriteriaType == "Benefit")
+                                    {
+                                        <span class="criteria-type-badge type-benefit">
+                                            <i class="bi bi-arrow-up-right"></i> Benefit
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="criteria-type-badge type-cost">
+                                            <i class="bi bi-arrow-down-right"></i> Cost
+                                        </span>
+                                    }
+                                </td>
 
-                                </tr>
-                            }
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-            }
-            else
-            {
-                <div class="empty-state">
-
-                    <h3>
-                        No suppliers.
-                    </h3>
-
-                    <p>
-                        No participating suppliers have been assigned to this batch.
-                    </p>
-
-                </div>
-            }
-
-        </div>
-
-    </div>
-
-
-    <!-- =========================================================
-     CRITERIA
-     ========================================================= -->
-
-    <div class="dashboard-section">
-
-        <div class="section-heading">
-
-            <div>
-
-                <div class="page-eyebrow">
-                    EVALUATION
-                </div>
-
-                <h2 class="section-title">
-                    Criteria
-                </h2>
-
-            </div>
-
-        </div>
-
-
-        <div class="table-card">
-
-            @if (Model.Criteria.Any())
-            {
-                <div class="data-table-wrapper">
-
-                    <table class="data-table">
-
-                        <thead>
-
-                            <tr>
-
-                                <th>
-                                    Code
-                                </th>
-
-                                <th>
-                                    Criteria
-                                </th>
-
-                                <th>
-                                    Type
-                                </th>
-
-                                <th>
-                                    Unit
-                                </th>
-
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(criterion.Unit))
+                                    {
+                                        <span class="criteria-unit-pill">
+                                            @criterion.Unit
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="table-muted">—</span>
+                                    }
+                                </td>
                             </tr>
-
-                        </thead>
-
-
-                        <tbody>
-
-                            @foreach (
-                                var criterion
-                                in Model.Criteria
-                                    .OrderBy(
-                                        x =>
-                                            x.CriteriaCode))
-                            {
-                                <tr>
-
-                                    <td>
-
-                                        <strong>
-                                            @criterion.CriteriaCode
-                                        </strong>
-
-                                    </td>
-
-
-                                    <td>
-
-                                        <strong>
-                                            @criterion.CriteriaName
-                                        </strong>
-
-
-                                        @if (
-                                            !string.IsNullOrWhiteSpace(
-                                                criterion.Description))
-                                        {
-                                            <span class="table-muted">
-                                                @criterion.Description
-                                            </span>
-                                        }
-
-                                    </td>
-
-
-                                    <td>
-
-                                        @if (
-                                            criterion.CriteriaType ==
-                                            "Benefit")
-                                        {
-                                            <span class="criteria-type criteria-benefit">
-                                                Benefit
-                                            </span>
-                                        }
-                                        else
-                                        {
-                                            <span class="criteria-type criteria-cost">
-                                                Cost
-                                            </span>
-                                        }
-
-                                    </td>
-
-
-                                    <td>
-
-                                        @(
-                                            string.IsNullOrWhiteSpace(
-                                                criterion.Unit)
-                                                ? "—"
-                                                : criterion.Unit
-                                        )
-
-                                    </td>
-
-                                </tr>
-                            }
-
-                        </tbody>
-
-                    </table>
-
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="bi bi-sliders2"></i>
                 </div>
-            }
-            else
-            {
-                <div class="empty-state">
-
-                    <h3>
-                        No criteria.
-                    </h3>
-
-                    <p>
-                        No evaluation criteria have been assigned to this batch.
-                    </p>
-
-                </div>
-            }
-
-        </div>
+                <h3>
+                    No criteria.
+                </h3>
+                <p>
+                    No evaluation criteria have been assigned to this batch.
+                </p>
+            </div>
+        }
 
     </div>
+
+</div>
 
 @section Styles {
     <link rel="stylesheet" href="~/css/pages/evaluation-batch.css" asp-append-version="true" />

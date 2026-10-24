@@ -286,6 +286,22 @@
     background: #dc2626;
 }
 
+.status-pill.status-active {
+    background: rgba(34, 197, 94, 0.12);
+    color: #15803d;
+}
+.status-pill.status-active::before {
+    background: #15803d;
+}
+
+.status-pill.status-inactive {
+    background: var(--surface-muted);
+    color: var(--muted);
+}
+.status-pill.status-inactive::before {
+    background: var(--muted);
+}
+
 /* 4. ACTIONS DROPDOWN */
 .batch-actions-dropdown {
     position: relative;
@@ -411,7 +427,7 @@
    ========================================================= */
 
 .evaluation-batch-header {
-    margin-bottom: 28px;
+    margin-bottom: 24px;
 }
 
 .evaluation-batch-header-actions {
@@ -1174,8 +1190,8 @@
     width: 100%;
     display: flex;
     align-items: center;
-    margin: 0 auto 28px;
-    padding: 22px 28px;
+    margin-bottom: 24px;
+    padding: 18px 24px;
     box-sizing: border-box;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -1197,17 +1213,17 @@
 }
 
 .batch-workflow-number {
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    flex: 0 0 34px;
+    flex: 0 0 32px;
     border: 1px solid var(--border);
     border-radius: 50%;
-    background: var(--surface);
+    background: var(--canvas-soft);
     color: var(--muted);
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: 12px;
     font-weight: 600;
 }
@@ -1219,51 +1235,60 @@
     white-space: nowrap;
 }
 
-    .batch-workflow-content span {
-        color: var(--ink);
-        font-family: var(--font-serif);
-        font-size: 14px;
-        font-weight: 600;
-    }
+.batch-workflow-content span {
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+    font-weight: 600;
+}
 
-    .batch-workflow-content small {
-        color: var(--muted);
-        font-size: 11px;
-    }
+.batch-workflow-content small {
+    color: var(--muted);
+    font-size: 11px;
+}
 
 
 /* =========================================================
-   COMPLETE / CURRENT / DISABLED
+   COMPLETE / CURRENT / WARNING / DISABLED
    ========================================================= */
 
-.batch-step-complete
-.batch-workflow-number {
+.batch-step-complete .batch-workflow-number {
     border-color: var(--sage-soft);
     background: var(--sage-soft);
     color: var(--sage-dark);
 }
 
-.batch-step-complete
-.batch-workflow-content span {
+.batch-step-complete .batch-workflow-content span {
     color: var(--sage-dark);
 }
 
-
-.batch-step-current
-.batch-workflow-number {
-    border-color: var(--terracotta-soft);
-    background: var(--terracotta-soft);
-    color: var(--terracotta);
+.batch-step-current .batch-workflow-number {
+    border-color: rgba(37, 99, 235, 0.25);
+    background: rgba(37, 99, 235, 0.1);
+    color: #2563eb;
 }
 
-.batch-step-current
-.batch-workflow-content span {
-    color: var(--terracotta);
+.batch-step-current .batch-workflow-content span {
+    color: #2563eb;
 }
 
+.batch-step-warning .batch-workflow-number {
+    border-color: rgba(245, 158, 11, 0.4);
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+}
+
+.batch-step-warning .batch-workflow-content span {
+    color: #d97706;
+}
+
+.batch-step-warning .batch-workflow-content small {
+    color: #b45309;
+    font-weight: 600;
+}
 
 .batch-step-disabled {
-    opacity: 0.50;
+    opacity: 0.45;
 }
 
 
@@ -1274,52 +1299,104 @@
 .batch-workflow-line {
     flex: 1;
     height: 1px;
-    min-width: 24px;
-    margin: 0 14px;
+    min-width: 20px;
+    margin: 0 12px;
     background: var(--border);
 }
 
 
 /* =========================================================
-   SUMMARY
+   SUMMARY GRID (4 OVERVIEW CARDS)
    ========================================================= */
 
 .batch-summary-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 16px;
-    margin-bottom: 28px;
+    margin-bottom: 24px;
 }
 
 .batch-summary-card {
-    min-height: 140px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 22px;
+    box-shadow: var(--shadow-card);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 24px;
+    min-height: 120px;
     box-sizing: border-box;
+    transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.18s ease;
+}
+
+.batch-summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-elevated);
+    border-color: var(--border-strong);
+}
+
+.batch-summary-card .card-label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-family: var(--font-sans);
+    margin-bottom: 8px;
 }
 
 .batch-summary-value {
-    color: var(--sky-dark);
-    font-family: var(--font-serif);
-    font-size: 36px;
-    font-weight: 500;
-    line-height: 1;
+    color: #2563eb;
+    font-family: var(--font-sans);
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
 }
 
 .batch-summary-value-text {
     color: var(--ink);
-    font-family: var(--font-serif);
-    font-size: 20px;
-    font-weight: 500;
-    line-height: 1.2;
+    font-family: var(--font-sans);
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.25;
+    word-break: break-word;
 }
 
 .batch-summary-meta {
     color: var(--muted);
     font-size: 12px;
     line-height: 1.4;
+    margin-top: 6px;
+}
+
+.batch-period-display {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.batch-period-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12.5px;
+}
+
+.batch-period-label {
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.batch-period-date {
+    color: var(--ink);
+    font-weight: 600;
+    font-family: var(--font-mono, monospace);
+    font-size: 12px;
 }
 
 
@@ -1331,62 +1408,90 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 32px;
-    margin-bottom: 56px;
-    padding: 28px 32px;
+    gap: 24px;
+    margin-bottom: 24px;
+    padding: 24px 28px;
     box-sizing: border-box;
-    background: var(--canvas-soft);
+    background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
 }
 
 .batch-action-content {
     max-width: 680px;
+    min-width: 0;
 }
 
-    .batch-action-content .page-eyebrow {
-        margin-bottom: 6px;
-    }
+.batch-action-content .page-eyebrow {
+    margin-bottom: 6px;
+}
 
-    .batch-action-content h2 {
-        margin: 0;
-        color: var(--ink);
-        font-family: var(--font-serif);
-        font-size: 30px;
-        font-weight: 500;
-        line-height: 1.1;
-    }
+.batch-action-content h2 {
+    margin: 0;
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.25;
+}
 
-    .batch-action-content p {
-        margin: 10px 0 0;
-        color: var(--body);
-        font-size: 15px;
-        line-height: 1.55;
-    }
+.batch-action-content p {
+    margin: 8px 0 0;
+    color: var(--body);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.batch-workflow-status-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 5px 12px;
+    background: var(--canvas-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.batch-workflow-status-note i {
+    color: var(--ink);
+    font-size: 13px;
+}
+
+.batch-workflow-status-note .status-note-label {
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.batch-workflow-status-note .status-note-text {
+    color: var(--body);
+}
 
 .batch-action-buttons {
     display: flex;
     align-items: center;
     gap: 10px;
     flex: 0 0 auto;
+    flex-wrap: wrap;
 }
 
 .batch-action-buttons .btn-primary,
-.batch-action-buttons .btn-outline,
-.batch-action-buttons button {
+.batch-action-buttons .btn-outline {
     height: 42px !important;
     min-height: 42px !important;
-    max-height: 42px !important;
-    padding: 0 20px !important;
+    padding: 0 18px !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
     box-sizing: border-box !important;
-    font-family: var(--font-serif) !important;
-    font-size: 14px !important;
+    font-family: var(--font-sans) !important;
+    font-size: 13.5px !important;
     font-weight: 500 !important;
     line-height: 1 !important;
-    border-radius: var(--radius-pill) !important;
+    border-radius: var(--radius-md) !important;
     text-decoration: none !important;
     white-space: nowrap !important;
     gap: 8px !important;
@@ -1394,9 +1499,36 @@
     transition: all 0.16s ease !important;
 }
 
+.batch-action-buttons .btn-cancel-batch {
+    height: 42px;
+    min-height: 42px;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-sizing: border-box;
+    border: 1px solid rgba(220, 38, 38, 0.35);
+    background: transparent;
+    color: #dc2626;
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.batch-action-buttons .btn-cancel-batch:hover {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: #dc2626;
+    color: #b91c1c;
+}
+
 .batch-action-buttons .btn-primary i,
 .batch-action-buttons .btn-outline i,
-.batch-action-buttons button i {
+.batch-action-buttons .btn-cancel-batch i {
     font-size: 14px !important;
     line-height: 1 !important;
     display: inline-flex !important;
@@ -1426,7 +1558,7 @@
    ========================================================= */
 
 .dashboard-section {
-    margin-bottom: 28px;
+    margin-bottom: 24px;
 }
 
 .dashboard-section .section-heading {
@@ -1434,6 +1566,58 @@
     align-items: center;
     justify-content: space-between;
     margin-bottom: 16px;
+}
+
+.section-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: var(--radius-pill);
+    background: var(--surface-muted);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+/* Criteria Type Badges */
+.criteria-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.criteria-type-badge.type-benefit,
+.criteria-type.criteria-benefit {
+    background: rgba(34, 197, 94, 0.12);
+    color: #15803d;
+    border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.criteria-type-badge.type-cost,
+.criteria-type.criteria-cost {
+    background: rgba(245, 158, 11, 0.12);
+    color: #b45309;
+    border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.criteria-unit-pill {
+    font-family: var(--font-mono, monospace);
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--canvas-soft);
+    padding: 2px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    display: inline-block;
 }
 
 
@@ -1510,7 +1694,8 @@
 
 
         .batch-action-buttons .btn-primary,
-        .batch-action-buttons .btn-outline {
+        .batch-action-buttons .btn-outline,
+        .batch-action-buttons .btn-cancel-batch {
             flex: 1;
         }
 
@@ -1581,7 +1766,8 @@
 
 
         .batch-action-buttons .btn-primary,
-        .batch-action-buttons .btn-outline {
+        .batch-action-buttons .btn-outline,
+        .batch-action-buttons .btn-cancel-batch {
             width: 100%;
         }
 
