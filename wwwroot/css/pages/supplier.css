@@ -69,37 +69,6 @@
     margin-top: 4px;
 }
 
-.kpi-meta-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 600;
-    line-height: 1.4;
-}
-
-.kpi-meta-pill.pill-blue {
-    background: rgba(37, 99, 235, 0.08);
-    color: #2563eb;
-}
-
-.kpi-meta-pill.pill-green {
-    background: var(--sage-soft);
-    color: var(--sage-dark);
-}
-
-.kpi-meta-pill.pill-muted {
-    background: var(--surface-muted);
-    color: var(--muted);
-}
-
-.kpi-meta-pill.pill-indigo {
-    background: rgba(124, 58, 237, 0.08);
-    color: #7c3aed;
-}
-
 .supplier-kpi-icon {
     width: 44px;
     height: 44px;

@@ -139,8 +139,8 @@
     align-items: center;
     justify-content: space-between;
     gap: 24px;
-    margin-bottom: 20px;
-    padding: 28px 32px;
+    margin-bottom: 24px;
+    padding: 24px 28px;
     background: var(--sage-soft);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
@@ -188,13 +188,21 @@
 
 .decision-ranking-card {
     overflow: hidden;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
 }
 
 
 .decision-card-header {
-    padding: 22px 24px;
+    padding: 20px 24px;
     border-bottom: 1px solid var(--border);
+}
+
+.decision-card-header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
 }
 
 
@@ -238,7 +246,8 @@
     display: block;
     width: 100%;
     box-sizing: border-box;
-    margin-top: 20px;
+    margin-top: 0;
+    margin-bottom: 24px;
     padding: 24px 28px;
     background: var(--surface);
     border: 1px solid var(--border);
