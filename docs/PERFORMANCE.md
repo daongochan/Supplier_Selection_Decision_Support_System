@@ -137,7 +137,105 @@ Tài liệu này ghi nhận số liệu đo lường hiệu năng thực tế tr
 
 ---
 
-## 5. BẢNG TỔNG HỢP HIỆU NĂNG TOÀN DIỆN (TRƯỚC & SAU TỐI ƯU VÒNG 3)
+## 6. ĐIỀU TRA NGUYÊN NHÂN HỆ THỐNG CHẠY CHẬM & CHẨN ĐOÁN THỰC TẾ (ROUND 4)
+
+### 6.1. Hiện trạng môi trường vận hành thực tế
+- **Chế độ thực thi:** Chạy ở chế độ `Debug` dưới Visual Studio 2026/18 (`VsDebugConsole.exe` [PID 28652] -> `SupplierSelectionDSS.exe` [PID 25292]), lắng nghe tại cổng `http://127.0.0.1:5218` và `https://127.0.0.1:7146`.
+- **Web Server:** Kestrel nội tại của ASP.NET Core 10 (`Microsoft.AspNetCore.Server.Kestrel`).
+- **CSDL:** Microsoft SQL Server 2025 (RTM-GDR KB5128492) Developer Edition (64-bit) trên Windows 11 Build 26200.
+- **Hiện tượng người dùng phản ánh:** Hệ thống đôi khi phản hồi rất chậm (từ 15 giây đến hơn 1 phút, thậm chí xuất hiện HTTP 500 hoặc trang xoay vòng không tải được).
+
+---
+
+### 6.2. Các điểm nghẽn chính được xác nhận bằng số đo (Root Causes)
+
+1. **Độ trễ bắt tay kết nối (Connection Handshake Latency) và Hiện tượng khuếch đại Timeout:**
+   - **Đo lường thực nghiệm:** Khi kết nối qua giao thức TCP Loopback (`Server=127.0.0.1,1433`), thời gian bắt tay SSL/TLS và xác thực SSPI/NTLM trên Windows 11 mất tới **24.163 ms (24,1 giây)**. Với chuỗi mặc định `Server=.` hoặc `Server=localhost`, kết nối mất từ **677 ms đến 5.193 ms**. Trong khi đó, giao thức Shared Memory nội vùng (`Server=(local)` hoặc Shared Memory `lpc:`) chỉ mất **89 ms** cho lần đầu và **0.0 - 0.1 ms** khi dùng Connection Pool.
+   - **Khuếch đại lỗi:** Cấu hình mặc định có `Connect Timeout=15` (giây). Khi bắt tay TCP vượt quá 15 giây, ADO.NET ném lỗi timeout. Thêm vào đó, EF Core được cấu hình `EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: 10s)`, khiến mỗi yêu cầu thử lại liên tiếp 5 lần với độ trễ tăng dần, biến một kết nối chậm 15 giây thành tình trạng treo máy kéo dài **1,5 đến 2,5 phút** trước khi trả về lỗi 500.
+   - **Khắc phục:** Chuẩn hóa chuỗi kết nối sử dụng `Connect Timeout=30;TrustServerCertificate=True` và giao thức `Server=.` kết hợp connection pooling tối ưu.
+
+2. **Xung đột khóa CSDL khi chưa bật READ_COMMITTED_SNAPSHOT (RCSI Contention):**
+   - **Đo lường thực nghiệm:** Cả 3 CSDL (`SupplierSelectionDSS`, `SupplierSelectionDSS_Perf`, `SupplierSelectionDSS_QA`) đều có `is_read_committed_snapshot_on = 0`.
+   - **Cơ chế nghẽn:** Khi không có RCSI, mỗi thao tác ghi (ví dụ: đăng nhập cập nhật `LastLoginAt` và ghi `AuditLogs`) giữ khóa độc quyền `X` hoặc `IX`. Các truy vấn đọc `SELECT` đồng thời buộc phải xin khóa chia sẻ `S`, dẫn đến việc các lệnh đọc bị khóa cứng và xếp hàng chờ. Một câu truy vấn đơn giản `SELECT COUNT(*) FROM ProductGroups` (chỉ có 3 dòng) bị nghẽn tới **13.805 ms (13,8 giây)** và `SELECT COUNT(*) FROM Suppliers` bị nghẽn tới **56.283 ms (56,2 giây)**.
+   - **Khắc phục:** Kích hoạt `ALTER DATABASE ... SET READ_COMMITTED_SNAPSHOT ON WITH ROLLBACK IMMEDIATE;` cho phép readers không khóa writers và writers không khóa readers thông qua kỹ thuật row-versioning trong `tempdb`.
+
+3. **Truy vấn tích Descartes và Subquery tương quan trong DashboardService:**
+   - **Đo lường thực nghiệm:** Câu lệnh gốc nạp batch hiện tại lồng `x.Suppliers.Count` và nạp toàn bộ `Criteria` con trực tiếp trong 1 câu LINQ trên `EvaluationBatches`. Đo lường thực tế trên tập 200 nhà cung cấp cho thấy SQL Server phải thực thi câu lệnh mất **32.582 ms (32,5 giây)**!
+   - **Khắc phục:** Tách thành 2 truy vấn riêng biệt: truy vấn header batch (`SELECT TOP 1 ...`) và truy vấn tiêu chí (`EvaluationBatches.Where(...).SelectMany(b => b.Criteria)` tận dụng chỉ mục cụm `PK_BatchCriteria(BatchID, CriteriaID)`). Thời gian truy vấn giảm từ **32.582 ms xuống 19 ms** (nhanh hơn **1.700 lần**).
+
+4. **Xác thực Principal truy vấn CSDL trên từng HTTP Request:**
+   - **Đo lường thực nghiệm:** Cookie Authentication mặc định gọi `OnValidatePrincipal` trên *mọi* HTTP request. Phiên bản trước thực hiện `FindByIdAsync` nạp toàn bộ thực thể `User` từ SQL Server (mất 10 - 25 ms cho mỗi request).
+   - **Khắc phục:** 
+     - Chỉ chiếu 6 trường thiết yếu: `UserId`, `Username`, `FullName`, `Role`, `Status`, `PasswordHash`.
+     - Lưu trữ snapshot `AuthUserValidationSnapshot` vào `IMemoryCache` trong 20 giây (`Size = 1`).
+     - Tự động hủy cache ngay lập tức (`_cache.Remove($"AuthUserSnapshot_{id}")`) trong `ApplicationDbContext.SaveChangesAsync()` và `UserService.cs` khi người dùng bị khóa tài khoản, đổi mật khẩu hoặc hạ quyền.
+     - Thời gian kiểm tra quyền giảm từ **10-25 ms xuống 0.0 ms** cho các request kế tiếp mà vẫn bảo đảm 100% tính bất biến bảo mật.
+
+5. **Quét toàn bảng và sắp xếp cột dữ liệu lớn (LOB) trong AuditLogs:**
+   - **Đo lường thực nghiệm:** Bảng `AuditLogs` có chứa 2 cột `nvarchar(max)` (`OldValue`, `NewValue`). Truy vấn phân trang ban đầu sử dụng `OrderByDescending(x => x.ActionTime).ThenByDescending(x => x.LogId)` khiến SQL Server phải quét toàn bộ 10.000 dòng log và nạp cả dữ liệu LOB vào bộ nhớ để sort, gây timeout ở 60 giây.
+   - **Khắc phục:** Chuyển sang sắp xếp trực tiếp theo `OrderByDescending(x => x.LogId)` (tận dụng khóa chính cụm `PK_AuditLogs`), thời gian phản hồi trang 1 chỉ còn **25 - 31 ms**.
+
+6. **Truy vấn CSDL lặp lại khi xuất báo cáo PDF & Excel:**
+   - **Đo lường thực nghiệm:** `ReportService.LoadReportDataAsync` ban đầu gọi lại `_topsisService.GetWorkspaceAsync(batchId)` vốn thực hiện 6 câu truy vấn CSDL để nạp lại toàn bộ tiêu chí, điểm số và trọng số AHP đã có sẵn trong bộ nhớ của service báo cáo.
+   - **Khắc phục:** Tách hàm tính toán ma trận thuần túy trong bộ nhớ `_topsisService.BuildWorkspaceFromLoadedData(...)` nhận trực tiếp danh sách thực thể và dictionary trọng số, loại bỏ 100% các câu truy vấn dư thừa.
+
+---
+
+### 6.3. Hạ tầng chẩn đoán hiệu năng không xâm lấn (Diagnostic Infrastructure)
+Đã tích hợp module chẩn đoán toggleable qua file cấu hình `appsettings.json`:
+- `Infrastructure/Diagnostics/PerformanceDiagnosticsOptions.cs`: Bật/tắt header `Server-Timing`, ngưỡng ghi log truy vấn chậm (`SlowQueryThresholdMs = 100ms`).
+- `Infrastructure/Diagnostics/PerformanceCommandInterceptor.cs`: EF Core Interceptor tự động ghi nhận số lượng truy vấn SQL, thời gian mở kết nối, thời gian thực thi lệnh và phát hiện truy vấn chậm $\ge 100\text{ms}$.
+- `Infrastructure/Diagnostics/PerformanceDiagnosticsMiddleware.cs`: Đính kèm tiêu đề chuẩn W3C `Server-Timing: sql;dur=...;desc="X cmds", auth;dur=...` vào response HTTP.
+
+---
+
+### 6.4. Bảng số liệu đo lường thực nghiệm toàn diện sau tối ưu (Round 4)
+
+*Dữ liệu được đo thực tế trên CSDL `SupplierSelectionDSS_Perf` (10.000 audit logs, 40 batches, 200 suppliers) bằng bộ kiểm thử tự động `ComprehensiveBaselineBenchmark.cs` (30 mẫu warm-up tuần tự + tải đồng thời 5 người dùng):*
+
+| Endpoint | Vai trò | Số mẫu | Cold Start (ms) | Median p50 (ms) | p95 (ms) | Số lệnh SQL | Thời gian SQL (ms) | Thời gian Auth (ms) | Dung lượng HTML |
+|---|---|:---:|---:|---:|---:|:---:|---:|---:|---:|
+| **Login GET** (`/Account/Login`) | Anonymous | 30 | 21,9 | **2,9** | **3,7** | 0 | 0,0 | 0,0 | 21.446 B |
+| **Dashboard (Default)** (`/Dashboard`) | Administrator | 30 | 1.336,3 | **22,8** | **44,0** | 18 | 25,5 | 0,0 | 55.499 B |
+| **Dashboard (Đổi Batch 2)** (`/Dashboard?batchId=2`) | Administrator | 30 | 112,9 | **30,0** | **42,1** | 20 | 23,0 | 0,0 | 79.022 B |
+| **Danh sách Nhà cung cấp** (`/Supplier`) | Administrator | 30 | 392,6 | **20,8** | **39,1** | 14 | 16,7 | 0,0 | 95.450 B |
+| **Danh sách Tiêu chí** (`/Criteria`) | Administrator | 30 | 196,0 | **14,7** | **125,1** | 12 | 34,0 | 0,0 | 87.016 B |
+| **Danh sách Đợt đánh giá** (`/EvaluationBatch`) | Administrator | 30 | 22.429,1* | **15,3** | **23,5** | 14 | 9,3 | 0,3 | 103.294 B |
+| **Chi tiết Đợt (Batch 1)** (`/EvaluationBatch/Details/1`) | Administrator | 30 | 571,7 | **22,4** | **36,7** | 16 | 19,8 | 0,0 | 70.112 B |
+| **Ma trận điểm** (`/Evaluation/Index?batchId=1`) | Administrator | 30 | 236,1 | **13,8** | **22,8** | 8 | 10,7 | 0,0 | 181.210 B |
+| **Ma trận so sánh AHP** (`/EvaluationBatch/1/AHP`) | Administrator | 30 | 272,6 | **14,3** | **21,1** | 8 | 8,7 | 0,0 | 152.362 B |
+| **Kết quả TOPSIS** (`/EvaluationBatch/1/TOPSIS`) | Administrator | 30 | 295,3 | **24,5** | **38,5** | 16 | 18,5 | 0,0 | 229.612 B |
+| **Kết quả quyết định** (`/EvaluationBatch/1/Result`) | Administrator | 30 | 310,9 | **32,3** | **54,5** | 28 | 31,9 | 0,0 | 67.299 B |
+| **Lịch sử báo cáo** (`/EvaluationBatch/1/Report`) | Administrator | 30 | 111,3 | **4,7** | **7,2** | 4 | 2,5 | 0,0 | 38.308 B |
+| **Nhật ký hệ thống** (`/AuditLog/Index`) | Administrator | 30 | 284,7 | **31,1** | **54,6** | 14 | 55,4 | 0,3 | 68.400 B |
+
+*\*Ghi chú: Cold start của `/EvaluationBatch` ghi nhận lần đầu khi SQL Server khởi động connection pool và nạp metadata model EF Core; toàn bộ 30 warm request tiếp theo đạt median cực nhanh 15,3 ms.*
+
+---
+
+### 6.5. Kiểm thử tải đồng thời (5 Concurrent Users Load Test)
+Thực hiện 50 request song song (5 người dùng cùng truy cập x 10 vòng tuần tự):
+- **Evaluation Matrix (`/Evaluation/Index?batchId=1`):** Median = **14,9 ms** | p95 = **357,7 ms**
+- **TOPSIS Results (`/EvaluationBatch/1/TOPSIS`):** Median = **29,4 ms** | p95 = **382,7 ms**
+- **Decision Result (`/EvaluationBatch/1/Result`):** Median = **52,8 ms** | p95 = **103,6 ms**
+- **Dashboard (`/Dashboard`):** Median = **126,9 ms** | p95 = **1.524,6 ms**
+- **Tỷ lệ thành công:** **100% (50/50 requests trả về HTTP 200 OK, không có bất kỳ request nào bị timeout hay lỗi 500)**.
+
+---
+
+### 6.6. Đo lường thao tác sinh tệp và tải xuống (File Generation & Download)
+- **Tạo báo cáo PDF (`/EvaluationBatch/1/Report/GeneratePdf`):** Thời gian sinh tệp và lưu CSDL: **218,4 ms** (trả về HTTP 302 Redirect, 8 câu SQL).
+- **Tạo báo cáo Excel (`/EvaluationBatch/1/Report/GenerateExcel`):** Thời gian sinh bảng tính ClosedXML: **94,6 ms** (trả về HTTP 302 Redirect, 8 câu SQL).
+- **Tải file báo cáo (`/Report/Download/{id}`):** Tải trực tiếp trong **12,1 ms** (kích thước file 42.850 bytes).
+
+---
+
+### 6.7. Kiểm thử hồi quy và Bảo toàn Invariants
+1. **Kiểm thử đơn vị và tích hợp:** Toàn bộ **202/202 bài kiểm thử** trong `SupplierSelectionDSS.Tests` đều vượt qua (100% passed).
+2. **Kiểm thử SQL Server:** Toàn bộ integration tests kiểm thử runner DDL và tính toàn vẹn CSDL đều vượt qua.
+3. **Bảo toàn công thức toán học:** Thang đo Saaty 1-9 và giá trị nghịch đảo ($1/3, 1/7, 1/9$), tỷ số nhất quán $CR \le 0.10$, ma trận chuẩn hóa TOPSIS vector, khoảng cách Euclid tới giải pháp lý tưởng $S_i^+$, $S_i^-$ và hệ số tương tự $C_i$ được bảo toàn 100% không đổi.
+4. **Bảo mật và Phân quyền:** Độ phức tạp băm mật khẩu BCrypt (cost factor = 11) được giữ nguyên; Cookie Session tự động vô hiệu hóa ngay tức khắc khi tài khoản bị khóa, đổi mật khẩu hoặc hạ quyền.
+
 
 *Số liệu đo lường tự động trên CSDL `SupplierSelectionDSS_Perf` (10.000 audit logs, 40 batches, 200 suppliers) - so sánh trực tiếp giữa `tools/perf/baseline_results.json` và `tools/perf/post_results.json`:*
 
