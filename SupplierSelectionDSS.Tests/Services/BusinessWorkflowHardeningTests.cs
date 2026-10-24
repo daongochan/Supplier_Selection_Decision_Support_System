@@ -216,7 +216,7 @@ public class BusinessWorkflowHardeningTests : IDisposable
 
         // Assert
         await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*đơn vị tính*đã được sử dụng*");
+            .WithMessage("*measurement unit*already used*");
     }
 
     [Fact]

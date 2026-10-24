@@ -47,29 +47,29 @@ public class HomeController : Controller
         switch (code)
         {
             case 404:
-                model.Title = "Không tìm thấy trang (404 Not Found)";
-                model.Message = "Trang hoặc tài nguyên bạn đang tìm kiếm không tồn tại, đã bị xóa hoặc đã được di chuyển.";
-                model.Description = "Vui lòng kiểm tra lại đường dẫn URL hoặc quay về bảng điều khiển để tiếp tục làm việc.";
+                model.Title = "Page Not Found (404 Not Found)";
+                model.Message = "The page or resource you are looking for does not exist, has been removed, or has been moved.";
+                model.Description = "Please check the URL or return to the dashboard to continue.";
                 break;
             case 403:
-                model.Title = "Truy cập bị từ chối (403 Forbidden)";
-                model.Message = "Bạn không có quyền hạn để truy cập vào tài nguyên hoặc thực hiện hành động này.";
-                model.Description = "Vui lòng liên hệ Quản trị viên hệ thống nếu bạn cho rằng đây là một sự nhầm lẫn.";
+                model.Title = "Access Denied (403 Forbidden)";
+                model.Message = "You do not have permission to access this resource or perform this action.";
+                model.Description = "Please contact your system administrator if you believe this is an error.";
                 break;
             case 400:
-                model.Title = "Yêu cầu không hợp lệ (400 Bad Request)";
-                model.Message = "Dữ liệu gửi lên không đúng định dạng hoặc phiên làm việc bảo mật đã hết hạn.";
-                model.Description = "Vui lòng làm mới lại trang hoặc quay lại biểu mẫu trước đó để thực hiện lại.";
+                model.Title = "Bad Request (400 Bad Request)";
+                model.Message = "The submitted data was malformed or your security session has expired.";
+                model.Description = "Please refresh the page or return to the previous form to try again.";
                 break;
             case 429:
-                model.Title = "Quá nhiều yêu cầu (429 Too Many Requests)";
-                model.Message = "Hệ thống phát hiện tần suất gửi yêu cầu quá nhanh từ địa chỉ mạng của bạn.";
-                model.Description = "Vui lòng tạm dừng và thử lại sau ít phút để bảo vệ an toàn cho hệ thống.";
+                model.Title = "Too Many Requests (429 Too Many Requests)";
+                model.Message = "Too many requests have been received from your network address in a short time.";
+                model.Description = "Please wait a moment before trying again to ensure system stability.";
                 break;
             default:
-                model.Title = "Lỗi máy chủ nội bộ (500 Internal Server Error)";
-                model.Message = "Hệ thống gặp sự cố ngoài dự kiến trong khi xử lý yêu cầu.";
-                model.Description = "Đội ngũ kỹ thuật đã ghi nhận mã yêu cầu để kiểm tra và khắc phục.";
+                model.Title = "Internal Server Error (500 Internal Server Error)";
+                model.Message = "An unexpected error occurred while processing your request.";
+                model.Description = "Our technical team has logged the request identifier for investigation.";
                 break;
         }
 

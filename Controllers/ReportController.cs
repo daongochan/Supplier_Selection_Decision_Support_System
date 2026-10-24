@@ -44,7 +44,7 @@ public class ReportController : Controller
     {
         if (batchId <= 0)
         {
-            TempData["WarningMessage"] = "Vui lòng chọn một đợt đánh giá để xem báo cáo.";
+            TempData["WarningMessage"] = "Please select an evaluation batch to view reports.";
             return RedirectToAction("Index", "EvaluationBatch");
         }
 
@@ -57,7 +57,7 @@ public class ReportController : Controller
 
         if (model == null)
         {
-            TempData["WarningMessage"] = $"Không tìm thấy đợt đánh giá với ID = {batchId}.";
+            TempData["WarningMessage"] = $"Evaluation batch with ID = {batchId} not found.";
             return RedirectToAction("Index", "EvaluationBatch");
         }
 
@@ -160,7 +160,7 @@ public class ReportController : Controller
         if (file == null)
         {
             return NotFound(
-                "Không tìm thấy file báo cáo.");
+                "Report file not found.");
         }
 
 
@@ -211,8 +211,8 @@ public class ReportController : Controller
 
             var description =
                 reportType == ReportTypes.Pdf
-                    ? $"Tải báo cáo PDF '{file.DownloadName}'."
-                    : $"Tải báo cáo Excel '{file.DownloadName}'.";
+                    ? $"Download PDF report '{file.DownloadName}'."
+                    : $"Download Excel report '{file.DownloadName}'.";
 
 
             await _auditLogService
@@ -303,7 +303,7 @@ public class ReportController : Controller
 
 
             TempData["SuccessMessage"] =
-                $"{result.ReportType} report đã được tạo thành công.";
+                $"{result.ReportType} report generated successfully.";
 
 
             return RedirectToAction(
@@ -349,7 +349,7 @@ public class ReportController : Controller
                 batchId);
 
             TempData["ErrorMessage"] =
-                "Không thể tạo báo cáo. Vui lòng thử lại sau.";
+                "Unable to generate report. Please try again later.";
 
 
             return RedirectToAction(

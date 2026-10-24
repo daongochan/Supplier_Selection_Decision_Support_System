@@ -4,12 +4,12 @@ namespace SupplierSelectionDSS.Models;
 
 public class EvaluationBatchCreateViewModel
 {
-    [Required(ErrorMessage = "Vui lòng nhập mã đợt đánh giá.")]
+    [Required(ErrorMessage = "Please enter a batch code.")]
     [StringLength(20)]
     [Display(Name = "Batch code")]
     public string BatchCode { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Vui lòng nhập tên đợt đánh giá.")]
+    [Required(ErrorMessage = "Please enter a batch name.")]
     [StringLength(200)]
     [Display(Name = "Batch name")]
     public string BatchName { get; set; } = string.Empty;
@@ -18,7 +18,7 @@ public class EvaluationBatchCreateViewModel
     [Display(Name = "Description")]
     public string? Description { get; set; }
 
-    [Required(ErrorMessage = "Vui lòng chọn nhóm hàng.")]
+    [Required(ErrorMessage = "Please select a product group.")]
     [Display(Name = "Product group")]
     public int? GroupId { get; set; }
 

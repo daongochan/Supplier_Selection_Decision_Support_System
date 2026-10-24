@@ -62,8 +62,8 @@ public class RouteSmokeAndBlankScreenSweepTests : IClassFixture<RouteSmokeAndBla
         body.Should().Contain("main-content");
 
         var decodedBody = WebUtility.HtmlDecode(body);
-        decodedBody.Should().Contain("Không tìm thấy trang");
-        decodedBody.Should().Contain("Về bảng điều khiển");
+        decodedBody.Should().Contain("Page Not Found");
+        decodedBody.Should().Contain("Back to Dashboard");
     }
 
     [Theory]
@@ -83,16 +83,16 @@ public class RouteSmokeAndBlankScreenSweepTests : IClassFixture<RouteSmokeAndBla
         body.Length.Should().BeGreaterThanOrEqualTo(200);
 
         var decodedBody = WebUtility.HtmlDecode(body);
-        decodedBody.Should().Contain("Không tìm thấy trang");
+        decodedBody.Should().Contain("Page Not Found");
         decodedBody.Should().Contain("404");
     }
 
     [Theory]
-    [InlineData(404, "Không tìm thấy trang")]
-    [InlineData(403, "Truy cập bị từ chối")]
-    [InlineData(400, "Yêu cầu không hợp lệ")]
-    [InlineData(429, "Quá nhiều yêu cầu")]
-    [InlineData(500, "Lỗi máy chủ nội bộ")]
+    [InlineData(404, "Page Not Found")]
+    [InlineData(403, "Access Denied")]
+    [InlineData(400, "Bad Request")]
+    [InlineData(429, "Too Many Requests")]
+    [InlineData(500, "Internal Server Error")]
     public async Task ErrorEndpoint_RendersVietnameseDesignSystemCard_ForStatusCodes(int statusCode, string expectedSnippet)
     {
         var client = _factory.CreateClient();
@@ -105,7 +105,7 @@ public class RouteSmokeAndBlankScreenSweepTests : IClassFixture<RouteSmokeAndBla
 
         var decodedBody = WebUtility.HtmlDecode(body);
         decodedBody.Should().Contain(expectedSnippet);
-        decodedBody.Should().Contain("MÃ PHẢN HỒI: " + statusCode);
-        decodedBody.Should().Contain("Về bảng điều khiển");
+        decodedBody.Should().Contain("STATUS CODE: " + statusCode);
+        decodedBody.Should().Contain("Back to Dashboard");
     }
 }

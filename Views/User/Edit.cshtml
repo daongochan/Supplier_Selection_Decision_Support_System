@@ -1,7 +1,7 @@
 @model SupplierSelectionDSS.Models.UserFormViewModel
 
 @{
-    ViewData["Title"] = "Chỉnh sửa người dùng";
+    ViewData["Title"] = "Edit User";
 }
 
 <div class="page-header">
@@ -9,15 +9,15 @@
     <div>
 
         <div class="page-eyebrow">
-            NGƯỜI DÙNG
+            USERS
         </div>
 
         <h1 class="page-title">
-            Chỉnh sửa người dùng
+            Edit User
         </h1>
 
         <p class="page-description">
-            Cập nhật thông tin và quyền truy cập của tài khoản.
+            Update user account information and access permissions.
         </p>
 
     </div>
@@ -43,26 +43,26 @@
 
             <!-- 1. Account Information -->
             <div class="form-section">
-                <div class="form-section-title">Thông tin tài khoản</div>
-                <div class="form-section-desc">Tên đăng nhập, họ tên và phân quyền truy cập hệ thống</div>
+                <div class="form-section-title">Account Information</div>
+                <div class="form-section-desc">Username, full name, and system role permissions</div>
             </div>
 
             <div class="form-group">
                 <label asp-for="Username" class="required-field">
-                    Tên đăng nhập
+                    Username
                 </label>
                 <input asp-for="Username"
                        class="form-control"
                        maxlength="50"
                        readonly />
                 <span class="form-hint">
-                    Tên đăng nhập không thể thay đổi sau khi tài khoản được tạo.
+                    Username cannot be changed once the account is created.
                 </span>
             </div>
 
             <div class="form-group">
                 <label asp-for="FullName" class="required-field">
-                    Họ và tên
+                    Full Name
                 </label>
                 <input asp-for="FullName"
                        class="form-control"
@@ -72,38 +72,38 @@
 
             <div class="form-group">
                 <label asp-for="Role" class="required-field">
-                    Vai trò người dùng
+                    Role
                 </label>
                 <select asp-for="Role" class="form-control">
-                    <option value="Administrator">Administrator (Quản trị viên hệ thống)</option>
-                    <option value="PurchasingStaff">Purchasing Staff (Nhân viên mua sắm)</option>
-                    <option value="Expert">Expert (Chuyên gia đánh giá)</option>
-                    <option value="Manager">Manager (Quản lý / Người phê duyệt)</option>
+                    <option value="Administrator">Administrator</option>
+                    <option value="PurchasingStaff">Purchasing Staff</option>
+                    <option value="Expert">Expert</option>
+                    <option value="Manager">Manager</option>
                 </select>
                 <span asp-validation-for="Role" class="text-danger"></span>
             </div>
 
             <div class="form-group">
                 <label asp-for="Status" class="required-field">
-                    Trạng thái hoạt động
+                    Status
                 </label>
                 <select asp-for="Status" class="form-control">
-                    <option value="Active">Active (Đang hoạt động)</option>
-                    <option value="Locked">Locked (Tạm khóa)</option>
-                    <option value="Inactive">Inactive (Ngừng hoạt động)</option>
+                    <option value="Active">Active</option>
+                    <option value="Locked">Locked</option>
+                    <option value="Inactive">Inactive</option>
                 </select>
                 <span asp-validation-for="Status" class="text-danger"></span>
             </div>
 
             <!-- 2. Contact Information -->
             <div class="form-section">
-                <div class="form-section-title">Thông tin liên hệ</div>
-                <div class="form-section-desc">Địa chỉ email và số điện thoại dùng để nhận thông báo</div>
+                <div class="form-section-title">Contact Information</div>
+                <div class="form-section-desc">Email address and phone number for system notifications</div>
             </div>
 
             <div class="form-group">
                 <label asp-for="Email">
-                    Địa chỉ email
+                    Email
                 </label>
                 <input asp-for="Email"
                        class="form-control"
@@ -114,7 +114,7 @@
 
             <div class="form-group">
                 <label asp-for="Phone">
-                    Số điện thoại
+                    Phone
                 </label>
                 <input asp-for="Phone"
                        class="form-control"
@@ -124,19 +124,19 @@
 
             <!-- 3. Security Credentials -->
             <div class="form-section">
-                <div class="form-section-title">Bảo mật & Mật khẩu</div>
-                <div class="form-section-desc">Để trống ô mật khẩu nếu không muốn thay đổi mật khẩu hiện tại</div>
+                <div class="form-section-title">Security & Password</div>
+                <div class="form-section-desc">Leave password blank to keep current password</div>
             </div>
 
             <div class="form-group form-group-full">
                 <label asp-for="Password">
-                    Mật khẩu mới
+                    New Password
                 </label>
                 <input asp-for="Password"
                        class="form-control"
                        type="password"
                        minlength="8"
-                       placeholder="Nhập mật khẩu mới (nếu muốn thay đổi)"
+                       placeholder="Enter new password (leave blank to keep current)"
                        autocomplete="new-password" />
                 <span asp-validation-for="Password" class="text-danger"></span>
             </div>
@@ -145,10 +145,10 @@
 
         <div class="form-actions">
             <a asp-action="Index" class="btn-outline">
-                Hủy bỏ
+                Cancel
             </a>
             <button type="submit" class="btn-primary">
-                Lưu thay đổi
+                Save Changes
             </button>
         </div>
 

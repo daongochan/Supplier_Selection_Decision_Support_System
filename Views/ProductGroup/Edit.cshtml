@@ -1,7 +1,7 @@
 @model SupplierSelectionDSS.Models.ProductGroupFormViewModel
 
 @{
-    ViewData["Title"] = "Chỉnh sửa nhóm hàng";
+    ViewData["Title"] = "Edit Product Group";
 }
 
 <div class="page-header">
@@ -9,15 +9,15 @@
     <div>
 
         <div class="page-eyebrow">
-            NHÓM HÀNG
+            PRODUCT GROUP
         </div>
 
         <h1 class="page-title">
-            Chỉnh sửa nhóm hàng
+            Edit Product Group
         </h1>
 
         <p class="page-description">
-            Cập nhật thông tin nhóm hàng hóa hoặc dịch vụ trong hệ thống.
+            Update product group or service category information in the system.
         </p>
 
     </div>
@@ -44,13 +44,13 @@
 
             <!-- 1. Group Identity -->
             <div class="form-section">
-                <div class="form-section-title">Thông tin nhóm hàng</div>
-                <div class="form-section-desc">Mã định danh và tên nhóm hàng hóa hoặc dịch vụ</div>
+                <div class="form-section-title">Product Group Information</div>
+                <div class="form-section-desc">Identifier code and name for the product group</div>
             </div>
 
             <div class="form-group">
                 <label asp-for="GroupCode" class="required-field">
-                    Mã nhóm hàng
+                    Product Group Code
                 </label>
                 <input asp-for="GroupCode"
                        class="form-control"
@@ -60,7 +60,7 @@
 
             <div class="form-group">
                 <label asp-for="GroupName" class="required-field">
-                    Tên nhóm hàng
+                    Product Group Name
                 </label>
                 <input asp-for="GroupName"
                        class="form-control"
@@ -70,13 +70,13 @@
 
             <!-- 2. Detailed Description -->
             <div class="form-section">
-                <div class="form-section-title">Mô tả & Ghi chú</div>
-                <div class="form-section-desc">Thông tin chi tiết về phạm vi và đặc tính nhóm hàng</div>
+                <div class="form-section-title">Description & Notes</div>
+                <div class="form-section-desc">Detailed information regarding scope and characteristics</div>
             </div>
 
             <div class="form-group form-group-full">
                 <label asp-for="Description">
-                    Mô tả
+                    Description
                 </label>
                 <textarea asp-for="Description"
                           class="form-control"
@@ -91,12 +91,12 @@
 
             <a asp-action="Index"
                class="btn-outline">
-                Hủy bỏ
+                Cancel
             </a>
 
             <button type="submit"
                     class="btn-primary">
-                Lưu thay đổi
+                Save Changes
             </button>
 
         </div>

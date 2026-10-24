@@ -117,7 +117,7 @@ public class DashboardService
                     x.BatchCode,
                     x.BatchName,
                     GroupCode = x.Group != null ? x.Group.GroupCode : string.Empty,
-                    GroupName = x.Group != null ? x.Group.GroupName : "Chưa chỉ định",
+                    GroupName = x.Group != null ? x.Group.GroupName : "Unassigned",
                     x.Status,
                     TotalSuppliers = x.Suppliers.Count,
                     x.CreatedAt,
@@ -418,7 +418,7 @@ public class DashboardService
             RoleCount = UserRole.All.Count,
             AppVersion = appVersion,
             DatabaseType = "Microsoft SQL Server",
-            SystemStatus = "Sẵn sàng (Online)"
+            SystemStatus = "Ready (Online)"
         };
 
         // =========================================================
@@ -434,7 +434,7 @@ public class DashboardService
                 ActionType = l.ActionType,
                 Description = l.Description,
                 ActionTime = l.ActionTime,
-                UserName = l.User != null ? l.User.FullName : "Hệ thống"
+                UserName = l.User != null ? l.User.FullName : "System"
             })
             .ToListAsync();
 

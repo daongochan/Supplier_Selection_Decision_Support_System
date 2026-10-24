@@ -282,7 +282,7 @@ public static class ClosedXmlExcelReportExporter
         if (data.SensitivityAnalysis == null) return;
 
         var ws = workbook.Worksheets.Add("Sensitivity Analysis");
-        ws.Cell(1, 1).Value = "SENSITIVITY ANALYSIS (PHÂN TÍCH ĐỘ NHẠY)";
+        ws.Cell(1, 1).Value = "SENSITIVITY ANALYSIS";
         ws.Cell(3, 1).Value = "Base Top Supplier";
         ws.Cell(3, 2).Value = $"{data.SensitivityAnalysis.BaseTopSupplierCode} - {data.SensitivityAnalysis.BaseTopSupplierName}";
 

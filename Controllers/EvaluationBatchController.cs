@@ -136,7 +136,7 @@ public class EvaluationBatchController : Controller
         {
             ModelState.AddModelError(
                 nameof(model.BatchCode),
-                "Mã đợt đánh giá đã tồn tại.");
+                "Batch code already exists.");
         }
 
 
@@ -222,7 +222,7 @@ public class EvaluationBatchController : Controller
                         batchId,
                         null,
                         newValue,
-                        $"Tạo đợt đánh giá '{model.BatchCode}' - '{model.BatchName}'.");
+                        $"Create evaluation batch '{model.BatchCode}' - '{model.BatchName}'.");
             }
             catch
             {
@@ -232,7 +232,7 @@ public class EvaluationBatchController : Controller
 
 
             TempData["SuccessMessage"] =
-                "Đợt đánh giá đã được tạo thành công.";
+                "Evaluation batch created successfully.";
 
 
             return RedirectToAction(
@@ -295,7 +295,7 @@ public class EvaluationBatchController : Controller
 
             ModelState.AddModelError(
                 string.Empty,
-                "Không thể tạo đợt đánh giá. Vui lòng thử lại sau.");
+                "An error occurred while creating the evaluation batch. Please try again later.");
 
 
             await LoadCreateDataAsync();
@@ -329,7 +329,7 @@ public class EvaluationBatchController : Controller
         if (groupId <= 0)
         {
             return BadRequest(
-                "Product Group không hợp lệ.");
+                "Invalid product group.");
         }
 
 
@@ -412,7 +412,7 @@ public class EvaluationBatchController : Controller
                         id,
                         oldValue,
                         newValue,
-                        $"Bắt đầu đợt đánh giá Batch #{id}.");
+                        $"Start evaluation batch #{id}.");
             }
             catch
             {
@@ -422,8 +422,7 @@ public class EvaluationBatchController : Controller
 
 
             TempData["SuccessMessage"] =
-                "Đợt đánh giá đã được bắt đầu. " +
-                "Batch chuyển sang trạng thái Evaluating.";
+                "Evaluation batch has been started. Status changed to Evaluating.";
 
 
             return RedirectToAction(
@@ -469,7 +468,7 @@ public class EvaluationBatchController : Controller
                 id);
 
             TempData["ErrorMessage"] =
-                "Không thể bắt đầu đợt đánh giá. Vui lòng thử lại sau.";
+                "An error occurred while starting the evaluation batch. Please try again later.";
 
 
             return RedirectToAction(
@@ -542,14 +541,14 @@ public class EvaluationBatchController : Controller
                     id,
                     oldValue,
                     newValue,
-                    $"Hủy đợt đánh giá '{batch.BatchCode}'. Lý do: {reason ?? "Không có"}");
+                    $"Cancel evaluation batch '{batch.BatchCode}'. Reason: {reason ?? "None"}");
             }
             catch
             {
                 // Audit log không được làm hỏng workflow
             }
 
-            TempData["SuccessMessage"] = $"Đợt đánh giá '{batch.BatchCode}' đã được hủy thành công.";
+            TempData["SuccessMessage"] = $"Evaluation batch '{batch.BatchCode}' has been cancelled successfully.";
             return RedirectToAction(nameof(Details), new { id });
         }
         catch (BusinessRuleException ex)
@@ -560,7 +559,7 @@ public class EvaluationBatchController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Lỗi khi hủy đợt đánh giá ID {BatchId}.", id);
-            TempData["ErrorMessage"] = "Có lỗi xảy ra khi hủy đợt đánh giá. Vui lòng thử lại sau.";
+            TempData["ErrorMessage"] = "An error occurred while cancelling the evaluation batch. Please try again later.";
             return RedirectToAction(nameof(Details), new { id });
         }
     }

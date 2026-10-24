@@ -99,7 +99,7 @@ public class UserController : Controller
             var oldStatus = user.Status;
             var updatedUser = await _userService.ToggleStatusAsync(id, currentUserId.Value);
 
-            var actionName = updatedUser.Status == EntityStatus.Active ? "Kích hoạt" : "Ngừng hoạt động";
+            var actionName = updatedUser.Status == EntityStatus.Active ? "activated" : "deactivated";
 
             try
             {
@@ -110,14 +110,14 @@ public class UserController : Controller
                     updatedUser.UserId,
                     JsonSerializer.Serialize(new { Status = oldStatus }),
                     JsonSerializer.Serialize(new { Status = updatedUser.Status }),
-                    $"{actionName} tài khoản người dùng '{updatedUser.Username}'.");
+                    $"User account '{updatedUser.Username}' was {actionName}.");
             }
             catch
             {
                 // Audit log không làm hỏng workflow
             }
 
-            TempData["SuccessMessage"] = $"Đã {actionName.ToLowerInvariant()} tài khoản '{updatedUser.Username}' thành công.";
+            TempData["SuccessMessage"] = $"User '{updatedUser.Username}' has been {actionName} successfully.";
         }
         catch (InvalidOperationException ex)
         {
@@ -125,7 +125,7 @@ public class UserController : Controller
         }
         catch (Exception)
         {
-            TempData["ErrorMessage"] = "Không thể thay đổi trạng thái tài khoản.";
+            TempData["ErrorMessage"] = "Unable to change user status.";
         }
 
         return RedirectToAction(nameof(Index));
@@ -197,11 +197,11 @@ public class UserController : Controller
                             model.Role,
                             model.Status
                         }),
-                    $"Tạo tài khoản người dùng '{model.Username}'.");
+                    $"Create user account '{model.Username}'.");
 
 
             TempData["SuccessMessage"] =
-                "Tài khoản đã được tạo thành công.";
+                "User created successfully.";
 
 
             return RedirectToAction(
@@ -346,7 +346,7 @@ public class UserController : Controller
             if (updatedUser == null)
             {
                 throw new InvalidOperationException(
-                    "Không thể tải lại thông tin tài khoản sau khi cập nhật.");
+                    "Unable to reload user information after update.");
             }
 
 
@@ -371,11 +371,11 @@ public class UserController : Controller
                     updatedUser.UserId,
                     oldValue,
                     newValue,
-                    $"Cập nhật tài khoản người dùng '{updatedUser.Username}'.");
+                    $"Update user account '{updatedUser.Username}'.");
 
 
             TempData["SuccessMessage"] =
-                "Thông tin tài khoản đã được cập nhật.";
+                "User updated successfully.";
 
 
             return RedirectToAction(

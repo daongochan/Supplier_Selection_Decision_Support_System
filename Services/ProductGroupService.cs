@@ -104,17 +104,17 @@ public class ProductGroupService
 
         if (string.IsNullOrWhiteSpace(group.GroupCode))
         {
-            throw new InvalidOperationException("Mã nhóm hàng không được để trống.");
+            throw new InvalidOperationException("Group code cannot be empty.");
         }
 
         if (string.IsNullOrWhiteSpace(group.GroupName))
         {
-            throw new InvalidOperationException("Tên nhóm hàng không được để trống.");
+            throw new InvalidOperationException("Group name cannot be empty.");
         }
 
         if (await GroupCodeExistsAsync(group.GroupCode))
         {
-            throw new InvalidOperationException("Mã nhóm hàng đã tồn tại.");
+            throw new InvalidOperationException("Group code already exists.");
         }
 
         group.Status = EntityStatus.Active;
@@ -138,7 +138,7 @@ public class ProductGroupService
 
         if (existing == null)
         {
-            throw new KeyNotFoundException("Không tìm thấy nhóm hàng.");
+            throw new KeyNotFoundException("Product group not found.");
         }
 
         var groupCode = group.GroupCode?.Trim() ?? string.Empty;
@@ -146,17 +146,17 @@ public class ProductGroupService
 
         if (string.IsNullOrWhiteSpace(groupCode))
         {
-            throw new InvalidOperationException("Mã nhóm hàng không được để trống.");
+            throw new InvalidOperationException("Group code cannot be empty.");
         }
 
         if (string.IsNullOrWhiteSpace(groupName))
         {
-            throw new InvalidOperationException("Tên nhóm hàng không được để trống.");
+            throw new InvalidOperationException("Group name cannot be empty.");
         }
 
         if (await GroupCodeExistsAsync(groupCode, group.GroupId))
         {
-            throw new InvalidOperationException("Mã nhóm hàng đã tồn tại.");
+            throw new InvalidOperationException("Group code already exists.");
         }
 
         existing.GroupCode = groupCode;

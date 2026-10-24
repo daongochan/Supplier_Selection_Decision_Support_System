@@ -6,18 +6,18 @@ public class SupplierFormViewModel
 {
     public int SupplierId { get; set; }
 
-    [Required(ErrorMessage = "Vui lòng nhập mã nhà cung cấp.")]
+    [Required(ErrorMessage = "Please enter a supplier code.")]
     [StringLength(
         20,
-        ErrorMessage = "Mã nhà cung cấp tối đa 20 ký tự.")]
+        ErrorMessage = "Supplier code cannot exceed 20 characters.")]
     [Display(Name = "Supplier code")]
     public string SupplierCode { get; set; } = string.Empty;
 
 
-    [Required(ErrorMessage = "Vui lòng nhập tên nhà cung cấp.")]
+    [Required(ErrorMessage = "Please enter a supplier name.")]
     [StringLength(
         200,
-        ErrorMessage = "Tên nhà cung cấp tối đa 200 ký tự.")]
+        ErrorMessage = "Supplier name cannot exceed 200 characters.")]
     [Display(Name = "Supplier name")]
     public string SupplierName { get; set; } = string.Empty;
 
@@ -33,7 +33,7 @@ public class SupplierFormViewModel
 
 
     [EmailAddress(
-        ErrorMessage = "Email không đúng định dạng.")]
+        ErrorMessage = "Invalid email format.")]
     [StringLength(100)]
     [Display(Name = "Email")]
     public string? Email { get; set; }

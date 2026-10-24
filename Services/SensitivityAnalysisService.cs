@@ -68,7 +68,7 @@ public class SensitivityAnalysisService
 
         if (criteriaCount < 2 || supplierCount < 2 || string.IsNullOrWhiteSpace(baseTopSupplierCode))
         {
-            result.SummaryMessage = "Không đủ điều kiện tối thiểu để thực hiện phân tích độ nhạy.";
+            result.SummaryMessage = "Minimum conditions not met to perform sensitivity analysis.";
             _logger.LogWarning("Không đủ điều kiện tối thiểu để thực hiện phân tích độ nhạy cho đợt {BatchCode}.", batchCode);
             return result;
         }
@@ -173,12 +173,12 @@ public class SensitivityAnalysisService
 
         if (result.IsOverallRobust)
         {
-            result.SummaryMessage = $"Nhà cung cấp dẫn đầu ({baseTopSupplierCode} - {baseTopSupplierName}) giữ vững vị trí #1 qua 100% các kịch bản biến thiên trọng số (±10%, ±20%), chứng minh mô hình ra quyết định có độ vững bền và tin cậy cao.";
+            result.SummaryMessage = $"The top-ranked supplier ({baseTopSupplierCode} - {baseTopSupplierName}) maintains position #1 across 100% of weight variation scenarios (±10%, ±20%), demonstrating high decision model robustness and reliability.";
         }
         else
         {
             var sensitiveList = string.Join(", ", sensitiveCriteria);
-            result.SummaryMessage = $"Xếp hạng có độ vững bền {result.RobustnessPercentage:0.0}%. Vị trí #1 có sự dịch chuyển khi biến thiên trọng số tại các tiêu chí: {sensitiveList}. Cần lưu ý đánh giá kỹ các tiêu chí này trước khi phê duyệt quyết định.";
+            result.SummaryMessage = $"The ranking exhibits {result.RobustnessPercentage:0.0}% robustness. Position #1 shifts under weight variations for the following criteria: {sensitiveList}. These criteria should be carefully reviewed prior to final decision approval.";
         }
 
         _logger.LogInformation(

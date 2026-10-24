@@ -128,6 +128,6 @@ public class SensitivityAnalysisServiceTests
         var result = _service.Analyze(
             1, "EB", new double[0, 0], Array.Empty<double>(), Array.Empty<string>(), criteria, suppliers, "A", "Name", 0.5m);
 
-        result.SummaryMessage.Should().Contain("Không đủ điều kiện");
+        result.SummaryMessage.Should().Contain("Minimum conditions");
     }
 }
