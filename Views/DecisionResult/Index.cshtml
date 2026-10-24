@@ -162,14 +162,6 @@
 
 </div>
 
-@if (Model.IsFrozenFromSnapshot)
-{
-    <div class="alert alert-info mb-3" style="border-radius: var(--radius-md); padding: 14px 18px; border: 1px solid rgba(59, 130, 246, 0.35); background: rgba(59, 130, 246, 0.08);">
-        <i class="bi bi-lock-fill me-2 text-primary"></i>
-        <strong>Reproducible Evidence Snapshot:</strong> This completed decision is rendered from the immutable Round @Model.CurrentRoundNumber snapshot (@(Model.SnapshotMethodVersion ?? "AHP+TOPSIS")) recorded at final approval. Subsequent changes to master supplier or criteria names do not alter this historical record.
-    </div>
-}
-
 
 @if (!Model.Ranking.Any())
 {
@@ -367,8 +359,8 @@ else
          ===================================================== -->
     @if (Model.SensitivityAnalysis != null && Model.SensitivityAnalysis.Scenarios.Any())
     {
-        <div class="table-card decision-ranking-card" style="margin-top: 24px;">
-            <div class="decision-card-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+        <div class="table-card decision-ranking-card">
+            <div class="decision-card-header decision-card-header-flex">
                 <div>
                     <div class="page-eyebrow">
                         ROBUSTNESS CHECK · SENSITIVITY ANALYSIS
@@ -778,7 +770,7 @@ else
      ========================================================= -->
 @if (Model.DecisionHistory.Any())
 {
-    <div class="table-card decision-ranking-card" style="margin-top: 28px;" id="decision-history">
+    <div class="table-card decision-ranking-card" id="decision-history">
         <div class="decision-card-header">
             <div>
                 <div class="page-eyebrow">
@@ -862,7 +854,7 @@ else
      ========================================================= -->
 @if (Model.RoundSnapshots.Any())
 {
-    <div class="table-card decision-ranking-card" style="margin-top: 28px;" id="round-snapshots">
+    <div class="table-card decision-ranking-card" id="round-snapshots">
         <div class="decision-card-header">
             <div>
                 <div class="page-eyebrow">

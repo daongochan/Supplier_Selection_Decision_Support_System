@@ -3,8 +3,7 @@
 @{
     ViewData["Title"] = "Reports";
 
-    var canGenerate =
-        Model.CanGenerate;
+    var canGenerate = Model.CanGenerate;
 
     var latestPdf = Model.Reports
         .FirstOrDefault(r => string.Equals(r.ReportType, SupplierSelectionDSS.Constants.ReportTypes.Pdf, StringComparison.OrdinalIgnoreCase));
@@ -17,79 +16,52 @@
     <link rel="stylesheet" href="~/css/pages/report.css" asp-append-version="true" />
 }
 
-
 <!-- =========================================================
      PAGE HEADER
      ========================================================= -->
-
 <div class="page-header report-page-header">
-
     <div>
-
         <div class="page-eyebrow">
             REPORTS
         </div>
-
         <h1 class="page-title">
             Evaluation reports
         </h1>
-
         <p class="page-description">
-            @Model.BatchCode
-            ·
-            @Model.BatchName
+            @Model.BatchCode · @Model.BatchName
         </p>
-
     </div>
 
-
     <div class="report-header-actions">
-
-        <span class="status-pill
-            status-@Model.BatchStatus.ToLowerInvariant()">
-
+        <span class="status-pill status-@Model.BatchStatus.ToLowerInvariant()">
             @Model.BatchStatus
-
         </span>
-
 
         <a asp-controller="EvaluationBatch"
            asp-action="Details"
            asp-route-id="@Model.BatchId"
            class="btn-outline">
-
             Back to Batch
-
         </a>
-
     </div>
-
 </div>
 
-
 <!-- =========================================================
-     REPORT STATUS
+     REPORTING STATUS
      ========================================================= -->
-
 <div class="report-status-card">
-
     <div class="report-status-copy">
-
         <div class="page-eyebrow">
             FINAL REPORT
         </div>
-
 
         @if (canGenerate)
         {
             <h2>
                 Batch is ready for reporting
             </h2>
-
             <p>
-                The evaluation batch has reached Approved status.
-                You can generate and download official PDF or Excel reports
-                based on the finalized decision package.
+                The evaluation batch has reached Approved status. You can generate and download official PDF or Excel reports based on the finalized decision package.
             </p>
         }
         else
@@ -97,433 +69,360 @@
             <h2>
                 Report generation is locked
             </h2>
-
             <p>
-                Final evaluation reports are unlocked once the batch workflow
-                is completed and the final supplier decision is approved.
+                Final evaluation reports are unlocked once the batch workflow is completed and the final supplier decision is approved.
             </p>
         }
-
     </div>
 
-
-    <div class="report-status-actions" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-
+    <div class="report-status-badge-wrap">
         @if (canGenerate)
         {
-            @if (latestPdf != null)
-            {
-                <a asp-controller="Report"
-                   asp-action="Download"
-                   asp-route-reportId="@latestPdf.ReportId"
-                   class="btn-primary"
-                   title="Download latest generated PDF (@latestPdf.GeneratedAt.ToString("dd/MM/yyyy HH:mm"))">
-                    <i class="bi bi-file-earmark-pdf"></i>
-                    Download PDF
-                </a>
-
-                <form method="post"
-                      action="@Url.Action("GeneratePdf", "Report", new { batchId = Model.BatchId })"
-                      style="display: inline;">
-                    @Html.AntiForgeryToken()
-                    <button type="submit"
-                            class="btn-outline"
-                            title="Regenerate a new PDF report">
-                        <i class="bi bi-arrow-repeat"></i>
-                        Regenerate PDF
-                    </button>
-                </form>
-            }
-            else
-            {
-                <form method="post"
-                      action="@Url.Action("GeneratePdf", "Report", new { batchId = Model.BatchId })">
-                    @Html.AntiForgeryToken()
-                    <button type="submit"
-                            class="btn-primary">
-                        <i class="bi bi-file-earmark-pdf"></i>
-                        Generate PDF
-                    </button>
-                </form>
-            }
-
-            @if (latestExcel != null)
-            {
-                <a asp-controller="Report"
-                   asp-action="Download"
-                   asp-route-reportId="@latestExcel.ReportId"
-                   class="btn-outline"
-                   title="Download latest generated Excel (@latestExcel.GeneratedAt.ToString("dd/MM/yyyy HH:mm"))">
-                    <i class="bi bi-file-earmark-spreadsheet"></i>
-                    Download Excel
-                </a>
-
-                <form method="post"
-                      action="@Url.Action("GenerateExcel", "Report", new { batchId = Model.BatchId })"
-                      style="display: inline;">
-                    @Html.AntiForgeryToken()
-                    <button type="submit"
-                            class="btn-outline"
-                            title="Regenerate a new Excel report">
-                        <i class="bi bi-arrow-repeat"></i>
-                        Regenerate Excel
-                    </button>
-                </form>
-            }
-            else
-            {
-                <form method="post"
-                      action="@Url.Action("GenerateExcel", "Report", new { batchId = Model.BatchId })">
-                    @Html.AntiForgeryToken()
-                    <button type="submit"
-                            class="btn-outline">
-                        <i class="bi bi-file-earmark-spreadsheet"></i>
-                        Generate Excel
-                    </button>
-                </form>
-            }
+            <span class="report-status-pill pill-ready">
+                <i class="bi bi-check-circle-fill"></i> Ready for export
+            </span>
         }
         else
         {
-            <span class="report-disabled-badge">
-                Available after approval
+            <span class="report-status-pill pill-locked">
+                <i class="bi bi-lock-fill"></i> Locked until approval
             </span>
         }
-
     </div>
-
 </div>
-
 
 <!-- =========================================================
-     REPORT CONTENT
+     REPORT FORMATS & ACTIONS (2 BALANCED CARDS)
      ========================================================= -->
-
-<div class="report-overview-grid">
-
-
-    <!-- REPORT SCOPE -->
-
-    <div class="surface-card report-overview-card">
-
-        <span class="card-label">
-            REPORT SCOPE
-        </span>
-
-
-        <strong class="report-overview-title">
-            Final decision package
-        </strong>
-
-
-        <span class="report-overview-meta">
-            Batch information
-        </span>
-
-        <span class="report-overview-meta">
-            Evaluation scores
-        </span>
-
-        <span class="report-overview-meta">
-            AHP weights & consistency
-        </span>
-
-        <span class="report-overview-meta">
-            TOPSIS ranking
-        </span>
-
-        <span class="report-overview-meta">
-            Final approval
-        </span>
-
-    </div>
-
-
-    <!-- AVAILABLE FORMATS -->
-
-    <div class="surface-card report-overview-card">
-
-        <span class="card-label">
-            OUTPUT FORMATS
-        </span>
-
-
-        <div class="report-format-item">
-
-            <span class="report-format-icon
-                         report-format-pdf">
-
-                <i class="bi bi-file-earmark-pdf"></i>
-
-            </span>
-
-
-            <div>
-
-                <strong>
-                    PDF
-                </strong>
-
-                <span>
-                    Printable final report
-                </span>
-
+<div class="report-format-grid">
+    <!-- PDF Report Card -->
+    <div class="report-format-card report-format-card-pdf">
+        <div class="report-format-card-body">
+            <div class="report-format-header">
+                <div class="report-format-icon report-format-pdf" aria-hidden="true">
+                    <i class="bi bi-file-earmark-pdf-fill"></i>
+                </div>
+                <div class="report-format-title-wrap">
+                    <h3 class="report-format-title">PDF Report</h3>
+                    <span class="report-format-subtitle">Printable final decision report</span>
+                </div>
             </div>
 
+            <p class="report-format-desc">
+                Official executive decision document containing batch setup, criteria weights, TOPSIS rankings, and executive approval records.
+            </p>
+
+            @if (latestPdf != null)
+            {
+                <div class="report-format-meta">
+                    <i class="bi bi-clock-history"></i>
+                    <span>Latest generated: @latestPdf.GeneratedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                </div>
+            }
         </div>
 
+        <div class="report-format-card-actions">
+            @if (canGenerate)
+            {
+                @if (latestPdf != null)
+                {
+                    <a asp-controller="Report"
+                       asp-action="Download"
+                       asp-route-reportId="@latestPdf.ReportId"
+                       class="btn-primary report-btn-main"
+                       title="Download latest generated PDF (@latestPdf.GeneratedAt.ToString("dd/MM/yyyy HH:mm"))">
+                        <i class="bi bi-download"></i>
+                        <span>Download PDF</span>
+                    </a>
 
-        <div class="report-format-item">
-
-            <span class="report-format-icon
-                         report-format-excel">
-
-                <i class="bi bi-file-earmark-spreadsheet"></i>
-
-            </span>
-
-
-            <div>
-
-                <strong>
-                    Excel
-                </strong>
-
-                <span>
-                    Structured analytical workbook
-                </span>
-
-            </div>
-
+                    <form method="post"
+                          action="@Url.Action("GeneratePdf", "Report", new { batchId = Model.BatchId })"
+                          class="report-form-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit"
+                                class="btn-outline report-btn-sub"
+                                title="Regenerate a new PDF report">
+                            <i class="bi bi-arrow-repeat"></i>
+                            <span>Regenerate</span>
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <form method="post"
+                          action="@Url.Action("GeneratePdf", "Report", new { batchId = Model.BatchId })"
+                          class="report-form-full">
+                        @Html.AntiForgeryToken()
+                        <button type="submit"
+                                class="btn-primary report-btn-main">
+                            <i class="bi bi-file-earmark-pdf"></i>
+                            <span>Generate PDF</span>
+                        </button>
+                    </form>
+                }
+            }
+            else
+            {
+                <button type="button" class="btn-outline report-btn-disabled" disabled>
+                    <i class="bi bi-lock"></i>
+                    <span>Locked until approval</span>
+                </button>
+            }
         </div>
-
     </div>
 
+    <!-- Excel Workbook Card -->
+    <div class="report-format-card report-format-card-excel">
+        <div class="report-format-card-body">
+            <div class="report-format-header">
+                <div class="report-format-icon report-format-excel" aria-hidden="true">
+                    <i class="bi bi-file-earmark-spreadsheet-fill"></i>
+                </div>
+                <div class="report-format-title-wrap">
+                    <h3 class="report-format-title">Excel Workbook</h3>
+                    <span class="report-format-subtitle">Structured evaluation and decision data</span>
+                </div>
+            </div>
 
+            <p class="report-format-desc">
+                Structured multi-sheet workbook including raw evaluation scores, normalized decision matrices, AHP weights, and TOPSIS rankings.
+            </p>
+
+            @if (latestExcel != null)
+            {
+                <div class="report-format-meta">
+                    <i class="bi bi-clock-history"></i>
+                    <span>Latest generated: @latestExcel.GeneratedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                </div>
+            }
+        </div>
+
+        <div class="report-format-card-actions">
+            @if (canGenerate)
+            {
+                @if (latestExcel != null)
+                {
+                    <a asp-controller="Report"
+                       asp-action="Download"
+                       asp-route-reportId="@latestExcel.ReportId"
+                       class="btn-primary report-btn-main"
+                       title="Download latest generated Excel (@latestExcel.GeneratedAt.ToString("dd/MM/yyyy HH:mm"))">
+                        <i class="bi bi-download"></i>
+                        <span>Download Excel</span>
+                    </a>
+
+                    <form method="post"
+                          action="@Url.Action("GenerateExcel", "Report", new { batchId = Model.BatchId })"
+                          class="report-form-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit"
+                                class="btn-outline report-btn-sub"
+                                title="Regenerate a new Excel report">
+                            <i class="bi bi-arrow-repeat"></i>
+                            <span>Regenerate</span>
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <form method="post"
+                          action="@Url.Action("GenerateExcel", "Report", new { batchId = Model.BatchId })"
+                          class="report-form-full">
+                        @Html.AntiForgeryToken()
+                        <button type="submit"
+                                class="btn-primary report-btn-main">
+                            <i class="bi bi-file-earmark-spreadsheet"></i>
+                            <span>Generate Excel</span>
+                        </button>
+                    </form>
+                }
+            }
+            else
+            {
+                <button type="button" class="btn-outline report-btn-disabled" disabled>
+                    <i class="bi bi-lock"></i>
+                    <span>Locked until approval</span>
+                </button>
+            }
+        </div>
+    </div>
 </div>
 
+<!-- =========================================================
+     REPORT SCOPE
+     ========================================================= -->
+<div class="report-scope-card">
+    <div class="report-scope-header">
+        <div>
+            <div class="page-eyebrow">
+                REPORT SCOPE
+            </div>
+            <h3 class="report-scope-title">
+                Final decision package
+            </h3>
+        </div>
+
+        <span class="report-scope-badge">
+            <i class="bi bi-layers"></i> Audit Ready
+        </span>
+    </div>
+
+    <div class="report-scope-grid">
+        <div class="report-scope-item">
+            <i class="bi bi-check2-circle"></i>
+            <div>
+                <strong>Batch Information</strong>
+                <span>Scope, criteria list, participating suppliers</span>
+            </div>
+        </div>
+
+        <div class="report-scope-item">
+            <i class="bi bi-check2-circle"></i>
+            <div>
+                <strong>Evaluation Scores</strong>
+                <span>Raw matrix and quantitative measurements</span>
+            </div>
+        </div>
+
+        <div class="report-scope-item">
+            <i class="bi bi-check2-circle"></i>
+            <div>
+                <strong>AHP Weights &amp; Consistency</strong>
+                <span>Pairwise comparisons and consistency ratio</span>
+            </div>
+        </div>
+
+        <div class="report-scope-item">
+            <i class="bi bi-check2-circle"></i>
+            <div>
+                <strong>TOPSIS Ranking</strong>
+                <span>Ideal solutions, separation, and closeness</span>
+            </div>
+        </div>
+
+        <div class="report-scope-item">
+            <i class="bi bi-check2-circle"></i>
+            <div>
+                <strong>Final Approval</strong>
+                <span>Executive sign-off and audit timestamps</span>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- =========================================================
      REPORT HISTORY
      ========================================================= -->
-
 <div class="report-history-section">
-
     <div class="section-heading">
-
         <div>
-
             <div class="page-eyebrow">
                 REPORT HISTORY
             </div>
-
             <h2 class="section-title">
-                Generated reports.
+                Generated reports
             </h2>
-
         </div>
-
     </div>
 
-
     <div class="table-card">
-
         @if (Model.Reports.Any())
         {
             <div class="data-table-wrapper">
-
                 <table class="data-table report-history-table">
-
                     <thead>
-
                         <tr>
-
-                            <th>
-                                Type
-                            </th>
-
-                            <th>
-                                Generated by
-                            </th>
-
-                            <th>
-                                Generated
-                            </th>
-
-                            <th>
-                                File
-                            </th>
-
-                            <th>
-                                Action
-                            </th>
-
+                            <th>Type</th>
+                            <th>Generated by</th>
+                            <th>Generated</th>
+                            <th>File</th>
+                            <th>Action</th>
                         </tr>
-
                     </thead>
-
-
                     <tbody>
-
-                        @foreach (
-                            var report
-                            in Model.Reports)
+                        @foreach (var report in Model.Reports)
                         {
                             <tr>
-
-                                <!-- TYPE -->
-
                                 <td>
-
-                                    @if (
-                                        string.Equals(
-                                            report.ReportType,
-                                            ReportTypes.Pdf,
-                                            StringComparison.OrdinalIgnoreCase))
+                                    @if (string.Equals(report.ReportType, SupplierSelectionDSS.Constants.ReportTypes.Pdf, StringComparison.OrdinalIgnoreCase))
                                     {
-                                        <span class="
-                                            report-type-badge
-                                            report-type-pdf">
-
+                                        <span class="report-type-badge report-type-pdf">
                                             <i class="bi bi-file-earmark-pdf"></i>
-
                                             PDF
-
                                         </span>
                                     }
                                     else
                                     {
-                                        <span class="
-                                            report-type-badge
-                                            report-type-excel">
-
+                                        <span class="report-type-badge report-type-excel">
                                             <i class="bi bi-file-earmark-spreadsheet"></i>
-
                                             Excel
-
                                         </span>
                                     }
-
                                 </td>
 
-
-                                <!-- GENERATED BY -->
-
                                 <td>
-
                                     <strong>
-                                        @(string.IsNullOrWhiteSpace(
-                                            report.GeneratedByName)
+                                        @(string.IsNullOrWhiteSpace(report.GeneratedByName)
                                             ? $"User #{report.GeneratedBy}"
                                             : report.GeneratedByName)
                                     </strong>
-
                                 </td>
 
-
-                                <!-- DATE -->
-
                                 <td>
-
                                     @report.GeneratedAt.ToString("dd/MM/yyyy HH:mm")
-
                                 </td>
 
-
-                                <!-- FILE -->
-
                                 <td>
-
-                                    @if (
-                                        !string.IsNullOrWhiteSpace(
-                                            report.FilePath))
+                                    @if (!string.IsNullOrWhiteSpace(report.FilePath))
                                     {
                                         <span class="table-muted">
-                                            @System.IO.Path.GetFileName(
-                                                report.FilePath)
+                                            @System.IO.Path.GetFileName(report.FilePath)
                                         </span>
                                     }
                                     else
                                     {
-                                        <span class="table-muted">
-                                            —
-                                        </span>
+                                        <span class="table-muted">—</span>
                                     }
-
                                 </td>
 
-
-                                <!-- DOWNLOAD -->
-
                                 <td>
-
                                     <a asp-controller="Report"
                                        asp-action="Download"
                                        asp-route-reportId="@report.ReportId"
                                        class="action-link">
-
                                         Download
-
                                         <i class="bi bi-download"></i>
-
                                     </a>
-
                                 </td>
-
                             </tr>
                         }
-
                     </tbody>
-
                 </table>
-
             </div>
         }
         else
         {
             <div class="empty-state">
-
-                <h3>
-                    No reports yet.
-                </h3>
-
-                <p>
-                    No evaluation reports have been generated for this batch yet.
-                </p>
-
+                <h3>No reports yet.</h3>
+                <p>No evaluation reports have been generated for this batch yet.</p>
                 @if (canGenerate)
                 {
-                    <p>
-                        Click Generate PDF or Generate Excel above to create the initial decision report.
-                    </p>
+                    <p>Use the format cards above to generate the initial decision report.</p>
                 }
-
             </div>
         }
-
     </div>
-
 </div>
-
 
 <!-- =========================================================
      WORKFLOW NOTE
      ========================================================= -->
-
 <div class="report-workflow-note">
-
     <span class="report-workflow-dot"></span>
-
     <div>
-
-        <strong>
-            Reporting workflow
-        </strong>
-
+        <strong>Reporting workflow</strong>
         <span>
             Reports are synthesized from finalized supplier evaluation scores, AHP criteria weights, TOPSIS rankings, and executive approval records.
         </span>
-
     </div>
-
 </div>
