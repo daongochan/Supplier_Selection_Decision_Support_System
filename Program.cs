@@ -6,11 +6,13 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using QuestPDF.Infrastructure;
 using SupplierSelectionDSS.Data;
 using SupplierSelectionDSS.Services;
 
 using SupplierSelectionDSS.Constants;
+using SupplierSelectionDSS.Infrastructure.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +21,11 @@ var builder = WebApplication.CreateBuilder(args);
 // =========================================================
 
 QuestPDF.Settings.License = LicenseType.Community;
+
+// Performance diagnostics configuration (toggleable via appsettings / env)
+builder.Services.Configure<PerformanceDiagnosticsOptions>(
+    builder.Configuration.GetSection(PerformanceDiagnosticsOptions.SectionName));
+builder.Services.AddSingleton<PerformanceCommandInterceptor>();
 
 // Memory cache with size limit for security components (LoginAttemptService, etc.)
 builder.Services.AddMemoryCache(options =>
@@ -101,7 +108,7 @@ if (string.IsNullOrWhiteSpace(connectionString))
         "Connection string 'DefaultConnection' was not found or is empty.");
 }
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
 {
     options.UseSqlServer(
         connectionString,
@@ -112,6 +119,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 maxRetryDelay: TimeSpan.FromSeconds(10),
                 errorNumbersToAdd: null);
         });
+
+    var diagOptions = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<PerformanceDiagnosticsOptions>>().Value;
+    if (diagOptions.Enabled)
+    {
+        options.AddInterceptors(sp.GetRequiredService<PerformanceCommandInterceptor>());
+    }
 });
 
 // =========================================================
@@ -188,55 +201,87 @@ builder.Services
 
         options.Events.OnValidatePrincipal = async context =>
         {
-            var userIdStr = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(userIdStr, out var userId))
+            var authSw = System.Diagnostics.Stopwatch.StartNew();
+            try
             {
-                context.RejectPrincipal();
-                await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                return;
-            }
-
-            var db = context.HttpContext.RequestServices.GetRequiredService<ApplicationDbContext>();
-            var liveUser = await db.Users
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.UserId == userId);
-
-            if (liveUser == null || !string.Equals(liveUser.Status, EntityStatus.Active, StringComparison.OrdinalIgnoreCase))
-            {
-                context.RejectPrincipal();
-                await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                return;
-            }
-
-            var cookiePwdStamp = context.Principal?.FindFirstValue(AuthClaimTypes.PasswordStamp);
-            if (!string.IsNullOrEmpty(cookiePwdStamp))
-            {
-                var livePwdStamp = AuthClaimTypes.ComputePasswordStamp(liveUser.PasswordHash);
-                if (!string.Equals(cookiePwdStamp, livePwdStamp, StringComparison.Ordinal))
+                var userIdStr = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!int.TryParse(userIdStr, out var userId))
                 {
                     context.RejectPrincipal();
                     await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
                     return;
                 }
-            }
 
-            var cookieRole = context.Principal?.FindFirstValue(ClaimTypes.Role);
-            var cookieGivenName = context.Principal?.FindFirstValue(ClaimTypes.GivenName);
-            if (!string.Equals(cookieRole, liveUser.Role, StringComparison.Ordinal)
-                || !string.Equals(cookieGivenName, liveUser.FullName, StringComparison.Ordinal))
-            {
-                var updatedClaims = new List<Claim>
+                var cache = context.HttpContext.RequestServices.GetRequiredService<Microsoft.Extensions.Caching.Memory.IMemoryCache>();
+                var cacheKey = $"AuthUserSnapshot_{userId}";
+
+                if (!cache.TryGetValue(cacheKey, out AuthUserValidationSnapshot? liveUser) || liveUser == null)
                 {
-                    new(ClaimTypes.NameIdentifier, liveUser.UserId.ToString()),
-                    new(ClaimTypes.Name, liveUser.Username),
-                    new(ClaimTypes.GivenName, liveUser.FullName),
-                    new(ClaimTypes.Role, liveUser.Role),
-                    new(AuthClaimTypes.PasswordStamp, AuthClaimTypes.ComputePasswordStamp(liveUser.PasswordHash))
-                };
+                    var db = context.HttpContext.RequestServices.GetRequiredService<ApplicationDbContext>();
+                    liveUser = await db.Users
+                        .AsNoTracking()
+                        .Where(x => x.UserId == userId)
+                        .Select(x => new AuthUserValidationSnapshot(
+                            x.UserId,
+                            x.Username,
+                            x.FullName,
+                            x.Role,
+                            x.Status,
+                            x.PasswordHash))
+                        .FirstOrDefaultAsync();
 
-                var updatedIdentity = new ClaimsIdentity(updatedClaims, CookieAuthenticationDefaults.AuthenticationScheme);
-                context.ReplacePrincipal(new ClaimsPrincipal(updatedIdentity));
-                context.ShouldRenew = true;
+                    if (liveUser != null)
+                    {
+                        cache.Set(cacheKey, liveUser, new MemoryCacheEntryOptions
+                        {
+                            AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(20),
+                            Size = 1
+                        });
+                    }
+                }
+
+                if (liveUser == null || !string.Equals(liveUser.Status, EntityStatus.Active, StringComparison.OrdinalIgnoreCase))
+                {
+                    context.RejectPrincipal();
+                    await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                    return;
+                }
+
+                var cookiePwdStamp = context.Principal?.FindFirstValue(AuthClaimTypes.PasswordStamp);
+                if (!string.IsNullOrEmpty(cookiePwdStamp))
+                {
+                    var livePwdStamp = AuthClaimTypes.ComputePasswordStamp(liveUser.PasswordHash);
+                    if (!string.Equals(cookiePwdStamp, livePwdStamp, StringComparison.Ordinal))
+                    {
+                        context.RejectPrincipal();
+                        await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                        return;
+                    }
+                }
+
+                var cookieRole = context.Principal?.FindFirstValue(ClaimTypes.Role);
+                var cookieGivenName = context.Principal?.FindFirstValue(ClaimTypes.GivenName);
+                if (!string.Equals(cookieRole, liveUser.Role, StringComparison.Ordinal)
+                    || !string.Equals(cookieGivenName, liveUser.FullName, StringComparison.Ordinal))
+                {
+                    var updatedClaims = new List<Claim>
+                    {
+                        new(ClaimTypes.NameIdentifier, liveUser.UserId.ToString()),
+                        new(ClaimTypes.Name, liveUser.Username),
+                        new(ClaimTypes.GivenName, liveUser.FullName),
+                        new(ClaimTypes.Role, liveUser.Role),
+                        new(AuthClaimTypes.PasswordStamp, AuthClaimTypes.ComputePasswordStamp(liveUser.PasswordHash))
+                    };
+
+                    var updatedIdentity = new ClaimsIdentity(updatedClaims, CookieAuthenticationDefaults.AuthenticationScheme);
+                    context.ReplacePrincipal(new ClaimsPrincipal(updatedIdentity));
+                    context.ShouldRenew = true;
+                }
+            }
+            finally
+            {
+                authSw.Stop();
+                RequestDiagnosticsContext.Current?.RecordAuthValidation(authSw.Elapsed);
             }
         };
 
@@ -288,6 +333,8 @@ else
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+
+app.UseMiddleware<PerformanceDiagnosticsMiddleware>();
 
 // Cấu hình Localization: Hỗ trợ tiếng Việt với dấu phân cách thập phân chuẩn để model binder luôn đọc đúng số
 var defaultCulture = new System.Globalization.CultureInfo("vi-VN");
