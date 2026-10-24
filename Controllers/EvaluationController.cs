@@ -165,23 +165,29 @@ public class EvaluationController : Controller
 
 
             // =================================================
-            // CAPTURE NEW EVALUATION
+            // CAPTURE NEW EVALUATION (In-memory projection)
             // =================================================
 
             EvaluationViewModel? afterModel = null;
 
-
-            try
+            if (beforeModel != null)
             {
-                afterModel =
-                    await _evaluationService
-                        .GetEvaluationAsync(
-                            model.BatchId);
+                afterModel = ApplySubmittedScoresToSnapshot(beforeModel, model);
             }
-            catch
+            else
             {
-                // Audit chỉ là lớp bổ sung.
-                // Không làm hỏng workflow chính.
+                try
+                {
+                    afterModel =
+                        await _evaluationService
+                            .GetEvaluationAsync(
+                                model.BatchId);
+                }
+                catch
+                {
+                    // Audit chỉ là lớp bổ sung.
+                    // Không làm hỏng workflow chính.
+                }
             }
 
 
@@ -341,6 +347,74 @@ public class EvaluationController : Controller
         }
 
         return View("Index", viewModel);
+    }
+
+
+    // =========================================================
+    // IN-MEMORY SNAPSHOT PROJECTION
+    // =========================================================
+
+    private static EvaluationViewModel ApplySubmittedScoresToSnapshot(
+        EvaluationViewModel baseModel,
+        EvaluationScoreInputViewModel input)
+    {
+        var updated = new EvaluationViewModel
+        {
+            BatchId = baseModel.BatchId,
+            BatchCode = baseModel.BatchCode,
+            BatchName = baseModel.BatchName,
+            GroupCode = baseModel.GroupCode,
+            GroupName = baseModel.GroupName,
+            Status = baseModel.Status,
+            RowVersion = baseModel.RowVersion,
+            Criteria = baseModel.Criteria
+        };
+
+        var rowMap = (input.Rows ?? new List<EvaluationScoreInputRowViewModel>())
+            .ToDictionary(r => r.SupplierId);
+
+        foreach (var supplier in baseModel.Suppliers)
+        {
+            var newRow = new EvaluationSupplierRowViewModel
+            {
+                SupplierId = supplier.SupplierId,
+                SupplierCode = supplier.SupplierCode,
+                SupplierName = supplier.SupplierName
+            };
+
+            rowMap.TryGetValue(supplier.SupplierId, out var inputRow);
+
+            foreach (var criterion in baseModel.Criteria)
+            {
+                var criterionId = criterion.CriteriaId;
+                decimal? score = null;
+                var hasInputScore = inputRow?.Scores != null && inputRow.Scores.TryGetValue(criterionId, out score);
+                var isCleared = (inputRow?.ClearedCriteriaIds != null && inputRow.ClearedCriteriaIds.Contains(criterionId))
+                                || (hasInputScore && !score.HasValue)
+                                || (input.ReplaceAllSubmittedCells && (!hasInputScore || !score.HasValue));
+
+                if (isCleared)
+                {
+                    newRow.Scores[criterionId] = new EvaluationCellViewModel { Score = null };
+                }
+                else if (hasInputScore && score.HasValue)
+                {
+                    newRow.Scores[criterionId] = new EvaluationCellViewModel { Score = score.Value };
+                }
+                else if (supplier.Scores.TryGetValue(criterionId, out var existingCell))
+                {
+                    newRow.Scores[criterionId] = new EvaluationCellViewModel { Score = existingCell.Score };
+                }
+                else
+                {
+                    newRow.Scores[criterionId] = new EvaluationCellViewModel { Score = null };
+                }
+            }
+
+            updated.Suppliers.Add(newRow);
+        }
+
+        return updated;
     }
 
 

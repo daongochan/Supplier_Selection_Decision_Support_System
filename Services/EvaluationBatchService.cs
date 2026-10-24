@@ -96,11 +96,21 @@ public class EvaluationBatchService
 
     public async Task<(int Total, int Evaluating, int Completed, int Draft)> GetKpiSummaryAsync()
     {
-        var total = await _context.EvaluationBatches.CountAsync();
-        var evaluating = await _context.EvaluationBatches.CountAsync(x => x.Status == BatchStatus.Evaluating);
-        var completed = await _context.EvaluationBatches.CountAsync(x => x.Status == BatchStatus.Completed);
-        var draft = await _context.EvaluationBatches.CountAsync(x => x.Status == BatchStatus.Draft);
-        return (total, evaluating, completed, draft);
+        var summary = await _context.EvaluationBatches
+            .AsNoTracking()
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                Total = g.Count(),
+                Evaluating = g.Count(x => x.Status == BatchStatus.Evaluating),
+                Completed = g.Count(x => x.Status == BatchStatus.Completed),
+                Draft = g.Count(x => x.Status == BatchStatus.Draft)
+            })
+            .FirstOrDefaultAsync();
+
+        return summary != null
+            ? (summary.Total, summary.Evaluating, summary.Completed, summary.Draft)
+            : (0, 0, 0, 0);
     }
 
 
@@ -754,68 +764,35 @@ public class EvaluationBatchService
 
     public async Task<EvaluationBatch?>
         GetDetailAsync(
-            int id)
+            int id,
+            bool lightweight = true)
     {
+        if (lightweight)
+        {
+            return await _context.EvaluationBatches
+                .AsNoTracking()
+                .AsSplitQuery()
+                .Include(x => x.Group)
+                .Include(x => x.CreatedByNavigation)
+                .Include(x => x.Suppliers)
+                .Include(x => x.Criteria)
+                .FirstOrDefaultAsync(x => x.BatchId == id);
+        }
+
         return await _context.EvaluationBatches
             .AsNoTracking()
             .AsSplitQuery()
-
-            // =====================================================
-            // BASIC INFORMATION
-            // =====================================================
-
-            .Include(
-                x =>
-                    x.Group)
-
-            .Include(
-                x =>
-                    x.CreatedByNavigation)
-
-            // =====================================================
-            // SCOPE
-            // =====================================================
-
-            .Include(
-                x =>
-                    x.Suppliers)
-
-            .Include(
-                x =>
-                    x.Criteria)
-
-            // =====================================================
-            // WORKFLOW DATA
-            // =====================================================
-
-            .Include(
-                x =>
-                    x.EvaluationScores)
-
-            .Include(
-                x =>
-                    x.AhppairwiseComparisons)
-
-            .Include(
-                x =>
-                    x.Ahpresult)
-
-            .Include(
-                x =>
-                    x.AhpcriteriaWeights)
-
-            .Include(
-                x =>
-                    x.TopsisResults)
-
-            .Include(
-                x =>
-                    x.Approvals)
-
-            .FirstOrDefaultAsync(
-                x =>
-                    x.BatchId ==
-                    id);
+            .Include(x => x.Group)
+            .Include(x => x.CreatedByNavigation)
+            .Include(x => x.Suppliers)
+            .Include(x => x.Criteria)
+            .Include(x => x.EvaluationScores)
+            .Include(x => x.AhppairwiseComparisons)
+            .Include(x => x.Ahpresult)
+            .Include(x => x.AhpcriteriaWeights)
+            .Include(x => x.TopsisResults)
+            .Include(x => x.Approvals)
+            .FirstOrDefaultAsync(x => x.BatchId == id);
     }
 
 }

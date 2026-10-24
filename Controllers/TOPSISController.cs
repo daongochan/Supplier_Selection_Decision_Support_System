@@ -120,7 +120,8 @@ public class TOPSISController : Controller
                 beforeModel =
                     await _topsisService
                         .GetWorkspaceAsync(
-                            batchId);
+                            batchId,
+                            includeSensitivity: false);
             }
             catch
             {
@@ -152,7 +153,8 @@ public class TOPSISController : Controller
                 afterModel =
                     await _topsisService
                         .GetWorkspaceAsync(
-                            batchId);
+                            batchId,
+                            includeSensitivity: false);
             }
             catch
             {

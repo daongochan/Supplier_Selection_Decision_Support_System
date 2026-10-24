@@ -47,7 +47,8 @@
     // UNIFIED WORKFLOW READINESS (Single Source of Truth)
     // =========================================================
     var readiness =
-        BatchWorkflowReadinessService.ComputeFromBatchEntity(Model);
+        (ViewBag.Readiness as BatchWorkflowReadiness)
+        ?? BatchWorkflowReadinessService.ComputeFromBatchEntity(Model);
 
     var supplierCount =
         readiness.SupplierCount;

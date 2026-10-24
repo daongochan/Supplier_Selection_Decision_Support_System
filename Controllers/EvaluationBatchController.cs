@@ -19,15 +19,18 @@ public class EvaluationBatchController : Controller
 {
     private readonly EvaluationBatchService _batchService;
     private readonly AuditLogService _auditLogService;
+    private readonly BatchWorkflowReadinessService? _readinessService;
     private readonly ILogger<EvaluationBatchController> _logger;
 
     public EvaluationBatchController(
         EvaluationBatchService batchService,
         AuditLogService auditLogService,
+        BatchWorkflowReadinessService? readinessService = null,
         ILogger<EvaluationBatchController>? logger = null)
     {
         _batchService = batchService;
         _auditLogService = auditLogService;
+        _readinessService = readinessService;
         _logger = logger ?? NullLogger<EvaluationBatchController>.Instance;
     }
 
@@ -574,16 +577,20 @@ public class EvaluationBatchController : Controller
     public async Task<IActionResult> Details(
         int id)
     {
+        var readiness = _readinessService != null
+            ? await _readinessService.GetReadinessAsync(id)
+            : null;
+
         var batch =
             await _batchService
-                .GetDetailAsync(id);
-
+                .GetDetailAsync(id, lightweight: readiness != null);
 
         if (batch == null)
         {
             return NotFound();
         }
 
+        ViewBag.Readiness = readiness;
 
         return View(batch);
     }

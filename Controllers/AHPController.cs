@@ -160,24 +160,29 @@ public class AHPController : Controller
 
 
             // =================================================
-            // CAPTURE NEW AHP STATE
+            // CAPTURE NEW AHP STATE (In-memory projection)
             // =================================================
 
-            AHPComparisonViewModel? afterModel =
-                null;
+            AHPComparisonViewModel? afterModel = null;
 
-
-            try
+            if (beforeModel != null)
             {
-                afterModel =
-                    await _ahpService
-                        .GetComparisonMatrixAsync(
-                            batchId);
+                afterModel = ApplySubmittedComparisonsToSnapshot(beforeModel, model);
             }
-            catch
+            else
             {
-                // Audit không được làm hỏng
-                // thao tác Save đã thành công.
+                try
+                {
+                    afterModel =
+                        await _ahpService
+                            .GetComparisonMatrixAsync(
+                                batchId);
+                }
+                catch
+                {
+                    // Audit không được làm hỏng
+                    // thao tác Save đã thành công.
+                }
             }
 
 
@@ -401,6 +406,48 @@ public class AHPController : Controller
             {
                 batchId
             });
+    }
+
+
+    // =========================================================
+    // IN-MEMORY SNAPSHOT PROJECTION
+    // =========================================================
+
+    private static AHPComparisonViewModel ApplySubmittedComparisonsToSnapshot(
+        AHPComparisonViewModel baseModel,
+        AHPComparisonInputViewModel input)
+    {
+        var updated = new AHPComparisonViewModel
+        {
+            BatchId = baseModel.BatchId,
+            BatchCode = baseModel.BatchCode,
+            BatchName = baseModel.BatchName,
+            Status = baseModel.Status,
+            RowVersion = baseModel.RowVersion,
+            Criteria = baseModel.Criteria,
+            Result = baseModel.Result
+        };
+
+        foreach (var kvp in baseModel.Values)
+        {
+            updated.Values[kvp.Key] = kvp.Value;
+        }
+
+        if (input.Comparisons != null)
+        {
+            foreach (var item in input.Comparisons)
+            {
+                if (item.Value > 0)
+                {
+                    var key = $"{item.CriteriaRowId}_{item.CriteriaColId}";
+                    var recipKey = $"{item.CriteriaColId}_{item.CriteriaRowId}";
+                    updated.Values[key] = item.Value;
+                    updated.Values[recipKey] = Math.Round(1m / item.Value, 4);
+                }
+            }
+        }
+
+        return updated;
     }
 
 

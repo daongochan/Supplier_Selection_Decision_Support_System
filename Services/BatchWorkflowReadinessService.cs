@@ -64,25 +64,85 @@ public class BatchWorkflowReadinessService
 
     public async Task<BatchWorkflowReadiness?> GetReadinessAsync(int batchId)
     {
-        var batch = await _context.EvaluationBatches
+        var raw = await _context.EvaluationBatches
             .AsNoTracking()
-            .AsSplitQuery()
-            .Include(x => x.Suppliers)
-            .Include(x => x.Criteria)
-            .Include(x => x.EvaluationScores)
-            .Include(x => x.AhppairwiseComparisons)
-            .Include(x => x.Ahpresult)
-            .Include(x => x.AhpcriteriaWeights)
-            .Include(x => x.TopsisResults)
-            .Include(x => x.Approvals)
-            .FirstOrDefaultAsync(x => x.BatchId == batchId);
+            .Where(b => b.BatchId == batchId)
+            .Select(b => new
+            {
+                b.BatchId,
+                b.BatchCode,
+                b.BatchName,
+                b.Status,
+                b.RowVersion,
+                SupplierCount = b.Suppliers.Count,
+                CriteriaCount = b.Criteria.Count,
+                ScoreCount = b.EvaluationScores.Count,
+                ActualPairs = b.AhppairwiseComparisons.Count(c => c.CriteriaRowId != c.CriteriaColId),
+                HasAhpResult = b.Ahpresult != null,
+                IsAhpConsistent = b.Ahpresult != null && b.Ahpresult.IsConsistent,
+                AhpCrValue = b.Ahpresult != null ? (decimal?)b.Ahpresult.Crvalue : null,
+                AhpWeightsCount = b.AhpcriteriaWeights.Count,
+                TopsisCount = b.TopsisResults.Count,
+                HasValidRanks = b.TopsisResults.Count > 0 && b.TopsisResults.Count == b.Suppliers.Count && b.TopsisResults.All(r => r.RankNo > 0),
+                HasFinalApproval = b.Approvals.Any(a => a.IsFinal && a.Status == ApprovalStatus.Approved),
+                LatestApproval = b.Approvals
+                    .OrderByDescending(a => a.ApprovalDate)
+                    .ThenByDescending(a => a.ApprovalId)
+                    .Select(a => new { a.Status, a.IsFinal })
+                    .FirstOrDefault()
+            })
+            .FirstOrDefaultAsync();
 
-        if (batch == null)
+        if (raw == null)
         {
             return null;
         }
 
-        return ComputeFromBatchEntity(batch);
+        var supplierCount = raw.SupplierCount;
+        var criteriaCount = raw.CriteriaCount;
+        var expectedScores = supplierCount * criteriaCount;
+
+        var isSetupComplete = supplierCount >= 2 && criteriaCount >= 2;
+        var isScoresComplete = isSetupComplete && expectedScores > 0 && raw.ScoreCount == expectedScores;
+        var expectedPairs = criteriaCount >= 2 ? criteriaCount * (criteriaCount - 1) / 2 : 0;
+        var hasCompleteAhpWeights = criteriaCount >= 2 && (raw.AhpWeightsCount == criteriaCount || (raw.HasAhpResult && raw.AhpWeightsCount == 0));
+
+        var isCancelled = string.Equals(raw.Status, BatchStatus.Cancelled, StringComparison.OrdinalIgnoreCase);
+        var isCompleted = string.Equals(raw.Status, BatchStatus.Completed, StringComparison.OrdinalIgnoreCase) || raw.HasFinalApproval;
+        var isDraft = string.Equals(raw.Status, BatchStatus.Draft, StringComparison.OrdinalIgnoreCase);
+        var isEvaluating = string.Equals(raw.Status, BatchStatus.Evaluating, StringComparison.OrdinalIgnoreCase);
+
+        var readiness = new BatchWorkflowReadiness
+        {
+            BatchId = raw.BatchId,
+            BatchCode = raw.BatchCode,
+            BatchName = raw.BatchName,
+            BatchStatus = raw.Status,
+            RowVersion = BatchConcurrencyHelper.ToBase64(raw.RowVersion),
+            SupplierCount = supplierCount,
+            CriteriaCount = criteriaCount,
+            ExpectedScoreCount = expectedScores,
+            ActualScoreCount = raw.ScoreCount,
+            IsSetupComplete = isSetupComplete,
+            IsScoresComplete = isScoresComplete,
+            ExpectedPairwiseCount = expectedPairs,
+            ActualPairwiseCount = raw.ActualPairs,
+            HasAhpResult = raw.HasAhpResult,
+            HasCompleteAhpWeights = hasCompleteAhpWeights,
+            IsAhpConsistent = raw.IsAhpConsistent,
+            AhpCrValue = raw.AhpCrValue,
+            TopsisResultCount = raw.TopsisCount,
+            HasValidTopsisRanks = raw.HasValidRanks,
+            IsCompleted = isCompleted,
+            IsCancelled = isCancelled,
+            IsEvaluating = isEvaluating,
+            IsDraft = isDraft,
+            LatestDecisionStatus = raw.LatestApproval?.Status,
+            HasFinalApproval = raw.HasFinalApproval || isCompleted
+        };
+
+        PopulateStepDetails(readiness);
+        return readiness;
     }
 
     public static BatchWorkflowReadiness ComputeFromBatchEntity(EvaluationBatch batch)
@@ -165,21 +225,27 @@ public class BatchWorkflowReadinessService
             HasFinalApproval = finalApproval != null || isCompleted
         };
 
-        if (isCancelled)
+        PopulateStepDetails(readiness);
+        return readiness;
+    }
+
+    private static void PopulateStepDetails(BatchWorkflowReadiness readiness)
+    {
+        if (readiness.IsCancelled)
         {
             readiness.CurrentStepNumber = 0;
             readiness.CurrentStepKey = "Cancelled";
             readiness.CurrentStepTitle = "Batch Cancelled";
             readiness.CurrentStepDescription = "This evaluation batch has been cancelled and locked.";
         }
-        else if (isCompleted)
+        else if (readiness.IsCompleted)
         {
             readiness.CurrentStepNumber = 5;
             readiness.CurrentStepKey = "Completed";
             readiness.CurrentStepTitle = "Evaluation Completed";
             readiness.CurrentStepDescription = "Final supplier selection decision has been approved and frozen.";
         }
-        else if (isDraft)
+        else if (readiness.IsDraft)
         {
             readiness.CurrentStepNumber = 1;
             readiness.CurrentStepKey = "Draft";
@@ -216,7 +282,5 @@ public class BatchWorkflowReadinessService
             readiness.CurrentStepTitle = "Review & Approve Decision";
             readiness.CurrentStepDescription = "TOPSIS ranking is complete. Review sensitivity analysis and record the final decision.";
         }
-
-        return readiness;
     }
 }

@@ -364,8 +364,11 @@ app.Use(async (context, next) =>
     await next();
 });
 
-// Response Compression (Brotli/Gzip)
-app.UseResponseCompression();
+// Response Compression (Brotli/Gzip) - production only to avoid dev loopback overhead & browser refresh script injection conflicts
+if (!app.Environment.IsDevelopment())
+{
+    app.UseResponseCompression();
+}
 
 // Bắt và chuyển hướng toàn bộ các HTTP status code không có body (400-599) sang Error view, chống màn hình trắng
 app.UseStatusCodePagesWithReExecute("/Home/Error", "?statusCode={0}");

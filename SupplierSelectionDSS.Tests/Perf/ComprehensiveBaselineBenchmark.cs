@@ -25,7 +25,7 @@ public class ComprehensiveBaselineBenchmark
     private readonly ITestOutputHelper _output;
 
     private const string PerfConnectionString =
-        "Server=.;Database=SupplierSelectionDSS_Perf;Trusted_Connection=True;TrustServerCertificate=True;Connect Timeout=30";
+        "Server=lpc:.;Database=SupplierSelectionDSS_Perf;Trusted_Connection=True;TrustServerCertificate=True;Connect Timeout=30";
 
     public ComprehensiveBaselineBenchmark(ITestOutputHelper output)
     {
