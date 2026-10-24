@@ -860,13 +860,13 @@ public class TOPSISService
             }
             catch (DbUpdateConcurrencyException ex)
             {
-                await transaction.RollbackAsync();
+                try { await transaction.RollbackAsync(); } catch { }
                 _logger.LogWarning(ex, "Xung đột đồng thời khi tính toán TOPSIS cho đợt {BatchId}.", batchId);
                 throw new BusinessRuleException(BatchConcurrencyHelper.ConcurrencyConflictMessage);
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
+                try { await transaction.RollbackAsync(); } catch { }
                 _logger.LogError(
                     ex,
                     "Lỗi khi tính toán xếp hạng TOPSIS cho đợt đánh giá ID {BatchId}.",

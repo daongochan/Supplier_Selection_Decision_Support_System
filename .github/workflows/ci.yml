@@ -88,6 +88,16 @@ jobs:
 
       - name: Run SQL Server integration tests
         env:
-          DSS_TEST_CONNECTION_STRING: "Server=localhost,1433;Database={0};User Id=sa;Password=YourStrong(!)Password2026;TrustServerCertificate=True;MultipleActiveResultSets=True;Connect Timeout=30"
+          DSS_TEST_CONNECTION_STRING: "Server=localhost,1433;Database=master;User Id=sa;Password=YourStrong(!)Password2026;TrustServerCertificate=True;MultipleActiveResultSets=True;Connect Timeout=30"
           DSS_REQUIRE_SQL: "1"
-        run: dotnet test SupplierSelectionDSS.slnx --filter "Category=SqlServer" --configuration Release --verbosity normal
+        run: dotnet test SupplierSelectionDSS.slnx --filter "Category=SqlServer" --configuration Release --verbosity normal --logger "trx;LogFileName=sql_test_results.trx"
+
+      - name: Verify SQL integration test execution count
+        shell: bash
+        run: |
+          TESTS_PASSED=$(python3 -c "import xml.etree.ElementTree as ET, glob; files = glob.glob('**/sql_test_results.trx', recursive=True); root = ET.parse(files[0]).getroot(); counters = root.find('.//{http://microsoft.com/schemas/VisualStudio/TeamTest/2010}Counters'); print(int(counters.attrib['passed']))")
+          echo "SQL tests executed and passed: $TESTS_PASSED"
+          if [ "$TESTS_PASSED" -le 0 ]; then
+            echo "ERROR: Expected at least 1 SQL test to pass, but got $TESTS_PASSED"
+            exit 1
+          fi
