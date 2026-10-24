@@ -48,18 +48,43 @@ sqlcmd -S . -E -C -b -i database/02_seed.sql
 ### 2.2. Môi trường Triển khai Production (Fresh Provisioning)
 
 > [!WARNING]
-> Tuyệt đối **KHÔNG** chạy dữ liệu seed `02_seed.sql` trên môi trường Production!
+> Tuyệt đối **KHÔNG** chạy dữ liệu seed `02_seed.sql` trên môi trường Production! Runner `Run_Production.sql` được thiết kế độc lập, không chứa tài khoản demo hoặc dữ liệu phát triển.
 
-Đối với máy chủ Production mới hoàn toàn (chưa có dữ liệu):
-1. Chuyển thư mục vào `database/scripts`:
+Runner `database/scripts/Run_Production.sql` thực hiện quy trình provisioning tự động gồm 10 bước có kiểm soát ngữ cảnh nghiêm ngặt:
+- Chuyển rõ ràng sang database đích `USE [$(DatabaseName)]` và xác thực `DB_NAME()` trước mọi câu lệnh DDL.
+- Dừng ngay lập tức nếu database đã tồn tại (từ chối fresh provisioning trên database hiện hữu để bảo vệ dữ liệu).
+- Tự động kiểm tra tính toàn vẹn ở bước cuối (`10_Verify_Database.sql`): xác minh 18 bảng, 7 triggers, 2 views, 21 user indexes (`is_ms_shipped = 0`), và 0 tài khoản demo.
+
+**Yêu cầu thực thi:**
+1. Chuyển thư mục làm việc vào `database/scripts` (bắt buộc vì SQLCMD `:r` sử dụng đường dẫn tương đối):
    ```bash
    cd database/scripts
    ```
-2. Thực thi runner SQLCMD có kiểm soát lỗi fail-fast (`:On Error exit`):
-   ```bash
-   sqlcmd -S <production-server> -U <admin-user> -P <admin-password> -C -b -i Run_Production.sql
+2. Thực thi lệnh với biến `DatabaseName` và cờ `-b` (fail-fast exit code):
+
+   **Windows (Windows Authentication):**
+   ```powershell
+   sqlcmd -S . -E -C -b -v DatabaseName=SupplierSelectionDSS -i Run_Production.sql
    ```
-3. Khởi tạo tài khoản quản trị viên Production đầu tiên theo quy trình bảo mật (xem mục 4).
+
+   **Linux / Docker / CI (Tài khoản sa):**
+   ```bash
+   sqlcmd -S localhost,1433 -U sa -P 'YourStrongPassword' -C -b -v DatabaseName=SupplierSelectionDSS -i Run_Production.sql
+   ```
+
+3. **Kiểm thử tự động cho Production Runner:**
+   Script `tools/verify/test_production_runner.py` kiểm chứng toàn diện 6 kịch bản bắt buộc trên SQL Server tạm:
+   - **Kịch bản a:** Khởi tạo sạch tạo đúng 18 bảng, 7 triggers, 2 views, 21 indexes, recovery model `FULL`.
+   - **Kịch bản b:** Không có bất kỳ đối tượng nghiệp vụ nào bị tạo nhầm trong `master`, `model`, hoặc `msdb`.
+   - **Kịch bản c:** Chạy lại trên database đã tồn tại bị từ chối với exit code khác 0; cấu hình và dữ liệu DB không đổi.
+   - **Kịch bản d:** Lỗi tại một module dừng ngay lập tức, không bao giờ in thông báo thành công.
+   - **Kịch bản e:** Database mới tạo không chứa tài khoản demo (`Users` count = 0).
+   - **Kịch bản f:** Nếu provisioning gặp lỗi dở dang, database lỗi được giữ nguyên cho DBA kiểm tra, không tự ý `DROP DATABASE`.
+
+   Chạy kiểm thử runner:
+   ```bash
+   python tools/verify/test_production_runner.py
+   ```
 
 ---
 
@@ -130,14 +155,33 @@ Khai báo trong `database/02_seed.sql`:
 
 ---
 
-## 6. Kiểm Tra Đồng Bộ Schema (Sync Verification)
+## 6. Kiểm Tra Ngữ Nghĩa Schema & Mutation Testing
 
-Chạy công cụ kiểm tra tự động để đối chiếu tính toàn vẹn giữa schema tổng hợp và các module:
+### 6.1. Trình xác minh Ngữ nghĩa CSDL (Semantic Schema Verifier)
+Chạy công cụ phân tích AST ngữ nghĩa tự động để đối chiếu tính tương đương giữa schema chuẩn `01_schema.sql` và các script module:
 
 ```bash
 python tools/verify/verify_schema_sync.py
 ```
-Công cụ xác minh:
-- Đủ 18 bảng, 7 triggers, 2 views, 21 indexes.
-- Cấu trúc từng cột giữa `01_schema.sql` và các file module khớp nhau.
-- Safety Guard hợp lệ, không có dữ liệu seed trùng lặp hoặc hash placeholder.
+**Phạm vi kiểm tra thực tế:**
+- **Đặc tính cột:** Tên cột, kiểu dữ liệu đầy đủ (bao gồm precision & scale ví dụ `DECIMAL(10,4)`), nullability (`NULL` / `NOT NULL`), thuộc tính `IDENTITY`, và giá trị `DEFAULT`.
+- **Ràng buộc toàn vẹn:** Khóa chính (PK), khóa ngoại (FK kèm `ON DELETE`), ràng buộc duy nhất (UQ), và biểu thức kiểm tra (CK).
+- **Chỉ mục, Trigger, View:** Định nghĩa chỉ mục (tên, thứ tự cột, thuộc tính duy nhất/lọc), mã nguồn trigger (chuẩn hóa khoảng trắng và khối batch), và câu lệnh view.
+- **Tách bạch 4 báo cáo:** Báo cáo phân định rõ ràng 4 hạng mục: Safety Guards, Schema Semantic Equivalence, Seed Data Isolation, và File Hygiene.
+- **Không hardcode:** Số lượng đối tượng được suy diễn động từ schema canonical `01_schema.sql`.
+
+### 6.2. Kiểm thử Đột biến (Mutation Testing)
+Bộ kiểm thử đột biến tự động xác thực khả năng phát hiện lỗi của trình xác minh:
+
+```bash
+python tools/verify/test_schema_sync_mutations.py
+```
+Bao gồm 8 kịch bản kiểm chứng:
+1. Đổi kiểu dữ liệu `DECIMAL(10,4)` thành `DECIMAL(10,3)` -> Bị phát hiện.
+2. Đổi nullability `NULL` thành `NOT NULL` -> Bị phát hiện.
+3. Thay đổi biểu thức ràng buộc `CHECK` -> Bị phát hiện.
+4. Thay đổi mệnh đề `ON DELETE` của `FOREIGN KEY` -> Bị phát hiện.
+5. Thay đổi logic điều kiện nghiệp vụ trong `TRIGGER` -> Bị phát hiện.
+6. Đổi thứ tự cột trong chỉ mục `INDEX` -> Bị phát hiện.
+7. Xóa hoặc thêm cột trong bảng -> Bị phát hiện.
+8. Chỉ đổi định dạng hoặc thêm comment -> Không gây báo động giả (Zero False Positives).

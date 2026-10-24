@@ -80,8 +80,9 @@ dotnet restore SupplierSelectionDSS.slnx
 
 ---
 
-### 3. Khởi tạo Cơ sở dữ liệu Phát triển (Fresh Database Setup)
+### 3. Khởi tạo Cơ sở dữ liệu Phát triển & Production
 
+#### A. Khởi tạo Môi trường Phát triển (Development with Seed)
 Chỉ thực hiện trên SQL Server phát triển **chưa có database `SupplierSelectionDSS`**. Chạy tuần tự và kiểm tra lỗi bằng cờ `-b`:
 
 **Windows PowerShell (SQL Server cục bộ `.` dùng Windows Authentication):**
@@ -102,9 +103,20 @@ sqlcmd -S localhost,1433 -U sa -P 'YourPassword' -C -b -v ConfirmRecreate=NO -i 
 sqlcmd -S localhost,1433 -U sa -P 'YourPassword' -C -b -i database/02_seed.sql
 ```
 
+#### B. Khởi tạo Môi trường Production (Fresh Production Provisioning)
+Runner `database/scripts/Run_Production.sql` thực hiện quy trình provisioning tự động 10 bước độc lập, tuyệt đối **không chứa tài khoản demo hay dữ liệu phát triển**:
+- Bắt buộc thực thi từ thư mục `database/scripts/` (do lệnh `:r` dùng đường dẫn tương đối).
+- Chuyển rõ ràng sang database đích `USE [$(DatabaseName)]` và xác thực `DB_NAME()` trước mọi DDL.
+- Tự động từ chối nếu database đã tồn tại; kiểm tra tính toàn vẹn ở bước cuối (`10_Verify_Database.sql`) xác minh 18 bảng, 7 triggers, 2 views, 21 user indexes (`is_ms_shipped = 0`), và 0 tài khoản demo.
+
+```bash
+cd database/scripts
+sqlcmd -S . -E -C -b -v DatabaseName=SupplierSelectionDSS -i Run_Production.sql
+```
+
 > [!NOTE]
 > - `ConfirmRecreate=NO`: Đảm bảo biến SQLCMD được định nghĩa an toàn và ngăn ngừa xóa nhầm database đã có.
-> - `database/02_seed.sql` là nguồn dữ liệu khởi tạo phát triển duy nhất. Không chạy thêm `database/scripts/Run_All.sql` vì file đó chỉ dành cho schema.
+> - `database/02_seed.sql` là nguồn dữ liệu khởi tạo phát triển duy nhất. Không chạy seed trên production.
 > - **Nâng cấp database đang chạy:** Nếu database đã có dữ liệu nghiệp vụ, không chạy lệnh tạo mới mà áp dụng tuần tự các bản vá trong [database/patches](database/patches) theo hướng dẫn tại [database/README.md](database/README.md).
 
 ---
@@ -210,28 +222,53 @@ SupplierSelectionDSS/
 
 ## Kiểm Thử & Kiểm Chứng Hệ Thống
 
-### 1. Kiểm tra Tính đồng bộ CSDL
+### 1. Trình Xác Minh Ngữ Nghĩa CSDL (Semantic Schema Verification)
 ```bash
 python tools/verify/verify_schema_sync.py
 ```
-Kiểm tra cấu trúc 18 bảng, 7 triggers, 2 views, 21 indexes và đối chiếu danh sách cột giữa aggregate schema và các module scripts.
+Bộ phân tích cú pháp AST kiểm tra đối chiếu ngữ nghĩa giữa `database/01_schema.sql` (canonical) và các module scripts:
+- Kiểu dữ liệu đầy đủ (bao gồm precision & scale ví dụ `DECIMAL(10,4)`), nullability, identity, giá trị default.
+- Ràng buộc toàn vẹn: Primary Key, Foreign Key (kèm `ON DELETE`), Unique, và Check constraints.
+- Định nghĩa Indexes, nội dung logic Trigger, câu lệnh View.
+- Báo cáo phân định 4 hạng mục rõ ràng: Safety Guards, Semantic Equivalence, Seed Isolation, File Hygiene.
 
-### 2. Kiểm tra Tính Tái lập của CSS Bundle
+Bộ kiểm thử đột biến (Mutation Testing) với 8 kịch bản kiểm chứng:
 ```bash
-python tools/assets/bundle_css.py --check
+python tools/verify/test_schema_sync_mutations.py
 ```
-Kiểm tra đảm bảo file `wwwroot/css/site.css` phục vụ trình duyệt khớp hoàn toàn với các source components (LF line endings, UTF-8, SHA-256).
 
-### 3. Chạy Toàn Bộ Test Suite
+### 2. Kiểm Thử Tự Động Production Provisioning Runner
+```bash
+python tools/verify/test_production_runner.py
+```
+Kiểm chứng 6 kịch bản bắt buộc (a-f) cho `Run_Production.sql`:
+- Tạo đúng 18 bảng, 7 triggers, 2 views, 21 indexes, recovery model `FULL`.
+- Zero business tables trong `master`, `model`, `msdb`.
+- Từ chối thực thi trên database đã tồn tại (exit code khác 0).
+- Dừng ngay khi lỗi ở module, không in thông báo thành công.
+- Không chứa tài khoản demo (`Users` count = 0).
+- Giữ nguyên database lỗi dở dang phục vụ DBA điều tra mà không tự ý `DROP DATABASE`.
+
+### 3. Kiểm Tra Tính Tái Lập CSS & Tài Nguyên Ngoại Tuyến
+```bash
+# Kiểm tra CSS bundle khớp hoàn toàn mã nguồn (LF, UTF-8, SHA-256)
+python tools/assets/bundle_css.py --check
+
+# Kiểm tra font/icon ngoại tuyến: 0 external @import, khớp 100% SHA-256 manifest
+python tools/assets/localize_fonts.py --check
+```
+
+### 4. Chạy Bộ Kiểm Thử Đơn Vị & Khói (Unit & Smoke Tests)
 ```bash
 dotnet test SupplierSelectionDSS.slnx --configuration Release
 ```
+Chạy mặc định 205 unit, algorithmic và route smoke tests. Thuộc tính tùy biến `[SqlServerFact]` tự động đánh dấu `[SKIP]` / `Skipped` đối với các kiểm thử SQL Server khi môi trường không cấu hình SQL Server, loại bỏ hoàn toàn báo cáo xanh giả (false pass).
 
-### 4. Kiểm thử Tích hợp SQL Server Thực
+### 5. Kiểm Thử Tích Hợp SQL Server Thực Tế
 Lớp kiểm thử `SqlServerConcurrencyAndTriggerTests` xác minh kiểm soát tương tranh `RowVersion` và trigger bảo vệ trạng thái trên SQL Server thực tế:
-- Mặc định kết nối tới `DSS_TEST_SQL_SERVER` (hoặc `.`) và tự động tạo database tạm riêng biệt có tên ngẫu nhiên `SupplierSelectionDSS_Test_<id>`.
-- Tự động dọn dẹp sạch sẽ database tạm khi hoàn tất.
-- Để bắt buộc kiểm thử SQL Server phải chạy (và fail nếu không kết nối được), đặt biến môi trường:
+- Tự động tạo và dọn dẹp database tạm riêng biệt `SupplierSelectionDSS_Test_<id>`.
+- Đảm bảo dọn dẹp sạch sẽ database tạm ngay cả khi áp dụng schema thất bại, không để rò rỉ tài nguyên.
+- Khi bật `DSS_REQUIRE_SQL=1`, kiểm thử bắt buộc thực thi và fail ngay lập tức nếu không kết nối được hoặc không tạo được đối tượng:
   ```powershell
   $env:DSS_REQUIRE_SQL = "1"
   dotnet test SupplierSelectionDSS.slnx --filter "Category=SqlServer"

@@ -4,6 +4,37 @@ Toàn bộ các thay đổi quan trọng về kiến trúc, thuật toán, bảo
 
 ---
 
+## [1.5.2] - 2026-10-24
+
+### Production Runner Hardening, Semantic Schema Verifier & Test Hygiene Completion
+
+- **Production Runner & Safe Provisioning (Priority 1):**
+  - Chuyển ngữ cảnh rõ ràng sang database đích `USE [$(DatabaseName)]` và xác thực `DB_NAME()` trước mọi câu lệnh DDL trong `database/scripts/Run_Production.sql` và `00_Create_Database_Production.sql`.
+  - Thiết kế runner fresh provisioning từ chối database đã tồn tại trước mọi thay đổi; loại bỏ hoàn toàn nguy cơ ghi đè, đổi recovery model hay tạo bảng nhầm vào database đang có.
+  - Phân tách rõ ràng giữa fresh provisioning và nâng cấp qua patches; loại bỏ hoàn toàn dữ liệu seed demo khỏi luồng production.
+  - Bổ sung chỉ thị `GO` sau các câu lệnh `PRINT` trước `CREATE TRIGGER` và `CREATE VIEW` để tuân thủ nghiêm ngặt quy tắc batch của SQL Server.
+  - Cập nhật `10_Verify_Database.sql` lọc các chỉ mục hệ thống của SQL Server 2025 (`t.is_ms_shipped = 0`), kiểm tra đúng 18 bảng, 7 triggers, 2 views, 21 user performance indexes, và 0 tài khoản demo.
+  - Xây dựng bộ kiểm thử tự động `tools/verify/test_production_runner.py` kiểm chứng toàn diện 6 kịch bản bắt buộc (a-f) trên SQL Server instance thật.
+- **Trình Xác Minh Ngữ Nghĩa CSDL & Mutation Tests (Priority 2):**
+  - Nâng cấp `tools/verify/verify_schema_sync.py` thành parser ngữ nghĩa cấp độ AST: so sánh chi tiết tên cột, kiểu dữ liệu, precision/scale (`DECIMAL(10,4)` vs `DECIMAL(10,3)`), nullability, identity, default constraints, PK/FK/UQ/CK, indexes, triggers, và views.
+  - Loại bỏ hardcode số lượng đối tượng; suy diễn động trực tiếp từ schema chuẩn `01_schema.sql`.
+  - Phân tách rõ ràng 4 nhóm kết quả: Safety Guards, Semantic Equivalence, Seed Isolation, và File Hygiene.
+  - Bổ sung bộ kiểm thử đột biến `tools/verify/test_schema_sync_mutations.py` với 8 kịch bản kiểm thử (bắt được toàn bộ thay đổi ngữ nghĩa, zero false positives đối với format/comments).
+- **Loại Bỏ False Pass trong Kiểm Thử SQL Server (Priority 3):**
+  - Hiện thực hóa thuộc tính xUnit tùy biến `[SqlServerFact]` kế thừa từ `FactAttribute`, tự động báo cáo trạng thái `[SKIP]` / `Skipped` trong test runner khi môi trường thiếu SQL Server, xóa bỏ hoàn toàn hiện tượng false pass (trả về xanh giả khi thiếu SQL).
+  - Khi bật `DSS_REQUIRE_SQL=1` (hoặc trong job CI có SQL Server), kiểm thử bắt buộc thực thi và fail ngay lập tức nếu không kết nối được hoặc không tạo được đối tượng.
+  - Chuẩn hóa vòng đời test: cấu hình timeout chống nghẽn I/O disk zeroing, tự động dọn dẹp database tạm ngay lập tức nếu khởi tạo schema thất bại, ghi log chi tiết tên database nếu dọn dẹp thất bại để tránh rò rỉ.
+  - Khắc phục lỗi masked exception trong `TOPSISService.cs` khi gọi `RollbackAsync()` trên transaction đã bị hủy bởi SQL Server.
+  - Cập nhật CI workflow kiểm tra số lượng SQL integration tests thực thi $> 0$, không cho phép skip ngầm trong pipeline có SQL Server.
+- **Bảo Vệ Tài Nguyên Ngoại Tuyến & Checksum Manifest (Priority 4):**
+  - Bổ sung bảng mã băm SHA-256 manifest cho toàn bộ 8 tệp font và icon cục bộ (Bootstrap Icons v1.11.3 và Source Serif 4).
+  - Tự động quét kiểm tra `wwwroot/css/`: xác nhận 0 external `@import` waterfall, và mọi `url(...)` trỏ tới font đều phân giải được đến tệp cục bộ và khớp mã băm SHA-256.
+- **Xác Minh An Toàn Phụ Thuộc (Dependency Security Audit):**
+  - Kiểm tra và đính chính các nhận định cũ về `Microsoft.AspNetCore.OpenApi 9.0.0`, `System.Text.Json 8.0.5`, `Dapper 2.1.35` (không có trong cây phụ thuộc hiện tại).
+  - Nhận diện lỗ hổng bắc cầu thực tế tại `System.Security.Cryptography.Pkcs 9.0.11` (qua `Microsoft.Data.SqlClient 6.1.6`), ghim trực tiếp phiên bản an toàn `9.0.21`, đưa số lượng vulnerable packages về 0.
+
+---
+
 ## [1.5.1] - 2026-10-24
 
 ### Repository Cleanup, Build Determinism & Test Hygiene Hardening
