@@ -340,24 +340,6 @@ select.form-control {
     line-height: 1.45;
 }
 
-/* Card Security Badge in Top-Right */
-.login-card-icon-badge {
-    position: absolute;
-    top: -6px;
-    right: -4px;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.9);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: #2563eb;
-    font-size: 14px;
-    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
-}
-
 /* Error alert */
 .login-alert {
     display: flex;
