@@ -9,25 +9,39 @@
 
 <aside id="appSidebar" class="app-sidebar" aria-label="Main Navigation">
 
-
-
     <!-- =====================================================
-         BRAND
+         BRAND & COLLAPSE TOGGLE
          ===================================================== -->
 
-    <div class="sidebar-brand">
+    <div class="sidebar-brand-header">
 
-        <div class="sidebar-brand-title">
-            SUPPLIER
-        </div>
+        <a asp-controller="Dashboard"
+           asp-action="Index"
+           class="sidebar-brand-link"
+           title="Supplier Selection DSS - Dashboard"
+           aria-label="Supplier Selection DSS Dashboard">
 
-        <div class="sidebar-brand-title">
-            SELECTION
-        </div>
+            <img src="~/images/app-logo.png"
+                 asp-append-version="true"
+                 alt="Supplier Selection DSS"
+                 class="sidebar-logo" />
 
-        <div class="sidebar-brand-subtitle">
-            Decision Support System
-        </div>
+            <div class="sidebar-brand-text">
+                <span class="sidebar-brand-title">SUPPLIER SELECTION</span>
+                <span class="sidebar-brand-subtitle">Decision Support System</span>
+            </div>
+
+        </a>
+
+        <button type="button"
+                id="desktopSidebarToggle"
+                class="sidebar-collapse-btn"
+                aria-controls="appSidebar"
+                aria-expanded="true"
+                aria-label="Collapse sidebar"
+                title="Collapse sidebar">
+            <i class="bi bi-chevron-left" id="desktopSidebarToggleIcon" aria-hidden="true"></i>
+        </button>
 
     </div>
 
@@ -41,9 +55,11 @@
         <!-- Dashboard -->
         <a asp-controller="Dashboard"
            asp-action="Index"
-           class="sidebar-link @(currentController == "Dashboard" ? "active" : "")">
-            <i class="bi bi-grid-1x2"></i>
-            <span>Dashboard</span>
+           class="sidebar-link @(currentController == "Dashboard" ? "active" : "")"
+           title="Dashboard"
+           aria-label="Dashboard">
+            <i class="bi bi-grid-1x2" aria-hidden="true"></i>
+            <span class="sidebar-link-text">Dashboard</span>
         </a>
 
         <!-- Suppliers -->
@@ -52,9 +68,11 @@
         {
             <a asp-controller="Supplier"
                asp-action="Index"
-               class="sidebar-link @(currentController == "Supplier" ? "active" : "")">
-                <i class="bi bi-building"></i>
-                <span>Suppliers</span>
+               class="sidebar-link @(currentController == "Supplier" ? "active" : "")"
+               title="Suppliers"
+               aria-label="Suppliers">
+                <i class="bi bi-building" aria-hidden="true"></i>
+                <span class="sidebar-link-text">Suppliers</span>
             </a>
         }
 
@@ -64,9 +82,11 @@
         {
             <a asp-controller="ProductGroup"
                asp-action="Index"
-               class="sidebar-link @(currentController == "ProductGroup" ? "active" : "")">
-                <i class="bi bi-box-seam"></i>
-                <span>Product Groups</span>
+               class="sidebar-link @(currentController == "ProductGroup" ? "active" : "")"
+               title="Product Groups"
+               aria-label="Product Groups">
+                <i class="bi bi-box-seam" aria-hidden="true"></i>
+                <span class="sidebar-link-text">Product Groups</span>
             </a>
         }
 
@@ -76,9 +96,11 @@
         {
             <a asp-controller="Criteria"
                asp-action="Index"
-               class="sidebar-link @(currentController == "Criteria" ? "active" : "")">
-                <i class="bi bi-sliders"></i>
-                <span>Evaluation Criteria</span>
+               class="sidebar-link @(currentController == "Criteria" ? "active" : "")"
+               title="Evaluation Criteria"
+               aria-label="Evaluation Criteria">
+                <i class="bi bi-sliders" aria-hidden="true"></i>
+                <span class="sidebar-link-text">Evaluation Criteria</span>
             </a>
         }
 
@@ -96,9 +118,11 @@
                                      currentController == "TOPSIS" ||
                                      currentController == "DecisionResult" ||
                                      currentController == "Report"
-                                     ? "active" : "")">
-                <i class="bi bi-collection"></i>
-                <span>Evaluation Batches</span>
+                                     ? "active" : "")"
+               title="Evaluation Batches"
+               aria-label="Evaluation Batches">
+                <i class="bi bi-collection" aria-hidden="true"></i>
+                <span class="sidebar-link-text">Evaluation Batches</span>
             </a>
         }
 
@@ -107,9 +131,11 @@
         {
             <a asp-controller="User"
                asp-action="Index"
-               class="sidebar-link @(currentController == "User" ? "active" : "")">
-                <i class="bi bi-people"></i>
-                <span>Users</span>
+               class="sidebar-link @(currentController == "User" ? "active" : "")"
+               title="Users"
+               aria-label="Users">
+                <i class="bi bi-people" aria-hidden="true"></i>
+                <span class="sidebar-link-text">Users</span>
             </a>
         }
 
@@ -118,9 +144,11 @@
         {
             <a asp-controller="AuditLog"
                asp-action="Index"
-               class="sidebar-link @(currentController == "AuditLog" ? "active" : "")">
-                <i class="bi bi-clock-history"></i>
-                <span>Audit Logs</span>
+               class="sidebar-link @(currentController == "AuditLog" ? "active" : "")"
+               title="Audit Logs"
+               aria-label="Audit Logs">
+                <i class="bi bi-clock-history" aria-hidden="true"></i>
+                <span class="sidebar-link-text">Audit Logs</span>
             </a>
         }
 
@@ -144,8 +172,8 @@
 
         <div class="sidebar-footer">
 
-            <div class="sidebar-user-card">
-                <div class="user-avatar" title="@fullName">
+            <div class="sidebar-user-card" title="@fullName (@role)">
+                <div class="user-avatar" title="@fullName" aria-hidden="true">
                     @fullName.FirstOrDefault()
                 </div>
                 <div class="sidebar-user-info">
@@ -165,9 +193,10 @@
                 @Html.AntiForgeryToken()
                 <button type="submit"
                         class="btn-logout sidebar-btn-logout"
-                        title="Sign Out">
-                    <i class="bi bi-box-arrow-right"></i>
-                    <span>Sign Out</span>
+                        title="Sign Out"
+                        aria-label="Sign Out">
+                    <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                    <span class="sidebar-logout-text">Sign Out</span>
                 </button>
             </form>
 

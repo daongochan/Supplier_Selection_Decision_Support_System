@@ -44,6 +44,17 @@
         "Styles",
         required: false)
 
+    <!-- Early execution to prevent Flash of Unstyled Content (FOUC) when sidebar is collapsed -->
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('dss_sidebar_collapsed') === 'true' && window.innerWidth > 900) {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
+            } catch (e) {}
+        })();
+    </script>
+
 </head>
 
 

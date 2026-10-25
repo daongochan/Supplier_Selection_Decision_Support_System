@@ -5,7 +5,13 @@
 @media (max-width: 1100px) {
 
     :root {
-        --sidebar-width: 210px;
+        --sidebar-width-expanded: 224px;
+        --sidebar-current-width: var(--sidebar-width-expanded);
+        --sidebar-width: var(--sidebar-current-width);
+    }
+
+    html.sidebar-collapsed {
+        --sidebar-width: var(--sidebar-width-collapsed);
     }
 
     .app-main {
@@ -16,7 +22,7 @@
 
 
 /* =========================================================
-   COLLAPSIBLE SIDEBAR & BACKDROP
+   COLLAPSIBLE SIDEBAR & MOBILE DRAWER BACKDROP
    ========================================================= */
 
 .sidebar-backdrop {
@@ -25,11 +31,22 @@
 
 @media (max-width: 900px) {
 
+    :root,
+    html.sidebar-collapsed {
+        --sidebar-width: 260px;
+    }
+
     .app-sidebar {
+        width: 260px !important;
+        padding: 20px 14px 16px !important;
         transform: translateX(-100%);
         transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-        box-shadow: 10px 0 30px rgba(36, 33, 30, 0.12);
+        box-shadow: 10px 0 30px rgba(15, 23, 42, 0.16);
         z-index: 1000;
+    }
+
+    .sidebar-collapse-btn {
+        display: none !important;
     }
 
     body.sidebar-mobile-open {
@@ -52,8 +69,8 @@
     }
 
     .app-main {
-        width: 100%;
-        margin-left: 0;
+        width: 100% !important;
+        margin-left: 0 !important;
     }
 
     .sidebar-toggle {
