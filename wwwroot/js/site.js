@@ -173,8 +173,13 @@
         }
 
         function applyDesktopState(isCollapsed, persist) {
+            const brandLink = document.querySelector(".sidebar-brand-link");
             if (isCollapsed) {
                 document.documentElement.classList.add("sidebar-collapsed");
+                if (brandLink) {
+                    brandLink.setAttribute("tabindex", "-1");
+                    brandLink.setAttribute("aria-hidden", "true");
+                }
                 if (desktopSidebarToggle) {
                     desktopSidebarToggle.setAttribute("aria-expanded", "false");
                     desktopSidebarToggle.setAttribute("aria-label", "Expand sidebar");
@@ -190,6 +195,10 @@
                 }
             } else {
                 document.documentElement.classList.remove("sidebar-collapsed");
+                if (brandLink) {
+                    brandLink.removeAttribute("tabindex");
+                    brandLink.removeAttribute("aria-hidden");
+                }
                 if (desktopSidebarToggle) {
                     desktopSidebarToggle.setAttribute("aria-expanded", "true");
                     desktopSidebarToggle.setAttribute("aria-label", "Collapse sidebar");
@@ -269,6 +278,19 @@
                     toggleDesktopSidebar();
                 } else {
                     closeMobileSidebar();
+                }
+            });
+        }
+
+        // Clicking brand header in collapsed desktop state triggers expansion
+        const brandHeader = document.querySelector(".sidebar-brand-header");
+        if (brandHeader) {
+            brandHeader.addEventListener("click", function (e) {
+                if (isDesktop() && document.documentElement.classList.contains("sidebar-collapsed")) {
+                    if (desktopSidebarToggle && e.target !== desktopSidebarToggle && !desktopSidebarToggle.contains(e.target)) {
+                        e.preventDefault();
+                        desktopSidebarToggle.click();
+                    }
                 }
             });
         }
