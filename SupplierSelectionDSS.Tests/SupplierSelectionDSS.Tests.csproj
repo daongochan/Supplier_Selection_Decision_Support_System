@@ -31,6 +31,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SupplierSelectionDSS.csproj" />
+    <ProjectReference Include="..\tools\demo\DemoSeeder\DemoSeeder.csproj" />
   </ItemGroup>
 
 </Project>
