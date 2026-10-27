@@ -14,6 +14,7 @@ These documents reflect the current operational state of the codebase:
 | [ALGORITHMS.md](ALGORITHMS.md) | Mathematical formulas and computational logic for **AHP** (pairwise comparison, geometric mean, $\lambda_{\max}$, consistency ratio $CR$) and **TOPSIS** (vector normalization, weighted matrix, PIS/NIS Euclidean distances, closeness coefficient $C_i$, sensitivity analysis). |
 | [WORKFLOW-AND-PERMISSIONS.md](WORKFLOW-AND-PERMISSIONS.md) | Role-Based Access Control matrix (Administrator, PurchasingStaff, Expert, Manager), evaluation batch lifecycle states (`Draft` $\rightarrow$ `Evaluating` $\rightarrow$ `Completed` / `Cancelled`), and concurrency invariants. |
 | [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md) | Design tokens, typography (Source Serif 4 + System Sans), color palettes, core components, visual asset fallbacks (`duck.jpg`, WebP/PNG/JPG), and deterministic zero-waterfall CSS pipeline. |
+| [DEMO_GUIDE.md](DEMO_GUIDE.md) | Comprehensive demonstration guide, reproducible dataset reference, 7-act stakeholder presentation walkthrough, and CLI seeder reference. |
 | [PERFORMANCE.md](PERFORMANCE.md) | Benchmark methodology, index optimizations, pagination, caching strategy, and benchmark database (`SupplierSelectionDSS_Perf`) setup. |
 
 ---
