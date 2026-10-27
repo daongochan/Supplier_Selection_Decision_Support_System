@@ -47,6 +47,10 @@ cookies.txt
 *.pfx
 *.certificate
 
+## Python
+__pycache__/
+*.py[cod]
+
 ## OS generated
 .DS_Store
 Thumbs.db

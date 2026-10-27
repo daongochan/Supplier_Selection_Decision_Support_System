@@ -1,7 +1,7 @@
 @model SupplierSelectionDSS.Models.EvaluationBatchCreateViewModel
 
 @{
-    ViewData["Title"] = "Tạo đợt đánh giá";
+    ViewData["Title"] = "Create Evaluation Batch";
 
     var productGroups =
         ViewBag.ProductGroups
@@ -39,12 +39,12 @@
     <div>
 
         <h1 class="page-title">
-            Tạo đợt đánh giá
+            Create Evaluation Batch
         </h1>
 
         <p class="page-description">
-            Xác định phạm vi, nhà cung cấp và tiêu chí trước
-            khi bắt đầu quy trình đánh giá AHP–TOPSIS.
+            Define scope, suppliers, and criteria before
+            starting the AHP–TOPSIS evaluation process.
         </p>
 
     </div>
@@ -53,7 +53,7 @@
     <a asp-action="Index"
        class="btn-outline">
         <i class="bi bi-arrow-left"></i>
-        <span>Quay lại</span>
+        <span>Back</span>
     </a>
 
 </div>
@@ -245,8 +245,8 @@
                                 </h2>
 
                                 <p>
-                                    Đặt mã và tên để nhận diện
-                                    đợt đánh giá.
+                                    Set code and name to identify
+                                    the evaluation batch.
                                 </p>
 
                             </div>
@@ -289,7 +289,7 @@
                                 <input asp-for="BatchName"
                                        class="form-control"
                                        maxlength="200"
-                                       placeholder="Đánh giá nhà cung cấp Q4"
+                                       placeholder="Q4 Supplier Evaluation"
                                        autocomplete="off" />
 
                                 <span asp-validation-for="BatchName"
@@ -310,10 +310,10 @@
                                 <textarea asp-for="Description"
                                           class="form-control create-description"
                                           maxlength="500"
-                                          placeholder="Mô tả ngắn về phạm vi và mục đích đợt đánh giá..."></textarea>
+                                          placeholder="Brief description of batch scope and evaluation objectives..."></textarea>
 
                                 <div class="field-helper">
-                                    Tối đa 500 ký tự.
+                                    Maximum 500 characters.
                                 </div>
 
                             </div>
@@ -346,8 +346,8 @@
                                 </h2>
 
                                 <p>
-                                    Chọn nhóm hàng hóa hoặc dịch vụ.
-                                    Supplier sẽ được lọc theo nhóm này.
+                                    Select a product group or service category.
+                                    Suppliers will be filtered by this group.
                                 </p>
 
                             </div>
@@ -399,8 +399,8 @@
                                 </span>
 
                                 <span class="field-helper">
-                                    Chỉ Product Group Active
-                                    mới xuất hiện.
+                                    Only active product groups
+                                    are displayed.
                                 </span>
 
                             </div>
@@ -433,8 +433,8 @@
                                 </h2>
 
                                 <p>
-                                    Chọn các Supplier Active thuộc
-                                    Product Group đã chọn.
+                                    Select active suppliers belonging to
+                                    the chosen product group.
                                 </p>
 
                             </div>
@@ -451,7 +451,7 @@
                                 </strong>
 
                                 <span>
-                                    Chọn một hoặc nhiều nhà cung cấp.
+                                    Select one or more suppliers.
                                 </span>
 
                             </div>
@@ -521,12 +521,12 @@
                                     <i class="bi bi-building"></i>
 
                                     <strong>
-                                        Chưa có Supplier
+                                        No Suppliers Available
                                     </strong>
 
                                     <span>
-                                        Chọn Product Group để tải
-                                        danh sách Supplier.
+                                        Select a product group to load
+                                        the supplier list.
                                     </span>
 
                                 </div>
@@ -560,8 +560,8 @@
                                 </h2>
 
                                 <p>
-                                    Chọn các tiêu chí Active được
-                                    sử dụng trong AHP–TOPSIS.
+                                    Select active criteria to be
+                                    used in AHP–TOPSIS.
                                 </p>
 
                             </div>
@@ -578,8 +578,8 @@
                                 </strong>
 
                                 <span>
-                                    Các tiêu chí sẽ trở thành
-                                    decision criteria của Batch.
+                                    Criteria will become the
+                                    decision criteria for the batch.
                                 </span>
 
                             </div>
@@ -681,8 +681,8 @@
                                 </h2>
 
                                 <p>
-                                    Xác định khoảng thời gian dự kiến
-                                    thực hiện đợt đánh giá.
+                                    Define the scheduled timeframe
+                                    for the evaluation batch.
                                 </p>
 
                             </div>
@@ -779,8 +779,8 @@
                 </h3>
 
                 <p>
-                    Kiểm tra phạm vi đợt đánh giá trước
-                    khi tạo Batch.
+                    Review batch scope and parameters
+                    before creation.
                 </p>
 
 
@@ -901,8 +901,8 @@
                         </strong>
 
                         <span id="readinessText">
-                            Chọn Product Group,
-                            Supplier và Criteria.
+                            Select product group,
+                            suppliers, and criteria.
                         </span>
 
                     </div>
@@ -929,7 +929,7 @@
                     </span>
 
                     <p>
-                        Tạo Evaluation Batch
+                        Create evaluation batch
                     </p>
 
                 </div>
@@ -941,7 +941,7 @@
                     </span>
 
                     <p>
-                        Nhập điểm đánh giá Supplier
+                        Enter supplier evaluation scores
                     </p>
 
                 </div>
@@ -953,7 +953,7 @@
                     </span>
 
                     <p>
-                        Tính trọng số bằng AHP
+                        Calculate weights using AHP
                     </p>
 
                 </div>
@@ -965,7 +965,7 @@
                     </span>
 
                     <p>
-                        Xếp hạng Supplier bằng TOPSIS
+                        Rank suppliers using TOPSIS
                     </p>
 
                 </div>
@@ -1331,7 +1331,7 @@
 
                         if (readinessText) {
                             readinessText.textContent =
-                                "Scope đã đủ Supplier và Criteria.";
+                                "Scope contains sufficient suppliers and criteria.";
                         }
 
                     }
@@ -1355,7 +1355,7 @@
                             if (!groupReady) {
 
                                 readinessText.textContent =
-                                    "Chọn Product Group.";
+                                    "Select a product group.";
 
                             }
                             else if (
@@ -1363,7 +1363,7 @@
                             ) {
 
                                 readinessText.textContent =
-                                    "Cần ít nhất 2 Supplier.";
+                                    "At least 2 suppliers required.";
 
                             }
                             else if (
@@ -1371,7 +1371,7 @@
                             ) {
 
                                 readinessText.textContent =
-                                    "Cần ít nhất 2 Criteria.";
+                                    "At least 2 criteria required.";
 
                             }
 

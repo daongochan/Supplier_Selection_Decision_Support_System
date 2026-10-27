@@ -43,7 +43,7 @@ public class DecisionResultController : Controller
     {
         if (batchId <= 0)
         {
-            TempData["WarningMessage"] = "Vui lòng chọn một đợt đánh giá để xem kết quả quyết định và phê duyệt.";
+            TempData["WarningMessage"] = "Please select an evaluation batch to view decision results and approval.";
             return RedirectToAction("Index", "EvaluationBatch");
         }
 
@@ -56,7 +56,7 @@ public class DecisionResultController : Controller
 
         if (model == null)
         {
-            TempData["WarningMessage"] = $"Không tìm thấy đợt đánh giá với ID = {batchId}.";
+            TempData["WarningMessage"] = $"Evaluation batch with ID = {batchId} not found.";
             return RedirectToAction("Index", "EvaluationBatch");
         }
 
@@ -74,8 +74,8 @@ public class DecisionResultController : Controller
             !model.Ranking.Any())
         {
             TempData["ErrorMessage"] =
-                "Batch đang ở trạng thái đánh giá lại. " +
-                "Hãy hoàn thiện lại Evaluation và TOPSIS trước khi xem Decision Result.";
+                "Batch is in re-evaluation state. " +
+                "Please complete Evaluation and TOPSIS before viewing Decision Results.";
 
 
             return RedirectToAction(
@@ -95,8 +95,8 @@ public class DecisionResultController : Controller
         if (!model.Ranking.Any())
         {
             TempData["ErrorMessage"] =
-                "Chưa có kết quả TOPSIS. " +
-                "Hãy hoàn thành bước TOPSIS trước.";
+                "TOPSIS results are not yet available. " +
+                "Please complete the TOPSIS step first.";
 
 
             return RedirectToAction(
@@ -135,7 +135,7 @@ public class DecisionResultController : Controller
             supplierId <= 0)
         {
             TempData["ErrorMessage"] =
-                "Thông tin Batch hoặc nhà cung cấp không hợp lệ.";
+                "Invalid batch or supplier information.";
 
 
             return RedirectToAction(
@@ -247,9 +247,9 @@ public class DecisionResultController : Controller
                         approvalId,
                         null,
                         newValue,
-                        $"Phê duyệt nhà cung cấp " +
+                        $"Approve supplier " +
                         $"{selectedSupplier?.SupplierCode ?? supplierId.ToString()} " +
-                        $"cho Batch #{batchId}.");
+                        $"for Batch #{batchId}.");
             }
             catch
             {
@@ -259,7 +259,7 @@ public class DecisionResultController : Controller
 
 
             TempData["SuccessMessage"] =
-                "Nhà cung cấp đã được phê duyệt.";
+                "Supplier has been approved.";
         }
         catch (
             BusinessRuleException ex)
@@ -280,7 +280,7 @@ public class DecisionResultController : Controller
                 "Lỗi khi phê duyệt kết quả cho đợt {BatchId}.",
                 batchId);
             TempData["ErrorMessage"] =
-                "Có lỗi xảy ra khi phê duyệt kết quả. Vui lòng thử lại sau.";
+                "An error occurred while approving the result. Please try again later.";
         }
 
 
@@ -312,7 +312,7 @@ public class DecisionResultController : Controller
         if (batchId <= 0)
         {
             TempData["ErrorMessage"] =
-                "Evaluation Batch không hợp lệ.";
+                "Invalid evaluation batch.";
 
 
             return RedirectToAction(
@@ -393,7 +393,7 @@ public class DecisionResultController : Controller
                         approvalId,
                         null,
                         newValue,
-                        $"Từ chối kết quả Decision của Batch #{batchId}.");
+                        $"Reject decision result for Batch #{batchId}.");
             }
             catch
             {
@@ -403,8 +403,8 @@ public class DecisionResultController : Controller
 
 
             TempData["SuccessMessage"] =
-                "Kết quả lựa chọn đã bị từ chối. " +
-                "Bạn có thể yêu cầu đánh giá lại.";
+                "Selection decision has been rejected. " +
+                "You may request a re-evaluation.";
         }
         catch (
             BusinessRuleException ex)
@@ -425,7 +425,7 @@ public class DecisionResultController : Controller
                 "Lỗi khi từ chối kết quả cho đợt {BatchId}.",
                 batchId);
             TempData["ErrorMessage"] =
-                "Có lỗi xảy ra khi từ chối kết quả. Vui lòng thử lại sau.";
+                "An error occurred while rejecting the result. Please try again later.";
         }
 
 
@@ -457,7 +457,7 @@ public class DecisionResultController : Controller
         if (batchId <= 0)
         {
             TempData["ErrorMessage"] =
-                "Evaluation Batch không hợp lệ.";
+                "Invalid evaluation batch.";
 
 
             return RedirectToAction(
@@ -538,8 +538,8 @@ public class DecisionResultController : Controller
                         approvalId,
                         null,
                         newValue,
-                        $"Yêu cầu đánh giá lại Batch #{batchId}. " +
-                        "Evaluation, AHP và TOPSIS cũ đã được vô hiệu hóa.");
+                        $"Request re-evaluation for Batch #{batchId}. " +
+                        "Previous Evaluation, AHP, and TOPSIS data have been invalidated.");
             }
             catch
             {
@@ -549,8 +549,8 @@ public class DecisionResultController : Controller
 
 
             TempData["SuccessMessage"] =
-                "Batch đã được yêu cầu đánh giá lại. " +
-                "Dữ liệu Evaluation, AHP và TOPSIS cũ đã được vô hiệu hóa.";
+                "Batch has been marked for re-evaluation. " +
+                "Previous Evaluation, AHP, and TOPSIS data have been invalidated.";
         }
         catch (
             BusinessRuleException ex)
@@ -571,7 +571,7 @@ public class DecisionResultController : Controller
                 "Lỗi khi yêu cầu đánh giá lại cho đợt {BatchId}.",
                 batchId);
             TempData["ErrorMessage"] =
-                "Có lỗi xảy ra khi yêu cầu đánh giá lại. Vui lòng thử lại sau.";
+                "An error occurred while requesting re-evaluation. Please try again later.";
         }
 
 

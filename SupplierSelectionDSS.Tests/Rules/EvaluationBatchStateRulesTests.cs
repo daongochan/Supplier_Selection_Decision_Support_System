@@ -164,4 +164,27 @@ public class EvaluationBatchStateRulesTests
     {
         Assert.Equal(expected, EvaluationBatchStateRules.IsLocked(status));
     }
+
+    [Theory]
+    [InlineData(Domain.Enums.EvaluationBatchStatus.Draft, BatchStatus.Draft)]
+    [InlineData(Domain.Enums.EvaluationBatchStatus.Evaluating, BatchStatus.Evaluating)]
+    [InlineData(Domain.Enums.EvaluationBatchStatus.Completed, BatchStatus.Completed)]
+    [InlineData(Domain.Enums.EvaluationBatchStatus.Cancelled, BatchStatus.Cancelled)]
+    public void EvaluationBatchStatus_MapsBidirectionallyWithBatchStatus(
+        Domain.Enums.EvaluationBatchStatus enumValue, string expectedString)
+    {
+        Assert.Equal(expectedString, Domain.Enums.EvaluationBatchStatusExtensions.ToStatusString(enumValue));
+        Assert.Equal(enumValue, Domain.Enums.EvaluationBatchStatusExtensions.ParseStatus(expectedString));
+        Assert.Equal(enumValue, Domain.Enums.EvaluationBatchStatusExtensions.ParseStatus(expectedString.ToLowerInvariant()));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("UnknownStatus")]
+    public void ParseStatus_InvalidOrEmpty_ReturnsNull(string? invalidStatus)
+    {
+        Assert.Null(Domain.Enums.EvaluationBatchStatusExtensions.ParseStatus(invalidStatus));
+    }
 }

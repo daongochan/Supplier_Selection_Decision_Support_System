@@ -1,7 +1,7 @@
 @model SupplierSelectionDSS.Models.EvaluationBatchIndexViewModel
 
 @{
-    ViewData["Title"] = "Đợt đánh giá";
+    ViewData["Title"] = "Evaluation Batches";
 
     var evalPercent = Model.TotalBatches > 0 
         ? (Model.EvaluatingBatches * 100.0 / Model.TotalBatches).ToString("0.#") 
@@ -23,9 +23,9 @@
      ========================================================= -->
 <div class="page-header">
     <div>
-        <h1 class="page-title">Đợt đánh giá</h1>
+        <h1 class="page-title">Evaluation Batches</h1>
         <p class="page-description">
-            Quản lý các đợt đánh giá nhà cung cấp theo từng nhóm hàng hóa, theo dõi tiến độ và quy trình ra quyết định.
+            Manage supplier evaluation batches by product group, track progress, and review decision workflows.
         </p>
     </div>
 
@@ -33,7 +33,7 @@
     {
         <a asp-action="Create" class="btn-primary">
             <i class="bi bi-plus-lg"></i>
-            <span>Tạo đợt đánh giá</span>
+            <span>Create Evaluation Batch</span>
         </a>
     }
 </div>
@@ -42,14 +42,14 @@
      KPI SUMMARY GRID (100% GENUINE DATABASE METRICS)
      ========================================================= -->
 <div class="batch-kpi-grid">
-    <!-- Card 1: Tổng đợt đánh giá -->
+    <!-- Card 1: Total Batches -->
     <div class="batch-kpi-card">
         <div class="batch-kpi-content">
-            <span class="batch-kpi-label">Tổng đợt đánh giá</span>
+            <span class="batch-kpi-label">Total Batches</span>
             <span class="batch-kpi-value">@Model.TotalBatches.ToString("N0")</span>
             <div class="batch-kpi-meta">
                 <span class="kpi-meta-pill pill-blue">
-                    <i class="bi bi-collection"></i> Hồ sơ đánh giá DSS
+                    <i class="bi bi-collection"></i> DSS evaluation batches
                 </span>
             </div>
         </div>
@@ -58,14 +58,14 @@
         </div>
     </div>
 
-    <!-- Card 2: Đang đánh giá -->
+    <!-- Card 2: Evaluating -->
     <div class="batch-kpi-card">
         <div class="batch-kpi-content">
-            <span class="batch-kpi-label">Đang đánh giá</span>
+            <span class="batch-kpi-label">Evaluating</span>
             <span class="batch-kpi-value">@Model.EvaluatingBatches.ToString("N0")</span>
             <div class="batch-kpi-meta">
                 <span class="kpi-meta-pill pill-indigo">
-                    <i class="bi bi-play-circle"></i> @evalPercent% tổng số
+                    <i class="bi bi-play-circle"></i> @evalPercent% of total
                 </span>
             </div>
         </div>
@@ -74,34 +74,34 @@
         </div>
     </div>
 
-    <!-- Card 3: Đã hoàn thành -->
+    <!-- Card 3: Completed -->
     <div class="batch-kpi-card">
         <div class="batch-kpi-content">
-            <span class="batch-kpi-label">Đã hoàn thành</span>
+            <span class="batch-kpi-label">Completed</span>
             <span class="batch-kpi-value">@Model.CompletedBatches.ToString("N0")</span>
             <div class="batch-kpi-meta">
                 <span class="kpi-meta-pill pill-green">
-                    <i class="bi bi-check2"></i> @compPercent% tổng số
+                    <i class="bi bi-check2"></i> @compPercent% of total
                 </span>
             </div>
         </div>
         <div class="batch-kpi-icon icon-green" aria-hidden="true">
-            <i class="bi bi-check-circle"></i>
+            <i class="bi bi-check2-circle"></i>
         </div>
     </div>
 
-    <!-- Card 4: Bản nháp -->
+    <!-- Card 4: Draft -->
     <div class="batch-kpi-card">
         <div class="batch-kpi-content">
-            <span class="batch-kpi-label">Bản nháp / Khởi tạo</span>
+            <span class="batch-kpi-label">Draft</span>
             <span class="batch-kpi-value">@Model.DraftBatches.ToString("N0")</span>
             <div class="batch-kpi-meta">
-                <span class="kpi-meta-pill pill-muted">
-                    <i class="bi bi-pencil-square"></i> @draftPercent% tổng số
+                <span class="kpi-meta-pill pill-amber">
+                    <i class="bi bi-pencil-square"></i> @draftPercent% of total
                 </span>
             </div>
         </div>
-        <div class="batch-kpi-icon icon-slate" aria-hidden="true">
+        <div class="batch-kpi-icon icon-amber" aria-hidden="true">
             <i class="bi bi-pencil-square"></i>
         </div>
     </div>
@@ -116,46 +116,44 @@
 
         <!-- 1. Keyword Search -->
         <div class="filter-field">
-            <label for="keyword">Tìm kiếm</label>
+            <label for="keyword">Search</label>
             <input id="keyword"
                    name="keyword"
                    value="@Model.Keyword"
                    class="form-control"
-                   placeholder="Mã đợt, tên đợt đánh giá..." />
+                   placeholder="Batch code, batch name..." />
         </div>
 
         <!-- 2. Status Dropdown -->
         <div class="filter-field">
-            <label for="status">Trạng thái</label>
+            <label for="status">Status</label>
             <select id="status" name="status" class="form-control">
                 <option value="All" selected="@(string.IsNullOrEmpty(Model.Status) || Model.Status == "All")">
-                    Tất cả trạng thái
+                    All Statuses
                 </option>
                 <option value="Draft" selected="@(Model.Status == "Draft")">
-                    Bản nháp
+                    Draft
                 </option>
                 <option value="Evaluating" selected="@(Model.Status == "Evaluating")">
-                    Đang đánh giá
+                    Evaluating
                 </option>
                 <option value="Completed" selected="@(Model.Status == "Completed")">
-                    Đã hoàn thành
+                    Completed
                 </option>
                 <option value="Cancelled" selected="@(Model.Status == "Cancelled")">
-                    Đã hủy
+                    Cancelled
                 </option>
             </select>
         </div>
 
-        <!-- 3. Product Group Dropdown -->
+        <!-- 3. Group Dropdown -->
         <div class="filter-field">
-            <label for="groupId">Nhóm hàng</label>
+            <label for="groupId">Product Group</label>
             <select id="groupId" name="groupId" class="form-control">
-                <option value="" selected="@(!Model.GroupId.HasValue)">
-                    Tất cả nhóm hàng
-                </option>
-                @if (Model.Groups != null)
+                <option value="">All Product Groups</option>
+                @if (ViewBag.Groups is List<SupplierSelectionDSS.Data.Entities.ProductGroup> groups)
                 {
-                    @foreach (var g in Model.Groups)
+                    foreach (var g in groups)
                     {
                         <option value="@g.GroupId" selected="@(Model.GroupId == g.GroupId)">
                             @g.GroupName
@@ -167,12 +165,12 @@
 
         <!-- 4. Filter Action Buttons (Same height 42px) -->
         <div class="filter-actions">
-            <button type="submit" class="btn-primary" title="Tìm kiếm">
-                Tìm kiếm
+            <button type="submit" class="btn-primary" title="Search">
+                Search
             </button>
 
-            <a asp-action="Index" class="btn-outline" title="Đặt lại bộ lọc">
-                Đặt lại
+            <a asp-action="Index" class="btn-outline" title="Reset filters">
+                Reset
             </a>
         </div>
     </form>
@@ -188,13 +186,13 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th style="width: 120px;">Mã đợt</th>
-                        <th style="min-width: 240px;">Tên đợt đánh giá</th>
-                        <th style="min-width: 180px;">Nhóm hàng</th>
-                        <th style="min-width: 200px;">Quy mô đánh giá</th>
-                        <th style="width: 130px;">Ngày tạo</th>
-                        <th style="width: 150px;">Trạng thái</th>
-                        <th style="width: 70px; text-align: center;">Thao tác</th>
+                        <th style="width: 120px;">Batch Code</th>
+                        <th style="min-width: 240px;">Batch Name</th>
+                        <th style="min-width: 180px;">Product Group</th>
+                        <th style="min-width: 200px;">Evaluation Scope</th>
+                        <th style="width: 130px;">Created Date</th>
+                        <th style="width: 150px;">Status</th>
+                        <th style="width: 70px; text-align: center;">Actions</th>
                     </tr>
                 </thead>
 
@@ -202,12 +200,12 @@
                     @foreach (var batch in Model.Batches)
                     {
                         <tr>
-                            <!-- Mã đợt -->
+                            <!-- Batch Code -->
                             <td>
                                 <span class="batch-code-badge">@batch.BatchCode</span>
                             </td>
 
-                            <!-- Tên đợt đánh giá + Thời gian diễn ra -->
+                            <!-- Batch Name + Date Range -->
                             <td>
                                 <div class="batch-name-cell">
                                     <a asp-action="Details" asp-route-id="@batch.BatchId" class="batch-name-link">
@@ -223,7 +221,7 @@
                                 </div>
                             </td>
 
-                            <!-- Nhóm hàng -->
+                            <!-- Product Group -->
                             <td>
                                 <div class="batch-group-cell">
                                     <span class="batch-group-pill" title="@batch.GroupName">
@@ -232,51 +230,51 @@
                                 </div>
                             </td>
 
-                            <!-- Quy mô đánh giá (NCC + Tiêu chí) -->
+                            <!-- Evaluation Scope (Suppliers + Criteria) -->
                             <td>
                                 <div class="batch-scope-cell">
-                                    <span class="batch-scope-pill" title="Số nhà cung cấp tham gia">
-                                        <i class="bi bi-building"></i> @batch.SupplierCount NCC
+                                    <span class="batch-scope-pill" title="Participating suppliers">
+                                        <i class="bi bi-building"></i> @batch.SupplierCount Suppliers
                                     </span>
-                                    <span class="batch-scope-pill" title="Số tiêu chí đánh giá">
-                                        <i class="bi bi-sliders"></i> @batch.CriteriaCount TC
+                                    <span class="batch-scope-pill" title="Evaluation criteria">
+                                        <i class="bi bi-sliders"></i> @batch.CriteriaCount Criteria
                                     </span>
                                 </div>
                             </td>
 
-                            <!-- Ngày tạo -->
+                            <!-- Created Date -->
                             <td>
                                 <span class="batch-date-cell">
                                     @batch.CreatedAt.ToString("dd/MM/yyyy")
                                 </span>
                             </td>
 
-                            <!-- Trạng thái -->
+                            <!-- Status -->
                             <td>
                                 @switch (batch.Status)
                                 {
                                     case "Evaluating":
-                                        <span class="status-pill status-evaluating">Đang đánh giá</span>
+                                        <span class="status-pill status-evaluating">Evaluating</span>
                                         break;
                                     case "Completed":
-                                        <span class="status-pill status-completed">Đã hoàn thành</span>
+                                        <span class="status-pill status-completed">Completed</span>
                                         break;
                                     case "Cancelled":
-                                        <span class="status-pill status-cancelled">Đã hủy</span>
+                                        <span class="status-pill status-cancelled">Cancelled</span>
                                         break;
                                     default:
-                                        <span class="status-pill status-draft">Bản nháp</span>
+                                        <span class="status-pill status-draft">Draft</span>
                                         break;
                                 }
                             </td>
 
-                            <!-- Thao tác dropdown [ ⋯ ] -->
+                            <!-- Actions dropdown [ ⋯ ] -->
                             <td style="text-align: center;">
                                 <div class="batch-actions-dropdown">
                                     <button type="button"
                                             class="btn-action-dots"
-                                            aria-label="Thao tác cho @batch.BatchName"
-                                            title="Thao tác">
+                                            aria-label="Actions for @batch.BatchName"
+                                            title="Actions">
                                         <i class="bi bi-three-dots-vertical"></i>
                                     </button>
 
@@ -285,7 +283,7 @@
                                            asp-route-id="@batch.BatchId"
                                            class="batch-action-item">
                                             <i class="bi bi-eye"></i>
-                                            <span>Xem chi tiết</span>
+                                            <span>View Details</span>
                                         </a>
 
                                         @if (batch.Status == "Evaluating")
@@ -295,7 +293,7 @@
                                                asp-route-batchId="@batch.BatchId"
                                                class="batch-action-item">
                                                 <i class="bi bi-pencil-square"></i>
-                                                <span>Chấm điểm đánh giá</span>
+                                                <span>Enter Scores</span>
                                             </a>
 
                                             <a asp-controller="TOPSIS"
@@ -303,7 +301,7 @@
                                                asp-route-batchId="@batch.BatchId"
                                                class="batch-action-item">
                                                 <i class="bi bi-calculator"></i>
-                                                <span>Tính toán TOPSIS</span>
+                                                <span>TOPSIS Calculation</span>
                                             </a>
                                         }
 
@@ -314,7 +312,7 @@
                                                asp-route-batchId="@batch.BatchId"
                                                class="batch-action-item">
                                                 <i class="bi bi-award"></i>
-                                                <span>Kết quả phê duyệt</span>
+                                                <span>Decision & Approval</span>
                                             </a>
                                         }
 
@@ -328,11 +326,11 @@
                                                 @Html.AntiForgeryToken()
                                                 <button type="submit"
                                                         class="batch-action-item text-primary"
-                                                        data-dss-confirm="Bạn có chắc chắn muốn bắt đầu tiến trình đánh giá cho đợt '@batch.BatchName'?"
-                                                        data-dss-title="Bắt đầu đánh giá"
-                                                        data-dss-btn-text="Bắt đầu ngay">
+                                                        data-dss-confirm="Are you sure you want to start the evaluation process for batch '@batch.BatchName'?"
+                                                        data-dss-title="Start Evaluation"
+                                                        data-dss-btn-text="Start Now">
                                                     <i class="bi bi-play-circle"></i>
-                                                    <span>Bắt đầu đánh giá</span>
+                                                    <span>Start Evaluation</span>
                                                 </button>
                                             </form>
                                         }
@@ -347,11 +345,11 @@
                                                 @Html.AntiForgeryToken()
                                                 <button type="submit"
                                                         class="batch-action-item text-danger"
-                                                        data-dss-confirm="Bạn có chắc chắn muốn hủy đợt đánh giá '@batch.BatchName'? Thao tác này không thể hoàn tác."
-                                                        data-dss-title="Xác nhận hủy đợt"
-                                                        data-dss-btn-text="Hủy đợt đánh giá">
+                                                        data-dss-confirm="Are you sure you want to cancel evaluation batch '@batch.BatchName'? This action cannot be undone."
+                                                        data-dss-title="Confirm Batch Cancellation"
+                                                        data-dss-btn-text="Cancel Batch">
                                                     <i class="bi bi-x-circle"></i>
-                                                    <span>Hủy đợt đánh giá</span>
+                                                    <span>Cancel Batch</span>
                                                 </button>
                                             </form>
                                         }
@@ -372,21 +370,21 @@
             <div style="font-size: 40px; color: var(--muted); margin-bottom: 12px;">
                 <i class="bi bi-search"></i>
             </div>
-            <h3>Không tìm thấy đợt đánh giá nào</h3>
+            <h3>No evaluation batches found</h3>
             <p>
-                Không có đợt đánh giá nào phù hợp với điều kiện tìm kiếm hoặc bộ lọc hiện tại.
-                Vui lòng thử lại với từ khóa hoặc bộ lọc khác.
+                No evaluation batches match the current search criteria or filters.
+                Please try again with different keywords or filters.
             </p>
             <div style="display: flex; gap: 10px; justify-content: center; margin-top: 16px;">
                 <a asp-action="Index" class="btn-outline">
                     <i class="bi bi-arrow-counterclockwise"></i>
-                    <span>Xóa bộ lọc</span>
+                    <span>Reset Filters</span>
                 </a>
                 @if (User.IsInRole("Administrator") || User.IsInRole("PurchasingStaff"))
                 {
                     <a asp-action="Create" class="btn-primary">
                         <i class="bi bi-plus-lg"></i>
-                        <span>Tạo đợt đánh giá mới</span>
+                        <span>Create Evaluation Batch</span>
                     </a>
                 }
             </div>

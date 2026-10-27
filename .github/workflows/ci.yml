@@ -13,7 +13,7 @@ on:
 
 jobs:
   build-and-test:
-    name: Build & Test (.NET 10)
+    name: Build, Verify & Unit Tests (.NET 10)
     runs-on: ubuntu-latest
 
     steps:
@@ -22,6 +22,12 @@ jobs:
 
       - name: Verify database schema synchronization and safety guards
         run: python tools/verify/verify_schema_sync.py
+
+      - name: Verify deterministic CSS bundle (no drift)
+        run: python tools/assets/bundle_css.py --check
+
+      - name: Verify localized offline typography and icons
+        run: python tools/assets/localize_fonts.py --check
 
       - name: Setup .NET 10 SDK
         uses: actions/setup-dotnet@v4
@@ -34,8 +40,16 @@ jobs:
       - name: Build solution
         run: dotnet build SupplierSelectionDSS.slnx --no-restore --configuration Release
 
-      - name: Run unit and algorithmic verification tests
+      - name: Run unit, algorithmic and HTTP smoke tests
         run: dotnet test SupplierSelectionDSS.slnx --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage"
+
+      - name: Verify publish output hygiene (excludes test, docs, database, tools)
+        run: |
+          dotnet publish SupplierSelectionDSS.csproj -c Release -o ./publish-check
+          test ! -d ./publish-check/docs
+          test ! -d ./publish-check/tools
+          test ! -d ./publish-check/database
+          rm -rf ./publish-check
 
       - name: Upload code coverage report
         uses: actions/upload-artifact@v4
@@ -44,3 +58,46 @@ jobs:
           name: code-coverage-report
           path: '**/TestResults/**/coverage.cobertura.xml'
           if-no-files-found: ignore
+
+  sql-server-integration:
+    name: SQL Server Integration & Trigger Tests
+    runs-on: ubuntu-latest
+
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: 'Y'
+          MSSQL_SA_PASSWORD: 'YourStrong(!)Password2026'
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'YourStrong(!)Password2026' -C -Q 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Run SQL Server integration tests
+        env:
+          DSS_TEST_CONNECTION_STRING: "Server=localhost,1433;Database=master;User Id=sa;Password=YourStrong(!)Password2026;TrustServerCertificate=True;MultipleActiveResultSets=True;Connect Timeout=30"
+          DSS_REQUIRE_SQL: "1"
+        run: dotnet test SupplierSelectionDSS.slnx --filter "Category=SqlServer" --configuration Release --verbosity normal --logger "trx;LogFileName=sql_test_results.trx"
+
+      - name: Verify SQL integration test execution count
+        shell: bash
+        run: |
+          TESTS_PASSED=$(python3 -c "import xml.etree.ElementTree as ET, glob; files = glob.glob('**/sql_test_results.trx', recursive=True); root = ET.parse(files[0]).getroot(); counters = root.find('.//{http://microsoft.com/schemas/VisualStudio/TeamTest/2010}Counters'); print(int(counters.attrib['passed']))")
+          echo "SQL tests executed and passed: $TESTS_PASSED"
+          if [ "$TESTS_PASSED" -le 0 ]; then
+            echo "ERROR: Expected at least 1 SQL test to pass, but got $TESTS_PASSED"
+            exit 1
+          fi

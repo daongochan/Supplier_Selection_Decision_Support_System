@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "Không có quyền truy cập";
+    ViewData["Title"] = "Access Denied";
 }
 
 @section Styles {
@@ -12,25 +12,25 @@
         <div class="access-denied-illustration-wrap">
             <picture>
                 <source srcset="~/images/access-denied-duck.webp" type="image/webp" />
-                <img src="~/images/access-denied-duck.png" 
-                     alt="Không có quyền truy cập" 
+                <img src="~/images/access-denied-duck.png"
+                     alt="Access Denied"
                      class="access-denied-duck-img" />
             </picture>
         </div>
 
         <!-- Headline -->
-        <h1 class="access-denied-heading">Không có quyền truy cập</h1>
+        <h1 class="access-denied-heading">Access Denied</h1>
 
         <!-- Friendly Subtitle -->
         <p class="access-denied-message">
-            Bạn không có quyền truy cập vào trang này. Vui lòng liên hệ<br />
-            quản trị viên hệ thống để được cấp quyền phù hợp.
+            You do not have permission to access this page. Please contact<br />
+            your system administrator to request appropriate permissions.
         </p>
 
         <!-- Primary Pill Action Button -->
         <a asp-controller="Dashboard" asp-action="Index" class="btn-access-home">
             <i class="bi bi-arrow-left"></i>
-            <span>Quay về trang chủ</span>
+            <span>Back to Dashboard</span>
         </a>
     </div>
 </div>

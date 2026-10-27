@@ -148,13 +148,13 @@ public static class QuestPdfReportExporter
                         {
                             column.Item()
                                 .PaddingTop(8)
-                                .Text("Sensitivity Analysis (Phân tích độ nhạy ±10%, ±20%)")
+                                .Text("Sensitivity Analysis (±10%, ±20%)")
                                 .Bold()
                                 .FontSize(13);
 
                             column.Item()
-                                .Text($"Độ vững bền: {data.SensitivityAnalysis.RobustnessPercentage:0.0}% · " +
-                                      $"{(data.SensitivityAnalysis.IsOverallRobust ? "Quyết định ổn định" : "Nhạy cảm với biến động")}");
+                                .Text($"Robustness: {data.SensitivityAnalysis.RobustnessPercentage:0.0}% · " +
+                                      $"{(data.SensitivityAnalysis.IsOverallRobust ? "Robust Decision" : "Sensitive to Changes")}");
 
                             column.Item()
                                 .Text(data.SensitivityAnalysis.SummaryMessage);

@@ -1,69 +1,34 @@
+#!/usr/bin/env python3
+"""
+tools/perf/bundle_css.py
+
+[DEPRECATED] Wrapper for backward compatibility.
+This script has moved to tools/assets/bundle_css.py.
+Scheduled for removal in v1.6.0. Please update invocations to use tools/assets/bundle_css.py.
+"""
+
 import os
 import sys
+import warnings
 
 def main():
+    warnings.warn(
+        "tools/perf/bundle_css.py is deprecated and will be removed in v1.6.0. "
+        "Use tools/assets/bundle_css.py instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    repo_root = os.path.abspath(os.path.join(script_dir, "..", ".."))
-    root_dir = os.path.join(repo_root, "wwwroot", "css")
-    if not os.path.isdir(root_dir) and len(sys.argv) > 1:
-        root_dir = sys.argv[1]
-    core_files = [
-        "tokens.css",
-        os.path.join("base", "typography.css"),
-        os.path.join("base", "layout.css"),
-        os.path.join("base", "responsive.css"),
-        os.path.join("components", "buttons.css"),
-        os.path.join("components", "cards.css"),
-        os.path.join("components", "status.css"),
-        os.path.join("components", "forms.css"),
-        os.path.join("components", "tables.css"),
-        os.path.join("components", "pagination.css"),
-        os.path.join("components", "shared.css"),
-        os.path.join("components", "background.css")
-    ]
-
-    # Read existing site.css from line 45 onwards (resets and utilities)
-    site_path = os.path.join(root_dir, "site.css")
-    with open(site_path, "r", encoding="utf-8") as f:
-        site_content = f.read()
-
-    # Find where global reset starts
-    split_marker = "/* =========================================================\n   GLOBAL RESET"
-    if split_marker not in site_content:
-        split_marker = "/* =========================================================\r\n   GLOBAL RESET"
+    assets_bundler = os.path.abspath(os.path.join(script_dir, "..", "assets", "bundle_css.py"))
     
-    parts = site_content.split(split_marker)
-    if len(parts) < 2:
-        raise ValueError("Could not find GLOBAL RESET marker in site.css")
-    
-    site_utilities = split_marker + parts[1]
+    if not os.path.isfile(assets_bundler):
+        print(f"Error: assets bundler not found at {assets_bundler}", file=sys.stderr)
+        sys.exit(1)
 
-    # Combine all core files
-    bundled = [
-        "/* =========================================================",
-        "   SITE — CORE DESIGN SYSTEM (BUNDLED, ZERO @IMPORT WATERFALL)",
-        "   Contains: Design Tokens, Typography, Layout, Responsive,",
-        "   Core UI Components, and Global System Utilities.",
-        "   Page-specific styles are loaded on demand via @section Styles.",
-        "   ========================================================= */\n"
-    ]
-
-    for rel in core_files:
-        full_p = os.path.join(root_dir, rel)
-        bundled.append(f"/* --- BEGIN {rel.replace(os.sep, '/')} --- */")
-        with open(full_p, "r", encoding="utf-8") as f:
-            bundled.append(f.read().strip())
-        bundled.append(f"/* --- END {rel.replace(os.sep, '/')} --- */\n")
-
-    bundled.append("/* --- BEGIN site utilities & resets --- */")
-    bundled.append(site_utilities.strip())
-    bundled.append("/* --- END site utilities & resets --- */\n")
-
-    output = "\n".join(bundled)
-    with open(site_path, "w", encoding="utf-8") as f:
-        f.write(output)
-
-    print(f"Bundled site.css written: {len(output):,} characters ({len(output.encode('utf-8'))/1024:.1f} KB)")
+    import subprocess
+    cmd = [sys.executable, assets_bundler] + sys.argv[1:]
+    result = subprocess.run(cmd)
+    sys.exit(result.returncode)
 
 if __name__ == "__main__":
     main()

@@ -37,7 +37,7 @@ Tài liệu này ghi nhận số liệu đo lường hiệu năng thực tế tr
    ```bash
    dotnet test --filter "FullyQualifiedName~RunBaselineBenchmark_OnPerfDatabase" --logger "console;verbosity=normal"
    ```
-3. Xem kết quả chi tiết xuất ra tại `tools/perf/baseline_results.json`.
+3. Xem kết quả chi tiết xuất ra tại `docs/qa/evidence/performance/baseline_results.json`.
 
 ---
 

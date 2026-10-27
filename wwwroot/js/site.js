@@ -144,48 +144,196 @@
     document.addEventListener("DOMContentLoaded", function () {
 
         // =====================================================
-        // SIDEBAR STATE CLEANUP & MOBILE NAVIGATION
+        // COLLAPSIBLE SIDEBAR & RESPONSIVE MOBILE NAVIGATION
         // =====================================================
-        try {
-            localStorage.removeItem("dss_sidebar_collapsed");
-        } catch (e) { }
-        document.documentElement.classList.remove("sidebar-collapsed");
-        document.body.classList.remove("sidebar-collapsed", "sidebar-mobile-open");
-
+        const STORAGE_KEY = "dss_sidebar_collapsed";
+        const MOBILE_BREAKPOINT = 900;
         const sidebarToggleBtn = document.getElementById("sidebarToggle");
+        const desktopSidebarToggle = document.getElementById("desktopSidebarToggle");
+        const desktopToggleIcon = document.getElementById("desktopSidebarToggleIcon");
         const sidebarBackdrop = document.getElementById("sidebarBackdrop");
         const appSidebar = document.getElementById("appSidebar");
+
+        function isDesktop() {
+            return window.innerWidth > MOBILE_BREAKPOINT;
+        }
+
+        function getStoredCollapseState() {
+            try {
+                return localStorage.getItem(STORAGE_KEY) === "true";
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function setStoredCollapseState(isCollapsed) {
+            try {
+                localStorage.setItem(STORAGE_KEY, isCollapsed ? "true" : "false");
+            } catch (e) { }
+        }
+
+        function applyDesktopState(isCollapsed, persist) {
+            const brandLink = document.querySelector(".sidebar-brand-link");
+            if (isCollapsed) {
+                document.documentElement.classList.add("sidebar-collapsed");
+                if (brandLink) {
+                    brandLink.setAttribute("tabindex", "-1");
+                    brandLink.setAttribute("aria-hidden", "true");
+                }
+                if (desktopSidebarToggle) {
+                    desktopSidebarToggle.setAttribute("aria-expanded", "false");
+                    desktopSidebarToggle.setAttribute("aria-label", "Expand sidebar");
+                    desktopSidebarToggle.setAttribute("title", "Expand sidebar");
+                }
+                if (desktopToggleIcon) {
+                    desktopToggleIcon.className = "bi bi-chevron-right";
+                }
+                if (sidebarToggleBtn && isDesktop()) {
+                    sidebarToggleBtn.setAttribute("aria-expanded", "false");
+                    sidebarToggleBtn.setAttribute("aria-label", "Expand sidebar");
+                    sidebarToggleBtn.setAttribute("title", "Expand sidebar");
+                }
+            } else {
+                document.documentElement.classList.remove("sidebar-collapsed");
+                if (brandLink) {
+                    brandLink.removeAttribute("tabindex");
+                    brandLink.removeAttribute("aria-hidden");
+                }
+                if (desktopSidebarToggle) {
+                    desktopSidebarToggle.setAttribute("aria-expanded", "true");
+                    desktopSidebarToggle.setAttribute("aria-label", "Collapse sidebar");
+                    desktopSidebarToggle.setAttribute("title", "Collapse sidebar");
+                }
+                if (desktopToggleIcon) {
+                    desktopToggleIcon.className = "bi bi-chevron-left";
+                }
+                if (sidebarToggleBtn && isDesktop()) {
+                    sidebarToggleBtn.setAttribute("aria-expanded", "true");
+                    sidebarToggleBtn.setAttribute("aria-label", "Collapse sidebar");
+                    sidebarToggleBtn.setAttribute("title", "Collapse sidebar");
+                }
+            }
+
+            if (persist) {
+                setStoredCollapseState(isCollapsed);
+            }
+
+            // Trigger window resize event after CSS transition to allow Chart.js and layouts to re-measure cleanly
+            setTimeout(function () {
+                window.dispatchEvent(new Event("resize"));
+            }, 220);
+        }
+
+        function toggleDesktopSidebar() {
+            const isCurrentlyCollapsed = document.documentElement.classList.contains("sidebar-collapsed");
+            applyDesktopState(!isCurrentlyCollapsed, true);
+        }
+
+        function openMobileSidebar() {
+            document.body.classList.add("sidebar-mobile-open");
+            if (sidebarToggleBtn) {
+                sidebarToggleBtn.setAttribute("aria-expanded", "true");
+            }
+            if (sidebarBackdrop) {
+                sidebarBackdrop.setAttribute("aria-hidden", "false");
+            }
+            if (appSidebar) {
+                const firstInteractive = appSidebar.querySelector("button, a");
+                if (firstInteractive && typeof firstInteractive.focus === "function") {
+                    setTimeout(function () { firstInteractive.focus(); }, 60);
+                }
+            }
+        }
 
         function closeMobileSidebar() {
             document.body.classList.remove("sidebar-mobile-open");
             if (sidebarToggleBtn) {
                 sidebarToggleBtn.setAttribute("aria-expanded", "false");
             }
+            if (sidebarBackdrop) {
+                sidebarBackdrop.setAttribute("aria-hidden", "true");
+            }
         }
 
-        if (sidebarToggleBtn) {
-            sidebarToggleBtn.addEventListener("click", function () {
-                const isOpen = document.body.classList.toggle("sidebar-mobile-open");
-                sidebarToggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
-                if (isOpen && appSidebar) {
-                    const firstLink = appSidebar.querySelector("a, button");
-                    if (firstLink && typeof firstLink.focus === "function") {
-                        setTimeout(function () { firstLink.focus(); }, 50);
+        function toggleMobileSidebar() {
+            if (document.body.classList.contains("sidebar-mobile-open")) {
+                closeMobileSidebar();
+            } else {
+                openMobileSidebar();
+            }
+        }
+
+        // Initialize desktop state from localStorage
+        if (isDesktop()) {
+            applyDesktopState(getStoredCollapseState(), false);
+        } else {
+            document.documentElement.classList.remove("sidebar-collapsed");
+        }
+
+        // Desktop sidebar toggle button click (inside sidebar header)
+        if (desktopSidebarToggle) {
+            desktopSidebarToggle.addEventListener("click", function (e) {
+                e.preventDefault();
+                if (isDesktop()) {
+                    toggleDesktopSidebar();
+                } else {
+                    closeMobileSidebar();
+                }
+            });
+        }
+
+        // Clicking brand header in collapsed desktop state triggers expansion
+        const brandHeader = document.querySelector(".sidebar-brand-header");
+        if (brandHeader) {
+            brandHeader.addEventListener("click", function (e) {
+                if (isDesktop() && document.documentElement.classList.contains("sidebar-collapsed")) {
+                    if (desktopSidebarToggle && e.target !== desktopSidebarToggle && !desktopSidebarToggle.contains(e.target)) {
+                        e.preventDefault();
+                        desktopSidebarToggle.click();
                     }
                 }
             });
         }
 
+        // Topbar toggle button click (hamburger)
+        if (sidebarToggleBtn) {
+            sidebarToggleBtn.addEventListener("click", function (e) {
+                e.preventDefault();
+                if (isDesktop()) {
+                    toggleDesktopSidebar();
+                } else {
+                    toggleMobileSidebar();
+                }
+            });
+        }
+
+        // Mobile backdrop click
         if (sidebarBackdrop) {
             sidebarBackdrop.addEventListener("click", closeMobileSidebar);
         }
 
+        // Nav links click closes mobile drawer
         document.querySelectorAll(".sidebar-link").forEach(function (link) {
             link.addEventListener("click", function () {
-                if (window.innerWidth <= 900) {
+                if (!isDesktop()) {
                     closeMobileSidebar();
                 }
             });
+        });
+
+        // Handle viewport resize across mobile/desktop boundary
+        let lastWidth = window.innerWidth;
+        window.addEventListener("resize", function () {
+            const currentWidth = window.innerWidth;
+            if (lastWidth <= MOBILE_BREAKPOINT && currentWidth > MOBILE_BREAKPOINT) {
+                // Transitioned to desktop
+                closeMobileSidebar();
+                applyDesktopState(getStoredCollapseState(), false);
+            } else if (lastWidth > MOBILE_BREAKPOINT && currentWidth <= MOBILE_BREAKPOINT) {
+                // Transitioned to mobile
+                document.documentElement.classList.remove("sidebar-collapsed");
+            }
+            lastWidth = currentWidth;
         });
 
 

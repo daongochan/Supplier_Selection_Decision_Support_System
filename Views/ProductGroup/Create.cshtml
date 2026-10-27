@@ -1,7 +1,7 @@
 @model SupplierSelectionDSS.Models.ProductGroupFormViewModel
 
 @{
-    ViewData["Title"] = "Thêm nhóm hàng";
+    ViewData["Title"] = "Add Product Group";
 }
 
 <div class="page-header">
@@ -9,11 +9,11 @@
     <div>
 
         <h1 class="page-title">
-            Thêm nhóm hàng
+            Add Product Group
         </h1>
 
         <p class="page-description">
-            Thêm một nhóm hàng hóa hoặc dịch vụ mới vào hệ thống.
+            Add a new product group or service category to the system.
         </p>
 
     </div>
@@ -37,47 +37,47 @@
 
             <!-- 1. Group Identity -->
             <div class="form-section">
-                <div class="form-section-title">Thông tin nhóm hàng</div>
-                <div class="form-section-desc">Mã định danh và tên nhóm hàng hóa hoặc dịch vụ</div>
+                <div class="form-section-title">Product Group Information</div>
+                <div class="form-section-desc">Identifier code and name for the product group</div>
             </div>
 
             <div class="form-group">
                 <label asp-for="GroupCode" class="required-field">
-                    Mã nhóm hàng
+                    Product Group Code
                 </label>
                 <input asp-for="GroupCode"
                        class="form-control"
                        maxlength="20"
-                       placeholder="VD: NH-001 hoặc ELEC"
+                       placeholder="e.g. PG-001 or ELEC"
                        autocomplete="off" />
                 <span asp-validation-for="GroupCode" class="text-danger"></span>
             </div>
 
             <div class="form-group">
                 <label asp-for="GroupName" class="required-field">
-                    Tên nhóm hàng
+                    Product Group Name
                 </label>
                 <input asp-for="GroupName"
                        class="form-control"
                        maxlength="150"
-                       placeholder="Tên danh mục hàng hóa, dịch vụ cung ứng" />
+                       placeholder="Category name of supplied products or services" />
                 <span asp-validation-for="GroupName" class="text-danger"></span>
             </div>
 
             <!-- 2. Detailed Description -->
             <div class="form-section">
-                <div class="form-section-title">Mô tả & Ghi chú</div>
-                <div class="form-section-desc">Thông tin chi tiết về phạm vi và đặc tính nhóm hàng</div>
+                <div class="form-section-title">Description & Notes</div>
+                <div class="form-section-desc">Detailed information regarding scope and characteristics</div>
             </div>
 
             <div class="form-group form-group-full">
                 <label asp-for="Description">
-                    Mô tả
+                    Description
                 </label>
                 <textarea asp-for="Description"
                           class="form-control"
                           maxlength="500"
-                          placeholder="Mô tả phạm vi áp dụng, tiêu chuẩn kỹ thuật hoặc ghi chú liên quan..."></textarea>
+                          placeholder="Describe scope of application, technical standards, or relevant notes..."></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
 
@@ -88,12 +88,12 @@
 
             <a asp-action="Index"
                class="btn-outline">
-                Hủy bỏ
+                Cancel
             </a>
 
             <button type="submit"
                     class="btn-primary">
-                Lưu nhóm hàng
+                Save Product Group
             </button>
 
         </div>

@@ -103,7 +103,7 @@ public class CriteriaService
 
         if (await CriteriaCodeExistsAsync(criterion.CriteriaCode))
         {
-            throw new InvalidOperationException("Mã tiêu chí đã tồn tại.");
+            throw new InvalidOperationException("Criteria code already exists.");
         }
 
         criterion.Status = EntityStatus.Active;
@@ -126,14 +126,14 @@ public class CriteriaService
 
         if (existing == null)
         {
-            throw new KeyNotFoundException("Không tìm thấy tiêu chí.");
+            throw new KeyNotFoundException("Criterion not found.");
         }
 
         if (await CriteriaCodeExistsAsync(
                 criterion.CriteriaCode,
                 criterion.CriteriaId))
         {
-            throw new InvalidOperationException("Mã tiêu chí đã tồn tại.");
+            throw new InvalidOperationException("Criteria code already exists.");
         }
 
         var unitChanged = !string.Equals(
@@ -153,9 +153,9 @@ public class CriteriaService
 
             if (isInUse)
             {
-                var fieldName = typeChanged ? "loại tiêu chí" : "đơn vị tính";
+                var fieldName = typeChanged ? "criteria type" : "measurement unit";
                 throw new InvalidOperationException(
-                    $"Không thể thay đổi {fieldName} vì tiêu chí đã được sử dụng trong dữ liệu đánh giá hoặc tính toán DSS.");
+                    $"Cannot change {fieldName} because the criterion is already used in evaluation data or DSS calculations.");
             }
         }
 
@@ -205,18 +205,18 @@ public class CriteriaService
     {
         if (string.IsNullOrWhiteSpace(criterion.CriteriaCode))
         {
-            throw new ArgumentException("Mã tiêu chí không được để trống.");
+            throw new ArgumentException("Criteria code cannot be empty.");
         }
 
         if (string.IsNullOrWhiteSpace(criterion.CriteriaName))
         {
-            throw new ArgumentException("Tên tiêu chí không được để trống.");
+            throw new ArgumentException("Criteria name cannot be empty.");
         }
 
         if (!string.Equals(criterion.CriteriaType, CriteriaType.Benefit, StringComparison.Ordinal) &&
             !string.Equals(criterion.CriteriaType, CriteriaType.Cost, StringComparison.Ordinal))
         {
-            throw new ArgumentException("Loại tiêu chí không hợp lệ. Chỉ chấp nhận Benefit hoặc Cost.");
+            throw new ArgumentException("Invalid criteria type. Only Benefit or Cost is allowed.");
         }
     }
 

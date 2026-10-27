@@ -1,7 +1,7 @@
 @model SupplierSelectionDSS.Models.CriteriaIndexViewModel
 
 @{
-    ViewData["Title"] = "Tiêu chí đánh giá";
+    ViewData["Title"] = "Evaluation Criteria";
 
     var benefitPercent = Model.TotalCriteria > 0 
         ? (Model.BenefitCriteria * 100.0 / Model.TotalCriteria).ToString("0.#") 
@@ -23,15 +23,15 @@
      ========================================================= -->
 <div class="page-header">
     <div>
-        <h1 class="page-title">Tiêu chí đánh giá</h1>
+        <h1 class="page-title">Evaluation Criteria</h1>
         <p class="page-description">
-            Quản lý danh mục tiêu chí, loại tiêu chí (Lợi ích / Chi phí) và đơn vị đo lường trong hệ thống DSS.
+            Manage evaluation criteria, criteria types (Benefit / Cost), and measurement units in the DSS.
         </p>
     </div>
 
     <a asp-action="Create" class="btn-primary">
         <i class="bi bi-plus-lg"></i>
-        <span>Thêm tiêu chí</span>
+        <span>Add Criteria</span>
     </a>
 </div>
 
@@ -39,14 +39,14 @@
      KPI SUMMARY GRID (100% GENUINE DATABASE METRICS)
      ========================================================= -->
 <div class="criteria-kpi-grid">
-    <!-- Card 1: Tổng tiêu chí -->
+    <!-- Card 1: Total Criteria -->
     <div class="criteria-kpi-card">
         <div class="criteria-kpi-content">
-            <span class="criteria-kpi-label">Tổng tiêu chí</span>
+            <span class="criteria-kpi-label">Total Criteria</span>
             <span class="criteria-kpi-value">@Model.TotalCriteria.ToString("N0")</span>
             <div class="criteria-kpi-meta">
                 <span class="kpi-meta-pill pill-blue">
-                    <i class="bi bi-sliders"></i> Hệ thống đánh giá
+                    <i class="bi bi-sliders"></i> Evaluation system
                 </span>
             </div>
         </div>
@@ -55,14 +55,14 @@
         </div>
     </div>
 
-    <!-- Card 2: Tiêu chí Lợi ích (Benefit) -->
+    <!-- Card 2: Benefit Criteria -->
     <div class="criteria-kpi-card">
         <div class="criteria-kpi-content">
-            <span class="criteria-kpi-label">Tiêu chí Lợi ích (Benefit)</span>
+            <span class="criteria-kpi-label">Benefit Criteria</span>
             <span class="criteria-kpi-value">@Model.BenefitCriteria.ToString("N0")</span>
             <div class="criteria-kpi-meta">
                 <span class="kpi-meta-pill pill-green">
-                    <i class="bi bi-graph-up-arrow"></i> @benefitPercent% tổng số
+                    <i class="bi bi-graph-up-arrow"></i> @benefitPercent% of total
                 </span>
             </div>
         </div>
@@ -71,14 +71,14 @@
         </div>
     </div>
 
-    <!-- Card 3: Tiêu chí Chi phí (Cost) -->
+    <!-- Card 3: Cost Criteria -->
     <div class="criteria-kpi-card">
         <div class="criteria-kpi-content">
-            <span class="criteria-kpi-label">Tiêu chí Chi phí (Cost)</span>
+            <span class="criteria-kpi-label">Cost Criteria</span>
             <span class="criteria-kpi-value">@Model.CostCriteria.ToString("N0")</span>
             <div class="criteria-kpi-meta">
                 <span class="kpi-meta-pill pill-amber">
-                    <i class="bi bi-graph-down-arrow"></i> @costPercent% tổng số
+                    <i class="bi bi-graph-down-arrow"></i> @costPercent% of total
                 </span>
             </div>
         </div>
@@ -87,14 +87,14 @@
         </div>
     </div>
 
-    <!-- Card 4: Đang hoạt động -->
+    <!-- Card 4: Active -->
     <div class="criteria-kpi-card">
         <div class="criteria-kpi-content">
-            <span class="criteria-kpi-label">Đang hoạt động</span>
+            <span class="criteria-kpi-label">Active</span>
             <span class="criteria-kpi-value">@Model.ActiveCriteria.ToString("N0")</span>
             <div class="criteria-kpi-meta">
                 <span class="kpi-meta-pill pill-indigo">
-                    <i class="bi bi-check2-circle"></i> @activePercent% tổng số
+                    <i class="bi bi-check2-circle"></i> @activePercent% of total
                 </span>
             </div>
         </div>
@@ -113,54 +113,54 @@
 
         <!-- 1. Keyword Search -->
         <div class="filter-field">
-            <label for="keyword">Tìm kiếm</label>
+            <label for="keyword">Search</label>
             <input id="keyword"
                    name="keyword"
                    value="@Model.Keyword"
                    class="form-control"
-                   placeholder="Mã tiêu chí, tên tiêu chí, mô tả..." />
+                   placeholder="Criteria code, name, description..." />
         </div>
 
         <!-- 2. Type Dropdown -->
         <div class="filter-field">
-            <label for="type">Loại tiêu chí</label>
+            <label for="type">Criteria Type</label>
             <select id="type" name="type" class="form-control">
                 <option value="All" selected="@(string.IsNullOrEmpty(Model.Type) || Model.Type == "All")">
-                    Tất cả loại
+                    All Types
                 </option>
                 <option value="Benefit" selected="@(Model.Type == "Benefit")">
-                    Lợi ích (Benefit)
+                    Benefit
                 </option>
                 <option value="Cost" selected="@(Model.Type == "Cost")">
-                    Chi phí (Cost)
+                    Cost
                 </option>
             </select>
         </div>
 
         <!-- 3. Status Dropdown -->
         <div class="filter-field">
-            <label for="status">Trạng thái</label>
+            <label for="status">Status</label>
             <select id="status" name="status" class="form-control">
                 <option value="All" selected="@(string.IsNullOrEmpty(Model.Status) || Model.Status == "All")">
-                    Tất cả trạng thái
+                    All Statuses
                 </option>
                 <option value="Active" selected="@(Model.Status == "Active")">
-                    Đang hoạt động
+                    Active
                 </option>
                 <option value="Inactive" selected="@(Model.Status == "Inactive")">
-                    Ngừng hoạt động
+                    Inactive
                 </option>
             </select>
         </div>
 
         <!-- 4. Filter Action Buttons (Same height 42px) -->
         <div class="filter-actions">
-            <button type="submit" class="btn-primary" title="Tìm kiếm">
-                Tìm kiếm
+            <button type="submit" class="btn-primary" title="Search">
+                Search
             </button>
 
-            <a asp-action="Index" class="btn-outline" title="Đặt lại bộ lọc">
-                Đặt lại
+            <a asp-action="Index" class="btn-outline" title="Reset filters">
+                Reset
             </a>
         </div>
     </form>
@@ -176,13 +176,13 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th style="width: 140px;">Mã tiêu chí</th>
-                        <th style="min-width: 240px;">Tên tiêu chí</th>
-                        <th style="min-width: 260px;">Mô tả</th>
-                        <th style="width: 160px;">Loại tiêu chí</th>
-                        <th style="width: 130px;">Đơn vị</th>
-                        <th style="width: 150px;">Trạng thái</th>
-                        <th style="width: 70px; text-align: center;">Thao tác</th>
+                        <th style="width: 140px;">Criteria Code</th>
+                        <th style="min-width: 240px;">Criteria Name</th>
+                        <th style="min-width: 260px;">Description</th>
+                        <th style="width: 160px;">Criteria Type</th>
+                        <th style="width: 130px;">Unit</th>
+                        <th style="width: 150px;">Status</th>
+                        <th style="width: 70px; text-align: center;">Actions</th>
                     </tr>
                 </thead>
 
@@ -190,12 +190,12 @@
                     @foreach (var criterion in Model.Criteria)
                     {
                         <tr>
-                            <!-- Mã tiêu chí -->
+                            <!-- Criteria Code -->
                             <td>
                                 <span class="criteria-code-badge">@criterion.CriteriaCode</span>
                             </td>
 
-                            <!-- Tên tiêu chí -->
+                            <!-- Criteria Name -->
                             <td>
                                 <div class="criteria-name-cell">
                                     <a asp-action="Edit" asp-route-id="@criterion.CriteriaId" class="criteria-name-link">
@@ -204,7 +204,7 @@
                                 </div>
                             </td>
 
-                            <!-- Mô tả -->
+                            <!-- Description -->
                             <td>
                                 @if (!string.IsNullOrWhiteSpace(criterion.Description))
                                 {
@@ -218,25 +218,25 @@
                                 }
                             </td>
 
-                            <!-- Loại tiêu chí -->
+                            <!-- Criteria Type -->
                             <td>
                                 @if (criterion.CriteriaType == "Benefit")
                                 {
-                                    <span class="criteria-type-badge type-benefit" title="Càng lớn càng tốt">
+                                    <span class="criteria-type-badge type-benefit" title="Higher is better">
                                         <i class="bi bi-arrow-up-right"></i>
-                                        <span>Lợi ích</span>
+                                        <span>Benefit</span>
                                     </span>
                                 }
                                 else
                                 {
-                                    <span class="criteria-type-badge type-cost" title="Càng nhỏ càng tốt">
+                                    <span class="criteria-type-badge type-cost" title="Lower is better">
                                         <i class="bi bi-arrow-down-right"></i>
-                                        <span>Chi phí</span>
+                                        <span>Cost</span>
                                     </span>
                                 }
                             </td>
 
-                            <!-- Đơn vị -->
+                            <!-- Unit -->
                             <td>
                                 @if (!string.IsNullOrWhiteSpace(criterion.Unit))
                                 {
@@ -248,25 +248,25 @@
                                 }
                             </td>
 
-                            <!-- Trạng thái -->
+                            <!-- Status -->
                             <td>
                                 @if (criterion.Status == "Active")
                                 {
-                                    <span class="status-pill status-active">Hoạt động</span>
+                                    <span class="status-pill status-active">Active</span>
                                 }
                                 else
                                 {
-                                    <span class="status-pill status-inactive">Ngừng hoạt động</span>
+                                    <span class="status-pill status-inactive">Inactive</span>
                                 }
                             </td>
 
-                            <!-- Thao tác dropdown [ ⋯ ] -->
+                            <!-- Actions dropdown [ ⋯ ] -->
                             <td style="text-align: center;">
                                 <div class="criteria-actions-dropdown">
                                     <button type="button"
                                             class="btn-action-dots"
-                                            aria-label="Thao tác cho @criterion.CriteriaName"
-                                            title="Thao tác">
+                                            aria-label="Actions for @criterion.CriteriaName"
+                                            title="Actions">
                                         <i class="bi bi-three-dots-vertical"></i>
                                     </button>
 
@@ -275,7 +275,7 @@
                                            asp-route-id="@criterion.CriteriaId"
                                            class="criteria-action-item">
                                             <i class="bi bi-pencil"></i>
-                                            <span>Chỉnh sửa</span>
+                                            <span>Edit</span>
                                         </a>
 
                                         <div class="criteria-action-divider"></div>
@@ -289,18 +289,18 @@
                                                    value="@criterion.CriteriaId" />
                                             <button type="submit"
                                                     class="criteria-action-item @(criterion.Status == "Active" ? "text-danger" : "text-success")"
-                                                    data-dss-confirm="@(criterion.Status == "Active" ? $"Bạn có chắc chắn muốn ngừng hoạt động tiêu chí \"{criterion.CriteriaName}\"?" : $"Bạn có chắc chắn muốn kích hoạt lại tiêu chí \"{criterion.CriteriaName}\"?")"
-                                                    data-dss-title="@(criterion.Status == "Active" ? "Xác nhận ngừng hoạt động" : "Xác nhận kích hoạt")"
-                                                    data-dss-btn-text="@(criterion.Status == "Active" ? "Ngừng hoạt động" : "Kích hoạt")">
+                                                    data-dss-confirm="@(criterion.Status == "Active" ? $"Are you sure you want to deactivate criterion \"{criterion.CriteriaName}\"?" : $"Are you sure you want to reactivate criterion \"{criterion.CriteriaName}\"?")"
+                                                    data-dss-title="@(criterion.Status == "Active" ? "Confirm Deactivation" : "Confirm Activation")"
+                                                    data-dss-btn-text="@(criterion.Status == "Active" ? "Deactivate" : "Activate")">
                                                 @if (criterion.Status == "Active")
                                                 {
                                                     <i class="bi bi-slash-circle"></i>
-                                                    <span>Ngừng hoạt động</span>
+                                                    <span>Deactivate</span>
                                                 }
                                                 else
                                                 {
                                                     <i class="bi bi-check-circle"></i>
-                                                    <span>Kích hoạt</span>
+                                                    <span>Activate</span>
                                                 }
                                             </button>
                                         </form>
@@ -321,19 +321,19 @@
             <div style="font-size: 40px; color: var(--muted); margin-bottom: 12px;">
                 <i class="bi bi-search"></i>
             </div>
-            <h3>Không tìm thấy tiêu chí nào</h3>
+            <h3>No criteria found</h3>
             <p>
-                Không có tiêu chí nào phù hợp với điều kiện tìm kiếm hiện tại.
-                Vui lòng thử lại với từ khóa hoặc bộ lọc khác.
+                No criteria match the current search criteria or filters.
+                Please try again with different keywords or filters.
             </p>
             <div style="display: flex; gap: 10px; justify-content: center; margin-top: 16px;">
                 <a asp-action="Index" class="btn-outline">
                     <i class="bi bi-arrow-counterclockwise"></i>
-                    <span>Xóa bộ lọc</span>
+                    <span>Reset Filters</span>
                 </a>
                 <a asp-action="Create" class="btn-primary">
                     <i class="bi bi-plus-lg"></i>
-                    <span>Thêm tiêu chí mới</span>
+                    <span>Add New Criteria</span>
                 </a>
             </div>
         </div>

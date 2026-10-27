@@ -8,11 +8,11 @@ public class UserFormViewModel
 
 
     [Required(
-        ErrorMessage = "Vui lòng nhập username.")]
+        ErrorMessage = "Please enter a username.")]
     [StringLength(
         50,
         ErrorMessage =
-            "Username tối đa 50 ký tự.")]
+            "Username cannot exceed 50 characters.")]
     [Display(
         Name = "Username")]
     public string Username { get; set; } =
@@ -21,11 +21,11 @@ public class UserFormViewModel
 
     [Required(
         ErrorMessage =
-            "Vui lòng nhập họ và tên.")]
+            "Please enter a full name.")]
     [StringLength(
         100,
         ErrorMessage =
-            "Họ và tên tối đa 100 ký tự.")]
+            "Full name cannot exceed 100 characters.")]
     [Display(
         Name = "Full name")]
     public string FullName { get; set; } =
@@ -34,7 +34,7 @@ public class UserFormViewModel
 
     [EmailAddress(
         ErrorMessage =
-            "Email không đúng định dạng.")]
+            "Invalid email format.")]
     [StringLength(100)]
     [Display(
         Name = "Email")]
@@ -49,7 +49,7 @@ public class UserFormViewModel
 
     [Required(
         ErrorMessage =
-            "Vui lòng chọn vai trò.")]
+            "Please select a role.")]
     [Display(
         Name = "Role")]
     public string Role { get; set; } =
@@ -58,7 +58,7 @@ public class UserFormViewModel
 
     [Required(
         ErrorMessage =
-            "Vui lòng chọn trạng thái.")]
+            "Please select a status.")]
     [Display(
         Name = "Status")]
     public string Status { get; set; } =
@@ -69,7 +69,7 @@ public class UserFormViewModel
     [MinLength(
         8,
         ErrorMessage =
-            "Mật khẩu phải có ít nhất 8 ký tự.")]
+            "Password must be at least 8 characters.")]
     [Display(
         Name = "Password")]
     public string? Password { get; set; }

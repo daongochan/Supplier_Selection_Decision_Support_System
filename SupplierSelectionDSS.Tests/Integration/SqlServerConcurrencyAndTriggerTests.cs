@@ -10,66 +10,118 @@ using SupplierSelectionDSS.Exceptions;
 using SupplierSelectionDSS.Models;
 using SupplierSelectionDSS.Services;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace SupplierSelectionDSS.Tests.Integration;
 
+[Collection("SqlServer")]
 public class SqlServerConcurrencyAndTriggerTests : IAsyncLifetime
 {
+    private readonly ITestOutputHelper _output;
     private readonly string _dbName = "SupplierSelectionDSS_Test_" + Guid.NewGuid().ToString("N")[..12];
     private string _masterConnString = string.Empty;
     private string _testConnString = string.Empty;
-    private bool _sqlAvailable;
+    private bool _databaseCreated;
+
+    public SqlServerConcurrencyAndTriggerTests(ITestOutputHelper output)
+    {
+        _output = output;
+    }
 
     public async Task InitializeAsync()
     {
-        var baseServer = Environment.GetEnvironmentVariable("DSS_TEST_SQL_SERVER") ?? ".";
-        _masterConnString = $"Server={baseServer};Database=master;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True;Connect Timeout=5";
-        _testConnString = $"Server={baseServer};Database={_dbName};Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True;Connect Timeout=10";
+        var baseConnStr = Environment.GetEnvironmentVariable("DSS_TEST_CONNECTION_STRING");
+        if (!string.IsNullOrWhiteSpace(baseConnStr))
+        {
+            var formatted = baseConnStr.Contains("{0}") ? string.Format(baseConnStr, _dbName) : baseConnStr;
+            var builder = new SqlConnectionStringBuilder(formatted);
+            builder.ConnectTimeout = 30;
+            builder.InitialCatalog = "master";
+            _masterConnString = builder.ConnectionString;
+            builder.InitialCatalog = _dbName;
+            _testConnString = builder.ConnectionString;
+        }
+        else
+        {
+            var baseServer = Environment.GetEnvironmentVariable("DSS_TEST_SQL_SERVER") ?? ".";
+            if (baseServer.StartsWith("np:", StringComparison.OrdinalIgnoreCase))
+            {
+                baseServer = "np:" + Regex.Replace(baseServer[3..], @"\\+", @"\");
+                if (baseServer.StartsWith(@"np:\.\", StringComparison.OrdinalIgnoreCase))
+                {
+                    baseServer = @"np:\\.\" + baseServer[6..];
+                }
+            }
+            _masterConnString = $"Server={baseServer};Database=master;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True;Connect Timeout=30";
+            _testConnString = $"Server={baseServer};Database={_dbName};Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True;Connect Timeout=30";
+        }
 
         try
         {
-            await using var conn = new SqlConnection(_masterConnString);
-            await conn.OpenAsync();
-            await using (var cmd = conn.CreateCommand())
+            await using (var conn = new SqlConnection(_masterConnString))
             {
+                await conn.OpenAsync();
+                await using var cmd = conn.CreateCommand();
+                cmd.CommandTimeout = 180;
                 cmd.CommandText = $"CREATE DATABASE [{_dbName}];";
                 await cmd.ExecuteNonQueryAsync();
             }
 
+            _databaseCreated = true;
+
             await ApplySchemaToTestDatabaseAsync();
-            _sqlAvailable = true;
         }
-        catch
+        catch (Exception ex)
         {
-            _sqlAvailable = false;
+            if (_databaseCreated)
+            {
+                try
+                {
+                    await TryDropDatabaseAsync();
+                    _databaseCreated = false;
+                }
+                catch (Exception cleanupEx)
+                {
+                    _output.WriteLine($"[WARNING] Failed to cleanup test database '{_dbName}' after initialization failure: {cleanupEx.Message}");
+                }
+            }
+
+            throw new InvalidOperationException($"SQL Server test database initialization failed for '{_dbName}': {ex.Message}", ex);
         }
     }
 
     public async Task DisposeAsync()
     {
-        if (!_sqlAvailable)
+        if (!_databaseCreated)
         {
             return;
         }
 
         try
         {
-            SqlConnection.ClearAllPools();
-            await using var conn = new SqlConnection(_masterConnString);
-            await conn.OpenAsync();
-            await using var cmd = conn.CreateCommand();
-            cmd.CommandText = $@"
+            await TryDropDatabaseAsync();
+            _databaseCreated = false;
+        }
+        catch (Exception ex)
+        {
+            _output.WriteLine($"[WARNING] Failed to drop disposable test database '{_dbName}'. Manual cleanup may be required: {ex.Message}");
+        }
+    }
+
+    private async Task TryDropDatabaseAsync()
+    {
+        SqlConnection.ClearAllPools();
+        await using var conn = new SqlConnection(_masterConnString);
+        await conn.OpenAsync();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandTimeout = 180;
+        cmd.CommandText = $@"
 IF DB_ID(N'{_dbName}') IS NOT NULL
 BEGIN
     ALTER DATABASE [{_dbName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
     DROP DATABASE [{_dbName}];
 END";
-            await cmd.ExecuteNonQueryAsync();
-        }
-        catch
-        {
-            // Ignore cleanup failure in disposable test DB
-        }
+        await cmd.ExecuteNonQueryAsync();
     }
 
     private async Task ApplySchemaToTestDatabaseAsync()
@@ -108,7 +160,7 @@ END";
             }
 
             await using var cmd = conn.CreateCommand();
-            cmd.CommandTimeout = 60;
+            cmd.CommandTimeout = 180;
             cmd.CommandText = batch;
             await cmd.ExecuteNonQueryAsync();
         }
@@ -122,14 +174,11 @@ END";
         return new ApplicationDbContext(options);
     }
 
-    [Fact]
+    [SqlServerFact]
+    [Trait("Category", "SqlServer")]
+    [Trait("Category", "Integration")]
     public async Task SqlServer_F03_TriggersBlockChildMutations_WhenBatchIsCompletedOrCancelled_And_RowVersionDetectsConcurrentWrite()
     {
-        if (!_sqlAvailable)
-        {
-            return;
-        }
-
         int batchId;
         int sup1Id, sup2Id, crit1Id, crit2Id, userId;
 
@@ -266,14 +315,11 @@ END";
         }
     }
 
-    [Fact]
+    [SqlServerFact]
+    [Trait("Category", "SqlServer")]
+    [Trait("Category", "Integration")]
     public async Task SqlServer_F10_ConcurrentAdminDemotions_NeverLeaveZeroActiveAdministrators()
     {
-        if (!_sqlAvailable)
-        {
-            return;
-        }
-
         int admin1Id, admin2Id;
         await using (var db = CreateSqlContext())
         {

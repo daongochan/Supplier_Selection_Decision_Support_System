@@ -6,12 +6,12 @@ public class ProductGroupFormViewModel
 {
     public int GroupId { get; set; }
 
-    [Required(ErrorMessage = "Vui lòng nhập mã nhóm.")]
+    [Required(ErrorMessage = "Please enter a group code.")]
     [StringLength(20)]
     [Display(Name = "Group code")]
     public string GroupCode { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Vui lòng nhập tên nhóm.")]
+    [Required(ErrorMessage = "Please enter a group name.")]
     [StringLength(150)]
     [Display(Name = "Group name")]
     public string GroupName { get; set; } = string.Empty;
